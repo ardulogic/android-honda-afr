@@ -30,7 +30,7 @@ public class AverageList {
             return 0; // Avoid division by zero
         }
 
-        return (double) sum / numbers.size();
+        return sum / numbers.size();
     }
 
     public int getMaxCount() {

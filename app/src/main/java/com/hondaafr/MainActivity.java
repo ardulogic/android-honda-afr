@@ -65,7 +65,7 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
     private Double ecoAfr = 15.4;
     private Double ecoPlusAfr = 16.4;
 
-    private AverageList shortAfrAvg = new AverageList(100);
+    private final AverageList shortAfrAvg = new AverageList(100);
 
     private SharedPreferences settings;
     private SharedPreferences.Editor editor;
@@ -91,24 +91,16 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
         mContext = this;
 
         buttonConnect = findViewById(R.id.buttonConnect);
-        buttonConnect.setOnClickListener(view -> {
-            BT_connect();
-        });
+        buttonConnect.setOnClickListener(view -> BT_connect());
 
         buttonIncreaseAfr = findViewById(R.id.buttonIncreaseAFR);
-        buttonIncreaseAfr.setOnClickListener(view -> {
-            mSpartanStudio.adjustAFR(0.05);
-        });
+        buttonIncreaseAfr.setOnClickListener(view -> mSpartanStudio.adjustAFR(0.05));
 
         buttonDecreaseAfr = findViewById(R.id.buttonDecreaseAFR);
-        buttonDecreaseAfr.setOnClickListener(view -> {
-            mSpartanStudio.adjustAFR(-0.05);
-        });
+        buttonDecreaseAfr.setOnClickListener(view -> mSpartanStudio.adjustAFR(-0.05));
 
         buttonTrackSensor = findViewById(R.id.buttonTrackSensor);
-        buttonTrackSensor.setOnClickListener(view -> {
-            mSpartanStudio.start();
-        });
+        buttonTrackSensor.setOnClickListener(view -> mSpartanStudio.start());
 
         buttonClearLog = findViewById(R.id.buttonClear);
         buttonClearLog.setOnClickListener(view -> {
@@ -131,9 +123,7 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
         mSpartanStudio = new SpartanStudio(this, this);
         mTextStatus = findViewById(R.id.textStatus);
         mTextTargetAfr = findViewById(R.id.textTargetAFR);
-        mTextTargetAfr.setOnClickListener(v -> {
-            SpartanStudio.requestCurrentAFR(mContext);
-        });
+        mTextTargetAfr.setOnClickListener(v -> SpartanStudio.requestCurrentAFR(mContext));
 
         mToggleClearAfrMin = findViewById(R.id.buttonClearAfrMin);
         mToggleClearAfrMin.setOnClickListener(v -> afrMin = null);
@@ -141,6 +131,7 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
         mToggleClearAfrAll.setOnClickListener(v -> {
             afrMin = null;
             afrMax = null;
+            shortAfrAvg.clear();
         });
         mToggleClearAfrMax = findViewById(R.id.buttonClearAfrMax);
         mToggleClearAfrMax.setOnClickListener(v -> afrMax = null);
@@ -295,13 +286,10 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
 
     public void BT_connect() {
         BT_startService();
-
-        SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
-        String ssid = settings.getString("pref_ssid", "AutoLights");
         BluetoothService.connect(this, "AutoLights");
     }
 
-    private BroadcastReceiver btReceiver = new BroadcastReceiver() {
+    private final BroadcastReceiver btReceiver = new BroadcastReceiver() {
 
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -330,9 +318,7 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
     public void OnBluetoothDataReceived(String data) {
         mSpartanStudio.onDataReceived(data);
 
-        runOnUiThread(() -> {
-            mTextStatus.setText(data);
-        });
+        runOnUiThread(() -> mTextStatus.setText(data));
     }
 
     public void OnBluetoothServiceStateChanged(int state) {
@@ -385,14 +371,6 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
         }
 
         mTextStatus.setText(BluetoothStates.labelOfState(state));
-    }
-
-    @Override
-    public void onWindowFocusChanged(boolean hasFocus) {
-        super.onWindowFocusChanged(hasFocus);
-        if (hasFocus) {
-//            mSpectrumVisualiser = new SpectrumVisualiser((ImageView) this.findViewById(R.id.imageSpectrum));
-        }
     }
 
     @Override

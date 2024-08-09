@@ -14,7 +14,6 @@ public class SpartanStudio extends Debuggable {
     private Context context;
     private SpartanStudioListener listener;
     public ArrayList<Double> mAfrHistory = new ArrayList<>();
-    public ArrayList<Double> mTempHistory = new ArrayList<>();
 
     private boolean readingsOn = false;
 
@@ -25,12 +24,7 @@ public class SpartanStudio extends Debuggable {
             scheduler = Executors.newScheduledThreadPool(2);
         }
 
-        final Runnable requestTask = new Runnable() {
-            @Override
-            public void run() {
-                requestSensorReadings();
-            }
-        };
+        final Runnable requestTask = this::requestSensorReadings;
 
         scheduler.scheduleAtFixedRate(requestTask, 0, 50, TimeUnit.MILLISECONDS);
         readingsOn = true;
