@@ -117,7 +117,7 @@ public class SpartanStudio extends Debuggable {
 
     public void adjustAFR(double adjustment) {
         targetAfr += adjustment;
-        setAFR(targetAfr + adjustment);
+        setAFR(targetAfr);
     }
 
     public void setAFR(double target) {
