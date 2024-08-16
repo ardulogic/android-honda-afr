@@ -5,16 +5,19 @@ package com.hondaafr.Libs.Bluetooth;
  */
 
 
+import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.os.ParcelUuid;
 import android.util.Log;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 public class BluetoothUtils {
     private static final String TAG = "BluetoothUtils";
@@ -124,6 +127,7 @@ public class BluetoothUtils {
             Method method = device.getClass().getMethod("getUuids", null);
             ParcelUuid[] phoneUuids = (ParcelUuid[]) method.invoke(device, null);
             if (phoneUuids != null) {
+                if (D) Log.d(TAG, "Found UUIDs for " + device.getName());
                 for (ParcelUuid uuid : phoneUuids) {
                     if (D) Log.d(TAG, device.getName() + ": " + uuid.toString());
                     result.add(uuid);
@@ -171,6 +175,18 @@ public class BluetoothUtils {
     public static ArrayList<String> getDeviceServices(BluetoothDevice device) {
         ArrayList<ParcelUuid> uuids = getDeviceUuids(device);
         return getDeviceServices(uuids);
+    }
+
+    public static final UUID OBD_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
+
+    @SuppressLint("MissingPermission")
+    public static BluetoothSocket createRfcommSocketAlt(BluetoothDevice device, UUID uuid) {
+        try {
+            return device.createRfcommSocketToServiceRecord(uuid);
+        } catch (IOException e) {
+            Log.e(TAG, "Socket creation failed", e);
+            return null;
+        }
     }
 
     /**

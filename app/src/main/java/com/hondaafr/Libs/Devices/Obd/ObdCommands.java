@@ -10,7 +10,7 @@ public class ObdCommands {
 
     // OBD command to request Throttle Position Sensor data
     public static String requestTps() {
-        return "01 11"; // Mode 01, PID 11 is for Throttle Position
+        return "0111"; // Mode 01, PID 11 is for Throttle Position
     }
 
     // Method to check if the received data is for TPS

@@ -165,7 +165,9 @@ public class BluetoothConnection extends Debuggable {
         public ConnectThread(BluetoothDevice device) {
             d("Creating 'ConnectThread'.", 1);
             mmDevice = device;
-            mmSocket = BluetoothUtils.createRfcommSocket(mmDevice);
+            mmSocket = BluetoothUtils.createRfcommSocketAlt(mmDevice, BluetoothUtils.OBD_UUID);
+            d("Socket created.", 1);
+            d("Socket type:", mmSocket.getConnectionType());
         }
 
         @SuppressLint("MissingPermission")
@@ -262,8 +264,16 @@ public class BluetoothConnection extends Debuggable {
                     String readedPart = new String(buffer, 0, bytes);
                     messageBuffer += readedPart;
 
-                    if (messageBuffer.contains("\n")) {
-                        int newlineIndex = messageBuffer.indexOf("\n");
+                    boolean endedWithNewline = messageBuffer.contains("\n");
+                    boolean endedWithRR = messageBuffer.contains(("\r\r"));
+                    if (endedWithNewline || endedWithRR) {
+                        int newlineIndex = -1;
+                        if (endedWithNewline)
+                            newlineIndex = messageBuffer.indexOf("\n");
+                        else if (endedWithRR) {
+                            newlineIndex = messageBuffer.indexOf("\r\r");
+                        }
+
                         String receivedLine = messageBuffer.substring(0, newlineIndex + 1);
                         messageBuffer = messageBuffer.substring(newlineIndex + 1);
 

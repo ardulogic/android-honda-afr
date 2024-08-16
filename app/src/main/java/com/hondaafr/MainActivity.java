@@ -125,6 +125,9 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
             startTimestamp = System.currentTimeMillis();
         });
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            Permissions.askBluetoothPermission(this);
+        }
         Permissions.askForFilePermissions(this);
 
         buttonSaveToCsv = findViewById(R.id.buttonSave);
@@ -188,7 +191,7 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
 
         Handler handler = new Handler();
 //        handler.postDelayed(this::BT_connect_spartan, 2000);// Delay in milliseconds
-        handler.postDelayed(this::BT_connect_obd, 2000);// Delay in milliseconds
+//        handler.postDelayed(this::BT_connect_obd, 2000);// Delay in milliseconds
 
 
         textShortAfrAvg = findViewById(R.id.textRecentAfrAvg);
@@ -333,7 +336,7 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
 
     public void BT_connect_obd() {
         BT_startService();
-        BluetoothService.connect(this, "3e:93:7c:32:08:c9", "obd");
+        BluetoothService.connect(this, "OBDII", "obd");
     }
 
     private final BroadcastReceiver btReceiver = new BroadcastReceiver() {
@@ -371,7 +374,9 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
     public void OnBluetoothDataReceived(String data, String device_id) {
         if (Objects.equals(device_id, "spartan")) {
             mSpartanStudio.onDataReceived(data);
-        } else if (Objects.equals(device_id, "obd")) {
+        }
+
+        if (Objects.equals(device_id, "obd")) {
             mObdStudio.onDataReceived(data);
         }
 
