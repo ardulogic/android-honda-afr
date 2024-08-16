@@ -66,6 +66,21 @@ public class BluetoothHelper {
         return null;
     }
 
+    public BluetoothDevice getPairedDeviceByMAC(String macAddress) {
+        for (BluetoothDevice device : getPairedDevices()) {
+            String savedMac = device.getAddress().trim().toLowerCase();
+            String inputMac = macAddress.trim().toLowerCase();
+
+            if (savedMac.equals(inputMac)) {
+                return device;
+            }
+        }
+
+        return null; // Device with the given MAC address not found
+    }
+
+
+
     public boolean isEnabled() {
         return mBluetooth.isEnabled();
     }

@@ -8,6 +8,7 @@ import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.PowerManager;
@@ -22,6 +23,54 @@ public class Permissions {
     private static final int MY_PERMISSIONS_REQUEST_BLUETOOTH_CONNECT = 1;
     private static final int MY_PERMISSIONS_REQUEST_BLUETOOTH_SCAN = 2;
     private static final int MY_PERMISSIONS_REQUEST_ENABLE_BT = 3;
+    private static final int MY_PERMISSIONS_REQUEST_LOCATION = 4;
+
+    public static void askForFilePermissions(Activity activity) {
+        if (ContextCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED ||
+                ContextCompat.checkSelfPermission(activity, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(activity, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
+        }
+    }
+
+
+
+    public static void askForLocationPermissions(Activity activity) {
+        if (ContextCompat.checkSelfPermission(activity, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(activity, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+
+            // Request location permissions
+            ActivityCompat.requestPermissions(activity,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
+                    MY_PERMISSIONS_REQUEST_LOCATION);
+        }
+            // Permissions are already granted, check if location services are enabled
+
+        checkLocationServices(activity);
+    }
+
+    private static void checkLocationServices(Activity activity) {
+        LocationManager locationManager = (LocationManager) activity.getSystemService(Activity.LOCATION_SERVICE);
+        boolean gpsEnabled = false;
+        boolean networkEnabled = false;
+
+        try {
+            gpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+        } catch (Exception ex) {
+            // Handle exception
+        }
+
+        try {
+            networkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+        } catch (Exception ex) {
+            // Handle exception
+        }
+
+        if (!gpsEnabled && !networkEnabled) {
+            // Prompt user to enable location services
+            Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+            activity.startActivity(intent);
+        }
+    }
 
     public static void askIgnoreBatteryOptimization(Activity activity) {
         PowerManager pm = (PowerManager) activity.getSystemService(POWER_SERVICE);

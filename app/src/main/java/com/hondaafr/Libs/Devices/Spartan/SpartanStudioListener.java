@@ -1,7 +1,5 @@
 package com.hondaafr.Libs.Devices.Spartan;
 
-import java.util.ArrayList;
-
 public interface SpartanStudioListener {
     void onTargetAfrUpdated(double targetAfr);
 
@@ -9,4 +7,6 @@ public interface SpartanStudioListener {
     void onSensorAfrReceived(Double afr);
 
     void onSensorTempReceived(Double temp);
+
+    void onSpeedUpdated(Double speedKmh);
 }

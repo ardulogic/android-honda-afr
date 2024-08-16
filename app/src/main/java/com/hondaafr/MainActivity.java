@@ -24,24 +24,32 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.hondaafr.Libs.Bluetooth.BluetoothStates;
 import com.hondaafr.Libs.Bluetooth.Services.BluetoothService;
+import com.hondaafr.Libs.Devices.Obd.ObdStudio;
+import com.hondaafr.Libs.Devices.Obd.ObdStudioListener;
 import com.hondaafr.Libs.Devices.Spartan.SpartanStudio;
 import com.hondaafr.Libs.Devices.Spartan.SpartanStudioListener;
 import com.hondaafr.Libs.Helpers.AverageList;
+import com.hondaafr.Libs.Helpers.CsvHelper;
 import com.hondaafr.Libs.Helpers.Permissions;
 import com.hondaafr.Libs.Helpers.TimeChart;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
-public class MainActivity extends AppCompatActivity implements SpartanStudioListener {
+public class MainActivity extends AppCompatActivity implements SpartanStudioListener, ObdStudioListener {
 
     private MainActivity mContext;
-    private Button buttonConnect;
+    private Button buttonConnectSpartan;
+    private Button buttonConnectObd;
 
     private SpartanStudio mSpartanStudio;
+    private ObdStudio mObdStudio;
     private TextView mTextStatus;
     private Button buttonTrackSensor;
     private TextView mTextTargetAfr;
@@ -58,7 +66,10 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
     private Button mToggleClearAfrMax;
     private Button mToggleClearAfrAll;
     private Button buttonClearLog;
-    private Button buttonClearAmplitude;
+    private Button buttonSaveToCsv;
+
+    private TextView mTextSpeed;
+    private TextView mTextTps;
 
     private Double sportPlusAfr = 12.7;
     private Double sportAfr = 14.7;
@@ -71,6 +82,7 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
     private SharedPreferences.Editor editor;
     private TextView textShortAfrAvg;
     private TextView textShortAfrAvgDeviation;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,8 +102,13 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
 
         mContext = this;
 
-        buttonConnect = findViewById(R.id.buttonConnect);
-        buttonConnect.setOnClickListener(view -> BT_connect());
+        buttonConnectSpartan = findViewById(R.id.buttonConnectSpartan);
+//        buttonConnect.setOnClickListener(view -> BT_connect_spartan());
+        buttonConnectSpartan.setOnClickListener(view -> BT_connect_spartan());
+
+        buttonConnectObd = findViewById(R.id.buttonConnectObd);
+//        buttonConnect.setOnClickListener(view -> BT_connect_spartan());
+        buttonConnectObd.setOnClickListener(view -> BT_connect_obd());
 
         buttonIncreaseAfr = findViewById(R.id.buttonIncreaseAFR);
         buttonIncreaseAfr.setOnClickListener(view -> mSpartanStudio.adjustAFR(0.05));
@@ -108,10 +125,12 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
             startTimestamp = System.currentTimeMillis();
         });
 
-        buttonClearAmplitude = findViewById(R.id.buttonClearAmp);
-        buttonClearAmplitude.setOnClickListener(view -> {
-            afrMax = null;
-            afrMin = null;
+        Permissions.askForFilePermissions(this);
+
+        buttonSaveToCsv = findViewById(R.id.buttonSave);
+        buttonSaveToCsv.setOnClickListener(view -> {
+            CsvHelper w = new CsvHelper();
+            w.saveCsvToDownloads(this, mSpartanStudio.getDataAsTable());
         });
 
 
@@ -120,10 +139,17 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
             Permissions.askBluetoothPermission(this);
         }
 
+        Permissions.askForLocationPermissions(this);
+
         mSpartanStudio = new SpartanStudio(this, this);
+        mObdStudio = new ObdStudio(this, this);
+
         mTextStatus = findViewById(R.id.textStatus);
         mTextTargetAfr = findViewById(R.id.textTargetAFR);
         mTextTargetAfr.setOnClickListener(v -> SpartanStudio.requestCurrentAFR(mContext));
+
+        mTextSpeed = findViewById(R.id.textSpeed);
+        mTextTps = findViewById(R.id.textTps);
 
         mToggleClearAfrMin = findViewById(R.id.buttonClearAfrMin);
         mToggleClearAfrMin.setOnClickListener(v -> afrMin = null);
@@ -161,7 +187,9 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
         setLongClickListenersToAfrButtons();
 
         Handler handler = new Handler();
-        handler.postDelayed(this::BT_connect, 2000);// Delay in milliseconds
+//        handler.postDelayed(this::BT_connect_spartan, 2000);// Delay in milliseconds
+        handler.postDelayed(this::BT_connect_obd, 2000);// Delay in milliseconds
+
 
         textShortAfrAvg = findViewById(R.id.textRecentAfrAvg);
         textShortAfrAvgDeviation = findViewById(R.id.textShortAfrAvgDeviation);
@@ -273,9 +301,23 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
         });
     }
 
+    public List<ILineDataSet> getAfrData() {
+        return mChart.data.getDataSets();
+    }
+
     @Override
     public void onSensorTempReceived(Double temp) {
 
+    }
+
+    @Override
+    public void onSpeedUpdated(Double speedKmh) {
+        mTextSpeed.setText(String.format("%.1f km/h", speedKmh));
+    }
+
+    @Override
+    public void onSensorTpsReceived(Double throttle_position) {
+        mTextTps.setText(String.format("TPS: %.1f%", throttle_position));
     }
 
     public void BT_startService() {
@@ -284,9 +326,14 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
         }
     }
 
-    public void BT_connect() {
+    public void BT_connect_spartan() {
         BT_startService();
-        BluetoothService.connect(this, "AutoLights");
+        BluetoothService.connect(this, "AutoLights", "spartan");
+    }
+
+    public void BT_connect_obd() {
+        BT_startService();
+        BluetoothService.connect(this, "3e:93:7c:32:08:c9", "obd");
     }
 
     private final BroadcastReceiver btReceiver = new BroadcastReceiver() {
@@ -306,17 +353,27 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
                 break;
 
             case BluetoothStates.EVENT_BT_STATE_CHANGED:
-                OnBluetoothStateChanged(intent.getIntExtra(BluetoothStates.KEY_DATA, -1));
+                OnBluetoothStateChanged(
+                        intent.getIntExtra(BluetoothStates.KEY_DATA, -1),
+                        intent.getStringExtra(BluetoothStates.KEY_DEVICE_ID)
+                );
                 break;
 
             case BluetoothStates.EVENT_DATA_RECEIVED:
-                OnBluetoothDataReceived(intent.getStringExtra(BluetoothStates.KEY_DATA));
+                OnBluetoothDataReceived(
+                        intent.getStringExtra(BluetoothStates.KEY_DATA),
+                        intent.getStringExtra(BluetoothStates.KEY_DEVICE_ID)
+                );
                 break;
         }
     }
 
-    public void OnBluetoothDataReceived(String data) {
-        mSpartanStudio.onDataReceived(data);
+    public void OnBluetoothDataReceived(String data, String device_id) {
+        if (Objects.equals(device_id, "spartan")) {
+            mSpartanStudio.onDataReceived(data);
+        } else if (Objects.equals(device_id, "obd")) {
+            mObdStudio.onDataReceived(data);
+        }
 
         runOnUiThread(() -> mTextStatus.setText(data));
     }
@@ -333,40 +390,49 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
         }
     }
 
-    public void OnBluetoothStateChanged(int state) {
+    public void OnBluetoothStateChanged(int state, String device_id) {
+        Log.d("MainActivity bluetoothStateChanged:", device_id);
         switch (state) {
             case BluetoothStates.STATE_BT_CONNECTED:
-                buttonConnect.setText("Connected");
-                buttonConnect.setEnabled(false);
-                mTextStatus.setText("Successfully connected to device!");
-                mSpartanStudio.start();
+                buttonConnectSpartan.setText("Connected");
+                buttonConnectSpartan.setEnabled(false);
+                mTextStatus.setText("Successfully connected to device: " + device_id);
+
+                if (device_id.equals("spartan")) {
+                    mSpartanStudio.start();
+                    BT_connect_obd();
+                }
+
+                if (device_id.equals("obd")) {
+                    mObdStudio.start();
+                }
                 break;
 
             case BluetoothStates.STATE_BT_BUSY:
             case BluetoothStates.STATE_BT_CONNECTING:
             case BluetoothStates.STATE_BT_ENABLING:
-                buttonConnect.setText("Connecting");
-                buttonConnect.setEnabled(false);
+                buttonConnectSpartan.setText("Connecting");
+                buttonConnectSpartan.setEnabled(false);
                 break;
 
             case BluetoothStates.STATE_BT_NONE:
             case BluetoothStates.STATE_BT_DISCONNECTED:
             case BluetoothStates.STATE_BT_UNPAIRED:
-                buttonConnect.setText("Connect");
-                buttonConnect.setEnabled(true);
+                buttonConnectSpartan.setText("Connect");
+                buttonConnectSpartan.setEnabled(true);
                 break;
 
             case BluetoothStates.STATE_BT_DISABLED:
                 Permissions.promptEnableBluetooth(this);
-                buttonConnect.setEnabled(true);
+                buttonConnectSpartan.setEnabled(true);
                 break;
 
             case BluetoothStates.STATE_BT_ENABLED:
-                BT_connect();
+                BT_connect_spartan();
 
             default:
-                buttonConnect.setText("Connect");
-                buttonConnect.setEnabled(true);
+                buttonConnectSpartan.setText("Connect");
+                buttonConnectSpartan.setEnabled(true);
 
         }
 
@@ -404,3 +470,4 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
         super.onDestroy();
     }
 }
+

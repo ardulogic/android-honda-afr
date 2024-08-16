@@ -6,7 +6,6 @@ import android.appwidget.AppWidgetManager;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -17,9 +16,11 @@ import com.hondaafr.Libs.Bluetooth.BluetoothConnection;
 import com.hondaafr.Libs.Bluetooth.BluetoothDeviceData;
 import com.hondaafr.Libs.Bluetooth.BluetoothHelper;
 import com.hondaafr.Libs.Bluetooth.BluetoothStates;
+import com.hondaafr.MainActivity;
 
 import java.util.ArrayList;
-import java.util.Objects;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -38,18 +39,23 @@ public class BluetoothService extends Service {
     public static final int COMMAND_BT_SEND = 5;
 
     public static final String KEY_COMMAND = "key";
+    public static final String PARAM_DEVICE_ID = "id";
     public static final String PARAM_DATA = "data";
     public static final String PARAM_SSID = "ssid";
     public static final String PARAM_LINES = "lines";
 
     private static final boolean AUTO_NEWLINE = false;
 
-    private String mSSID;
-    private ArrayList<String> queuedLines = new ArrayList<String>();
+    private Map<String, ArrayList<String>> queuedLines = new HashMap<>();
     private Timer mTimer;
     private BluetoothHelper mBtHelper;
     private BluetoothConnection mBtConnection;
+
+    private Map<String, BluetoothConnection> mBtConnections = new HashMap<>();
+
     private BluetoothConnectionListener mBtListener;
+
+
 
     private class TerminateServiceTask extends TimerTask {
         @Override
@@ -61,7 +67,6 @@ public class BluetoothService extends Service {
 
     @Override
     public IBinder onBind(Intent intent) {
-        mSSID = intent.getStringExtra(PARAM_SSID);
 
         // TODO: Return the communication channel to the service.
         throw new UnsupportedOperationException("Not yet implemented");
@@ -94,71 +99,83 @@ public class BluetoothService extends Service {
     @Override
     public void onDestroy() {
         d("onDestroy", 2);
-        disconnect();
+        disconnectAll();
         unregisterReceiver(BluetoothBroadcastReceiver);
     }
 
     public void connectToPrevious() {
-        if (mSSID != null) {
-            connectTo(mSSID);
-        }
+        // TODO: Connect to previous connections
+//        mBtConnections
+
     }
 
-    public void connectTo(String ssid) {
+    public void connectTo(String ssid_or_mac, String device_id) {
         if (!mBtHelper.isEnabled()) {
-            notifyUIOfBtStateChange(BluetoothStates.STATE_BT_DISABLED);
+            notifyUIOfBtStateChange(BluetoothStates.STATE_BT_DISABLED, device_id);
             return;
         }
 
-        if (mBtConnection != null && Objects.equals(ssid, mSSID)) {
-            notifyUIOfBtStateChange(BluetoothStates.STATE_BT_CONNECTED);
+        if (mBtConnections.containsKey(device_id)) {
+            notifyUIOfBtStateChange(BluetoothStates.STATE_BT_CONNECTED, device_id);
             return;
         }
 
-        BluetoothDevice device = mBtHelper.getPairedDeviceBySSID(ssid);
+        BluetoothDevice device = null;
+        if (isMacAddress(ssid_or_mac)) {
+            device = mBtHelper.getPairedDeviceByMAC(ssid_or_mac);
+        } else {
+            device = mBtHelper.getPairedDeviceBySSID(ssid_or_mac);
+        }
+
 
         if (device != null) {
             BluetoothDeviceData deviceData = new BluetoothDeviceData(device, "BT Device");
 
-            if (mBtConnection != null) {
-                mBtConnection.stop();
-            }
-
-            mBtConnection = new BluetoothConnection(this, deviceData, mBtListener);
-            mBtConnection.connect();
-            mSSID = ssid;
+            BluetoothConnection btConnection = new BluetoothConnection(this, deviceData, mBtListener, device_id);
+            btConnection.connect();
+            mBtConnections.put(device_id, btConnection);
         } else {
-            notifyUIOfBtStateChange(BluetoothStates.STATE_BT_UNPAIRED);
+            notifyUIOfBtStateChange(BluetoothStates.STATE_BT_UNPAIRED, device_id);
         }
+    }
+
+    private boolean isMacAddress(String identifier) {
+        // Simple check for MAC address format
+        return identifier != null && identifier.matches("[0-9A-Fa-f:]{17}");
+    }
+
+
+    public void connectTo(String ssid) {
+        this.connectTo(ssid, "default");
     }
 
     public class BluetoothConnectionListener implements com.hondaafr.Libs.Bluetooth.BluetoothConnectionListener {
 
         @Override
-        public void onStateChanged(int state) {
+        public void onStateChanged(int state, String device_id) {
             d("Bluetooth State (" + state + "):" + BluetoothStates.labelOfState(state), 1);
 
             switch (state) {
                 case BluetoothStates.STATE_BT_CONNECTED:
-                    sendQueuedLines();
+                    sendQueuedLines(device_id);
                     break;
 
                 case BluetoothStates.STATE_BT_DISCONNECTED:
-                    disconnect();
+                    disconnect(device_id);
                     break;
             }
 
-            notifyUIOfBtStateChange(state);
+            notifyUIOfBtStateChange(state, device_id);
         }
 
         @Override
-        public void onDataReceived(String line) {
-            notifyUIOfDataReceived(line);
+        public void onDataReceived(String line, String device_id) {
+            notifyUIOfDataReceived(line, device_id);
         }
 
         @Override
-        public void onNotification(int notification_id, String message) {
-            notifyUIOfGeneralNotification(notification_id, message);
+        public void onNotification(int notification_id, String message, String device_id) {
+            notifyUIOfGeneralNotification(notification_id, message, device_id);
         }
     }
 
@@ -168,10 +185,18 @@ public class BluetoothService extends Service {
         }
     }
 
-    public static void connect(Context context, String ssid) {
+    public static void connect(Context context, String ssid_or_mac, String device_id) {
         Intent intent = new Intent(ACTION_BT_COMMAND);
         intent.putExtra(KEY_COMMAND, COMMAND_BT_CONNECT);
-        intent.putExtra(PARAM_SSID, ssid);
+        intent.putExtra(PARAM_SSID, ssid_or_mac);
+        intent.putExtra(PARAM_DEVICE_ID, device_id);
+        context.sendBroadcast(intent);
+    }
+
+    public static void connect(Context context, String ssid_or_mac) {
+        Intent intent = new Intent(ACTION_BT_COMMAND);
+        intent.putExtra(KEY_COMMAND, COMMAND_BT_CONNECT);
+        intent.putExtra(PARAM_SSID, ssid_or_mac);
         context.sendBroadcast(intent);
     }
 
@@ -181,17 +206,54 @@ public class BluetoothService extends Service {
         context.sendBroadcast(intent);
     }
 
-    public static void send(Context context, ArrayList<String> lines) {
+    public static void disconnect(Context context, String id) {
+        Intent intent = new Intent(ACTION_BT_COMMAND);
+        intent.putExtra(KEY_COMMAND, COMMAND_BT_DISCONNECT);
+        intent.putExtra(PARAM_DEVICE_ID, id);
+        context.sendBroadcast(intent);
+    }
+
+    private void disconnect(String id) {
+        if (id != null) {
+            BluetoothConnection connection = mBtConnections.get(id);
+            if (connection != null) {
+                connection.stop();
+                mBtConnections.remove(id);
+            }
+        } else {
+            disconnectAll();
+        }
+    }
+
+    private void disconnectAll() {
+        for (BluetoothConnection connection : mBtConnections.values()) {
+            connection.stop();
+        }
+        mBtConnections.clear();
+    }
+
+    public static void send(Context context, ArrayList<String> lines, String id) {
         Intent intent = new Intent(ACTION_BT_COMMAND);
         intent.putExtra(KEY_COMMAND, COMMAND_BT_SEND);
+        intent.putExtra(PARAM_DEVICE_ID, id);
         intent.putStringArrayListExtra(PARAM_LINES, lines);
         context.sendBroadcast(intent);
+    }
+
+    public static void send(Context context, ArrayList<String> lines) {
+        send(context, lines, "default");
+    }
+
+    public static void send(Context context, String line, String id) {
+        ArrayList<String> lines = new ArrayList<>();
+        lines.add(line);
+        send(context, lines, id);
     }
 
     public static void send(Context context, String line) {
         ArrayList<String> lines = new ArrayList<>();
         lines.add(line);
-        send(context, lines);
+        send(context, lines, "default");
     }
 
     public static boolean isRunning(Context context) {
@@ -204,21 +266,27 @@ public class BluetoothService extends Service {
         return false;
     }
 
-    private void disconnect() {
-        if (mBtConnection != null) {
-            mBtConnection.stop();
-            mBtConnection = null;
+    private void sendQueuedLines() {
+        sendQueuedLines("default");
+    }
+
+    private void sendQueuedLines(String id) {
+        for (Map.Entry<String, BluetoothConnection> entry : mBtConnections.entrySet()) {
+            BluetoothConnection connection = entry.getValue();
+            ArrayList<String> queuedLinesForDevice = this.queuedLines.get(id);
+            if (queuedLinesForDevice != null && !queuedLinesForDevice.isEmpty()) {
+                connection.write(queuedLinesForDevice, AUTO_NEWLINE);
+                this.queuedLines.get(id).clear();
+            }
         }
     }
 
     private void setQueuedLines(ArrayList<String> lines) {
-        queuedLines = lines;
+        setQueuedLines(lines, "default");
     }
 
-    private void sendQueuedLines() {
-        if (mBtConnection != null && queuedLines != null && queuedLines.size() > 0) {
-            mBtConnection.write(queuedLines, AUTO_NEWLINE);
-        }
+    private void setQueuedLines(ArrayList<String> lines, String id) {
+        queuedLines.put(id, lines);
     }
 
     private void setAutoShutdownTimer() {
@@ -260,56 +328,61 @@ public class BluetoothService extends Service {
 
     private void processBluetoothAdapterIntent(Intent intent) {
         final int bluetoothState = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR);
+        final String device_id = intent.getStringExtra(BluetoothStates.KEY_DEVICE_ID);
 
         switch (bluetoothState) {
             case BluetoothAdapter.STATE_CONNECTING:
-                notifyUIOfBtStateChange(BluetoothStates.STATE_BT_CONNECTING);
+                notifyUIOfBtStateChange(BluetoothStates.STATE_BT_CONNECTING, device_id);
                 break;
 
             case BluetoothAdapter.STATE_TURNING_OFF:
-                notifyUIOfBtStateChange(BluetoothStates.STATE_BT_DISABLING);
+                notifyUIOfBtStateChange(BluetoothStates.STATE_BT_DISABLING, device_id);
                 break;
 
             case BluetoothAdapter.STATE_TURNING_ON:
-                notifyUIOfBtStateChange(BluetoothStates.STATE_BT_ENABLING);
+                notifyUIOfBtStateChange(BluetoothStates.STATE_BT_ENABLING, device_id);
                 break;
 
             case BluetoothAdapter.STATE_ON:
-                notifyUIOfBtStateChange(BluetoothStates.STATE_BT_ENABLED);
+                notifyUIOfBtStateChange(BluetoothStates.STATE_BT_ENABLED, device_id);
                 connectToPrevious();
                 break;
             case BluetoothAdapter.STATE_OFF:
-                notifyUIOfBtStateChange(BluetoothStates.STATE_BT_DISABLED);
+                notifyUIOfBtStateChange(BluetoothStates.STATE_BT_DISABLED, device_id);
                 break;
         }
     }
 
     private void processUiCommandIntent(Intent intent) {
         final int cmd = intent.getIntExtra(KEY_COMMAND, 0);
+        String device_id = intent.getStringExtra(PARAM_DEVICE_ID);
+        String ssid = intent.getStringExtra(PARAM_SSID);
 
         switch (cmd) {
             case COMMAND_BT_CONNECT:
                 d("Command: connect", 1);
-                connectTo(intent.getStringExtra(PARAM_SSID));
+                connectTo(ssid, device_id);
                 break;
             case COMMAND_BT_DISCONNECT:
                 d("Command: disconnect", 1);
-                disconnect();
+                disconnect(device_id);
                 break;
             case COMMAND_BT_SEND:
                 d("Command: send", 3);
-                setQueuedLines(intent.getStringArrayListExtra(PARAM_LINES));
-                sendQueuedLines();
+                setQueuedLines(intent.getStringArrayListExtra(PARAM_LINES), device_id);
+                sendQueuedLines(device_id);
                 break;
         }
     }
 
-    private void notifyUIOfGeneralNotification(int notification_id, String message) {
-        sendBroadcast(BluetoothStates.intentForNotification(ACTION_UI_UPDATE, notification_id, message));
+
+
+    private void notifyUIOfGeneralNotification(int notification_id, String message, String bt_id) {
+        sendBroadcast(BluetoothStates.intentForNotification(ACTION_UI_UPDATE, notification_id, message, bt_id));
     }
 
-    private void notifyUIOfBtStateChange(int state_key) {
-        Intent intent = BluetoothStates.intentForBtStateChange(ACTION_UI_UPDATE, state_key);
+    private void notifyUIOfBtStateChange(int state_key, String device_id) {
+        Intent intent = BluetoothStates.intentForBtStateChange(ACTION_UI_UPDATE, state_key, device_id);
         intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, getWidgetIds());
 
         sendBroadcast(intent);
@@ -322,8 +395,8 @@ public class BluetoothService extends Service {
         sendBroadcast(intent);
     }
 
-    private void notifyUIOfDataReceived(String data) {
-        sendBroadcast(BluetoothStates.intentForDataReceived(ACTION_UI_UPDATE, data));
+    private void notifyUIOfDataReceived(String data, String bt_device_id) {
+        sendBroadcast(BluetoothStates.intentForDataReceived(ACTION_UI_UPDATE, data, bt_device_id));
     }
 
     private int[] getWidgetIds() {

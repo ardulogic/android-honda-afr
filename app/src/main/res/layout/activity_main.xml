@@ -16,12 +16,12 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <Button
-        android:id="@+id/buttonConnect"
+        android:id="@+id/buttonConnectSpartan"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
         android:backgroundTint="#595959"
-        android:text="Connect"
+        android:text="Connect Spartan"
         app:layout_constraintBottom_toBottomOf="@+id/textStatus"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
@@ -131,13 +131,13 @@
     </com.google.android.material.button.MaterialButtonToggleGroup>
 
     <Button
-        android:id="@+id/buttonClearAmp"
+        android:id="@+id/buttonSave"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:layout_marginTop="16dp"
         android:backgroundTint="#575757"
-        android:text="Clear Amplitude"
+        android:text="Save"
         app:layout_constraintStart_toStartOf="@+id/graph"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -200,5 +200,36 @@
         app:layout_constraintBottom_toTopOf="@+id/textRecentAfrAvg"
         app:layout_constraintEnd_toEndOf="@+id/textRecentAfrAvg"
         app:layout_constraintStart_toStartOf="@+id/textRecentAfrAvg" />
+
+    <TextView
+        android:id="@+id/textSpeed"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:text="0 km/h"
+        app:layout_constraintBottom_toTopOf="@+id/textTargetAFR"
+        app:layout_constraintEnd_toEndOf="@+id/textTargetAFR"
+        app:layout_constraintStart_toStartOf="@+id/textTargetAFR" />
+
+    <TextView
+        android:id="@+id/textTps"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:text="Tps: "
+        app:layout_constraintBottom_toTopOf="@+id/textSpeed"
+        app:layout_constraintEnd_toEndOf="@+id/textSpeed"
+        app:layout_constraintStart_toStartOf="@+id/textSpeed" />
+
+    <Button
+        android:id="@+id/buttonConnectObd"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="4dp"
+        android:text="Connect OBD"
+        app:layout_constraintBottom_toTopOf="@+id/buttonConnectSpartan"
+        app:layout_constraintEnd_toEndOf="@+id/buttonConnectSpartan"
+        app:layout_constraintHorizontal_bias="0.545"
+        app:layout_constraintStart_toStartOf="@+id/buttonConnectSpartan" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

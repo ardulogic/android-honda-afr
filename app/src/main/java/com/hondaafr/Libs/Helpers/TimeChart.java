@@ -35,7 +35,7 @@ public class TimeChart {
     private final String DATE_FORMAT = "mm:ss.SSS";
     private final SimpleDateFormat mFormat;
     private Random random = new Random();
-    private LineData data;
+    public LineData data;
 
     public TimeChart(Activity activity, LineChart chart) {
         this.mChart = chart;

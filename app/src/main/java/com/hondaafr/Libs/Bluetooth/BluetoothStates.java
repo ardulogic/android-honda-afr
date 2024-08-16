@@ -7,6 +7,7 @@ public class BluetoothStates {
 
     public static final String KEY_EVENT = "event";
     public static final String KEY_DATA = "data";
+    public static final String KEY_DEVICE_ID = "id";
     public static final String KEY_NOTIFICATION_ID = "notification_id";
 
     public static final int EVENT_BT_STATE_CHANGED = 1;
@@ -53,42 +54,47 @@ public class BluetoothStates {
         return i;
     }
 
-    public static Intent intentForBtStateChange(String action, int state_key) {
+    public static Intent intentForBtStateChange(String action, int state_key, String device_id) {
         Intent i = new Intent(action);
         i.putExtra(BluetoothStates.KEY_EVENT, BluetoothStates.EVENT_BT_STATE_CHANGED);
         i.putExtra(BluetoothStates.KEY_DATA, state_key);
+        i.putExtra(BluetoothStates.KEY_DEVICE_ID, device_id);
         return i;
     }
 
-    public static Intent intentForDataReceived(Context context, Class target_class, String action, String data) {
+    public static Intent intentForDataReceived(Context context, Class target_class, String action, String data, String bt_id) {
         Intent i = new Intent(context, target_class);
         i.setAction(action);
         i.putExtra(BluetoothStates.KEY_EVENT, BluetoothStates.EVENT_DATA_RECEIVED);
         i.putExtra(BluetoothStates.KEY_DATA, data);
+        i.putExtra(BluetoothStates.KEY_DEVICE_ID, bt_id);
         return i;
     }
 
-    public static Intent intentForDataReceived(String action, String data) {
+    public static Intent intentForDataReceived(String action, String data, String bt_id) {
         Intent i = new Intent(action);
         i.putExtra(BluetoothStates.KEY_EVENT, BluetoothStates.EVENT_DATA_RECEIVED);
         i.putExtra(BluetoothStates.KEY_DATA, data);
+        i.putExtra(BluetoothStates.KEY_DEVICE_ID, bt_id);
         return i;
     }
 
-    public static Intent intentForNotification(Context context, Class target_class, String action, int notification_id, String message) {
+    public static Intent intentForNotification(Context context, Class target_class, String action, int notification_id, String message, String bt_id) {
         Intent i = new Intent(context, target_class);
         i.setAction(action);
         i.putExtra(BluetoothStates.KEY_EVENT, BluetoothStates.EVENT_NOTIFICATION);
         i.putExtra(BluetoothStates.KEY_NOTIFICATION_ID, notification_id);
         i.putExtra(BluetoothStates.KEY_DATA, message);
+        i.putExtra(BluetoothStates.KEY_DEVICE_ID, bt_id);
         return i;
     }
 
-    public static Intent intentForNotification(String action, int notification_id, String message) {
+    public static Intent intentForNotification(String action, int notification_id, String message, String bt_id) {
         Intent i = new Intent(action);
         i.putExtra(BluetoothStates.KEY_EVENT, BluetoothStates.EVENT_NOTIFICATION);
         i.putExtra(BluetoothStates.KEY_NOTIFICATION_ID, notification_id);
         i.putExtra(BluetoothStates.KEY_DATA, message);
+        i.putExtra(BluetoothStates.KEY_DEVICE_ID, bt_id);
         return i;
     }
 

@@ -36,13 +36,16 @@ public class BluetoothConnection extends Debuggable {
     private final String deviceName;
     public boolean isSending = false;
 
-    public BluetoothConnection(Context mContext, BluetoothDeviceData deviceData, BluetoothConnectionListener listener) {
+    private String id; // Id for simultaneous connections
+
+    public BluetoothConnection(Context mContext, BluetoothDeviceData deviceData, BluetoothConnectionListener listener, String id) {
         this.mContext = mContext;
         this.listener = listener;
         btAdapter = BluetoothAdapter.getDefaultAdapter();
         connectedDevice = btAdapter.getRemoteDevice(deviceData.getAddress());
         deviceName = (deviceData.getName() == null) ? deviceData.getAddress() : deviceData.getName();
         mState = BluetoothStates.STATE_BT_NONE;
+        this.id = id;
     }
 
     public synchronized void connect() {
@@ -73,7 +76,7 @@ public class BluetoothConnection extends Debuggable {
     private synchronized void setState(int state) {
         d("setState() " + BluetoothStates.labelOfState(mState) + " -> " + BluetoothStates.labelOfState(state), 1);
         mState = state;
-        listener.onStateChanged(state);
+        listener.onStateChanged(state, this.id);
     }
 
     public synchronized int getState() {
@@ -109,7 +112,7 @@ public class BluetoothConnection extends Debuggable {
         mConnectedThread.start();
 
         setState(BluetoothStates.STATE_BT_CONNECTED);
-        listener.onNotification(BluetoothStates.NOTIFICATION_CONNECTED_TO_SSID, deviceName);
+        listener.onNotification(BluetoothStates.NOTIFICATION_CONNECTED_TO_SSID, deviceName, id);
     }
 
     /**
@@ -264,7 +267,7 @@ public class BluetoothConnection extends Debuggable {
                         String receivedLine = messageBuffer.substring(0, newlineIndex + 1);
                         messageBuffer = messageBuffer.substring(newlineIndex + 1);
 
-                        listener.onDataReceived(receivedLine);;
+                        listener.onDataReceived(receivedLine, id);;
                     }
                 } catch (IOException e) {
                     d("Disconnected while trying to read stream.", 1);
