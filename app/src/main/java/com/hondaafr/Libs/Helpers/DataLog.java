@@ -1,28 +1,49 @@
 package com.hondaafr.Libs.Helpers;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.net.Uri;
+import android.os.Build;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.widget.Toast;
 
 import com.opencsv.CSVWriter;
 
+import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-
-import android.content.ContentValues;
-import android.os.Build;
-import android.os.Environment;
-import android.provider.MediaStore;
-
-import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.Locale;
 
-public class CsvHelper {
+public class DataLog {
+    private final Context context;
+    private final ArrayList<DataLogEntry> entries;
 
-    public void saveCsvToDownloads(Context context, List<String[]> data) {
+    // Constructor to initialize the list
+    public DataLog(Context context) {
+        this.entries = new ArrayList<>();
+        this.context = context;
+    }
+
+    // Getter for entries
+    public ArrayList<DataLogEntry> getEntries() {
+        return entries;
+    }
+
+    // Method to add a new entry
+    public void addEntry(DataLogEntry entry) {
+        this.entries.add(entry);
+    }
+
+    // Method to clear all entries
+    public void clearAllEntries() {
+        this.entries.clear();
+    }
+
+    public void saveAsCsv() {
         // Check if Android version is above or equal to Android Q (API 29)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             String timeStamp = new SimpleDateFormat("yyyy-MM-dd_HH-mm", Locale.getDefault()).format(new Date());
@@ -41,9 +62,10 @@ public class CsvHelper {
                     if (outputStream != null) {
                         OutputStreamWriter writer = new OutputStreamWriter(outputStream);
                         CSVWriter csvWriter = new CSVWriter(writer);
+                        csvWriter.writeNext(DataLogEntry.getHeader());
 
-                        for (String[] row : data) {
-                            csvWriter.writeNext(row);
+                        for (DataLogEntry row : this.entries) {
+                            csvWriter.writeNext(row.toStringArray());
                         }
 
                         csvWriter.close();
@@ -65,4 +87,10 @@ public class CsvHelper {
     }
 
 
+    @Override
+    public String toString() {
+        return "HistoryData{" +
+                "entries=" + entries +
+                '}';
+    }
 }

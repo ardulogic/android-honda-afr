@@ -6,7 +6,6 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.Context;
 import android.text.TextUtils;
-import android.util.Log;
 
 import com.hondaafr.Libs.Helpers.Debuggable;
 
@@ -21,6 +20,7 @@ import java.util.ArrayList;
  */
 public class BluetoothConnection extends Debuggable {
     private static final String TAG = "BluetoothConnection";
+    private final String serviceUuid;
     protected int D = 1;
 
     public static final String ACTION = "com.hondaafr.Libs.Bluetooth.Services.action.bt.connector";
@@ -38,7 +38,7 @@ public class BluetoothConnection extends Debuggable {
 
     private String id; // Id for simultaneous connections
 
-    public BluetoothConnection(Context mContext, BluetoothDeviceData deviceData, BluetoothConnectionListener listener, String id) {
+    public BluetoothConnection(Context mContext, BluetoothDeviceData deviceData, BluetoothConnectionListener listener, String id, String uuid) {
         this.mContext = mContext;
         this.listener = listener;
         btAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -46,6 +46,7 @@ public class BluetoothConnection extends Debuggable {
         deviceName = (deviceData.getName() == null) ? deviceData.getAddress() : deviceData.getName();
         mState = BluetoothStates.STATE_BT_NONE;
         this.id = id;
+        this.serviceUuid = uuid;
     }
 
     public synchronized void connect() {
@@ -165,7 +166,13 @@ public class BluetoothConnection extends Debuggable {
         public ConnectThread(BluetoothDevice device) {
             d("Creating 'ConnectThread'.", 1);
             mmDevice = device;
-            mmSocket = BluetoothUtils.createRfcommSocketAlt(mmDevice, BluetoothUtils.OBD_UUID);
+
+            if (serviceUuid != null) {
+                mmSocket = BluetoothUtils.createRfcommSocketOnServiceUuid(mmDevice, serviceUuid);
+            } else {
+                mmSocket = BluetoothUtils.createRfcommSocket(mmDevice);
+            }
+
             d("Socket created.", 1);
             d("Socket type:", mmSocket.getConnectionType());
         }
@@ -265,13 +272,16 @@ public class BluetoothConnection extends Debuggable {
                     messageBuffer += readedPart;
 
                     boolean endedWithNewline = messageBuffer.contains("\n");
-                    boolean endedWithRR = messageBuffer.contains(("\r\r"));
+
+                    messageBuffer = messageBuffer.replace("\r\r", "\r");
+                    boolean endedWithRR = messageBuffer.contains(("\r"));
+
                     if (endedWithNewline || endedWithRR) {
                         int newlineIndex = -1;
                         if (endedWithNewline)
                             newlineIndex = messageBuffer.indexOf("\n");
                         else if (endedWithRR) {
-                            newlineIndex = messageBuffer.indexOf("\r\r");
+                            newlineIndex = messageBuffer.indexOf("\r");
                         }
 
                         String receivedLine = messageBuffer.substring(0, newlineIndex + 1);

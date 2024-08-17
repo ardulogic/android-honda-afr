@@ -177,12 +177,12 @@ public class BluetoothUtils {
         return getDeviceServices(uuids);
     }
 
-    public static final UUID OBD_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
+    public static final String OBD_UUID = "00001101-0000-1000-8000-00805F9B34FB";
 
     @SuppressLint("MissingPermission")
-    public static BluetoothSocket createRfcommSocketAlt(BluetoothDevice device, UUID uuid) {
+    public static BluetoothSocket createRfcommSocketOnServiceUuid(BluetoothDevice device, String uuid) {
         try {
-            return device.createRfcommSocketToServiceRecord(uuid);
+            return device.createRfcommSocketToServiceRecord(UUID.fromString(uuid));
         } catch (IOException e) {
             Log.e(TAG, "Socket creation failed", e);
             return null;

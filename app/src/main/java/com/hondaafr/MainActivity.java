@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -27,13 +28,17 @@ import androidx.core.view.WindowInsetsCompat;
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.hondaafr.Libs.Bluetooth.BluetoothStates;
+import com.hondaafr.Libs.Bluetooth.BluetoothUtils;
 import com.hondaafr.Libs.Bluetooth.Services.BluetoothService;
 import com.hondaafr.Libs.Devices.Obd.ObdStudio;
 import com.hondaafr.Libs.Devices.Obd.ObdStudioListener;
+import com.hondaafr.Libs.Devices.Phone.GpsSpeed;
+import com.hondaafr.Libs.Devices.Phone.GpsSpeedListener;
 import com.hondaafr.Libs.Devices.Spartan.SpartanStudio;
 import com.hondaafr.Libs.Devices.Spartan.SpartanStudioListener;
 import com.hondaafr.Libs.Helpers.AverageList;
-import com.hondaafr.Libs.Helpers.CsvHelper;
+import com.hondaafr.Libs.Helpers.DataLog;
+import com.hondaafr.Libs.Helpers.DataLogEntry;
 import com.hondaafr.Libs.Helpers.Permissions;
 import com.hondaafr.Libs.Helpers.TimeChart;
 
@@ -42,7 +47,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-public class MainActivity extends AppCompatActivity implements SpartanStudioListener, ObdStudioListener {
+public class MainActivity extends AppCompatActivity implements SpartanStudioListener, ObdStudioListener, GpsSpeedListener {
 
     private MainActivity mContext;
     private Button buttonConnectSpartan;
@@ -50,7 +55,13 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
 
     private SpartanStudio mSpartanStudio;
     private ObdStudio mObdStudio;
-    private TextView mTextStatus;
+
+    private GpsSpeed mGpsSpeed;
+
+    private DataLog mDataLog;
+    private TextView mTextStatusSpartan;
+    private TextView mTextStatusObd;
+    private TextView mTextStatusGeneric;
     private Button buttonTrackSensor;
     private TextView mTextTargetAfr;
     private Button buttonDecreaseAfr;
@@ -68,8 +79,10 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
     private Button buttonClearLog;
     private Button buttonSaveToCsv;
 
-    private TextView mTextSpeed;
     private TextView mTextTps;
+    private TextView mTextMap;
+    private TextView mTextGpsSpeed;
+    private TextView mTextRpm;
 
     private Double sportPlusAfr = 12.7;
     private Double sportAfr = 14.7;
@@ -98,6 +111,8 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
 
         loadSettings();
 
+        Permissions.askForAllPermissions(this);
+
         startTimestamp = System.currentTimeMillis();
 
         mContext = this;
@@ -122,37 +137,32 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
         buttonClearLog = findViewById(R.id.buttonClear);
         buttonClearLog.setOnClickListener(view -> {
             mChart.clearData();
+            mDataLog.clearAllEntries();
             startTimestamp = System.currentTimeMillis();
         });
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            Permissions.askBluetoothPermission(this);
-        }
-        Permissions.askForFilePermissions(this);
-
         buttonSaveToCsv = findViewById(R.id.buttonSave);
         buttonSaveToCsv.setOnClickListener(view -> {
-            CsvHelper w = new CsvHelper();
-            w.saveCsvToDownloads(this, mSpartanStudio.getDataAsTable());
+            mDataLog.saveAsCsv();
         });
 
 
-        Permissions.askIgnoreBatteryOptimization(this);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            Permissions.askBluetoothPermission(this);
-        }
-
-        Permissions.askForLocationPermissions(this);
-
         mSpartanStudio = new SpartanStudio(this, this);
         mObdStudio = new ObdStudio(this, this);
+        mDataLog = new DataLog(this);
+        mGpsSpeed = new GpsSpeed(this, this);
 
-        mTextStatus = findViewById(R.id.textStatus);
+        mTextStatusGeneric = findViewById(R.id.textStatusGeneric);
+        mTextStatusSpartan = findViewById(R.id.textStatusSpartan);
+        mTextStatusObd = findViewById(R.id.textStatusObd);
+
         mTextTargetAfr = findViewById(R.id.textTargetAFR);
         mTextTargetAfr.setOnClickListener(v -> SpartanStudio.requestCurrentAFR(mContext));
 
-        mTextSpeed = findViewById(R.id.textSpeed);
+        mTextGpsSpeed = findViewById(R.id.textGpsSpeed);
         mTextTps = findViewById(R.id.textTps);
+        mTextMap = findViewById(R.id.textMap);
+//        mTextRpm = findViewById(R.id.textRpm);
 
         mToggleClearAfrMin = findViewById(R.id.buttonClearAfrMin);
         mToggleClearAfrMin.setOnClickListener(v -> afrMin = null);
@@ -301,6 +311,15 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
             mToggleClearAfrMax.setText(String.format("%.1f", afrMax));
 
             addEntryToShortAfr(afr);
+
+            mDataLog.addEntry(new DataLogEntry(
+                    mSpartanStudio.targetAfr,
+                    afr,
+                    ObdStudio.tps,
+                    ObdStudio.map,
+                    mGpsSpeed.speed.intValue(),
+                    mSpartanStudio.lastSensorTemp
+            ));
         });
     }
 
@@ -314,14 +333,36 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
     }
 
     @Override
-    public void onSpeedUpdated(Double speedKmh) {
-        mTextSpeed.setText(String.format("%.1f km/h", speedKmh));
+    public void onGpsSpeedUpdated(Double speedKmh) {
+        mTextStatusGeneric.setText("GPS speed acquired");
+        mTextGpsSpeed.setText(String.format("%.1f km/h", speedKmh));
     }
 
     @Override
-    public void onSensorTpsReceived(Double throttle_position) {
-        mTextTps.setText(String.format("TPS: %.1f%", throttle_position));
+    public void onObdTpsReceived(Double throttle_position) {
+        mTextTps.setText(String.format("%.1f %%", throttle_position));
     }
+
+    @Override
+    public void onObdSpeedReceived(Integer speed) {
+
+    }
+
+    @Override
+    public void onObdRpmReceived(Integer rpm) {
+        mTextRpm.setText(String.format("%d RPM", rpm));
+    }
+
+    @Override
+    public void onObdMapReceived(Integer mapKpa) {
+        mTextMap.setText(String.format("%d kPa", mapKpa));
+    }
+
+    @Override
+    public void onObdIntakeTempReceived(Integer tempC) {
+
+    }
+
 
     public void BT_startService() {
         if (!BluetoothService.isRunning(this)) {
@@ -336,7 +377,7 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
 
     public void BT_connect_obd() {
         BT_startService();
-        BluetoothService.connect(this, "OBDII", "obd");
+        BluetoothService.connect(this, "OBDII", BluetoothUtils.OBD_UUID, "obd");
     }
 
     private final BroadcastReceiver btReceiver = new BroadcastReceiver() {
@@ -374,23 +415,23 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
     public void OnBluetoothDataReceived(String data, String device_id) {
         if (Objects.equals(device_id, "spartan")) {
             mSpartanStudio.onDataReceived(data);
+            runOnUiThread(() -> mTextStatusSpartan.setText(data));
         }
 
         if (Objects.equals(device_id, "obd")) {
             mObdStudio.onDataReceived(data);
+            runOnUiThread(() -> mTextStatusObd.setText(data));
         }
-
-        runOnUiThread(() -> mTextStatus.setText(data));
     }
 
     public void OnBluetoothServiceStateChanged(int state) {
         switch (state) {
             case BluetoothStates.STATE_SERVICE_STARTED:
-                mTextStatus.setText("Bluetooth service started.");
+                mTextStatusGeneric.setText("Bluetooth service started.");
                 break;
 
             case BluetoothStates.STATE_SERVICE_STOPPED:
-                mTextStatus.setText("Bluetooth service stopped.");
+                mTextStatusGeneric.setText("Bluetooth service stopped.");
                 break;
         }
     }
@@ -399,16 +440,17 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
         Log.d("MainActivity bluetoothStateChanged:", device_id);
         switch (state) {
             case BluetoothStates.STATE_BT_CONNECTED:
-                buttonConnectSpartan.setText("Connected");
-                buttonConnectSpartan.setEnabled(false);
-                mTextStatus.setText("Successfully connected to device: " + device_id);
-
                 if (device_id.equals("spartan")) {
+                    mTextStatusSpartan.setText("Connected");
+                    buttonConnectSpartan.setText(   "Connected");
+                    buttonConnectSpartan.setEnabled(false);
                     mSpartanStudio.start();
-                    BT_connect_obd();
                 }
 
                 if (device_id.equals("obd")) {
+                    mTextStatusObd.setText("Connected");
+                    buttonConnectObd.setText("Connected");
+                    buttonConnectObd.setEnabled(false);
                     mObdStudio.start();
                 }
                 break;
@@ -416,32 +458,56 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
             case BluetoothStates.STATE_BT_BUSY:
             case BluetoothStates.STATE_BT_CONNECTING:
             case BluetoothStates.STATE_BT_ENABLING:
-                buttonConnectSpartan.setText("Connecting");
-                buttonConnectSpartan.setEnabled(false);
+                if (device_id.equals("spartan")) {
+                    buttonConnectSpartan.setText("Connecting");
+                    buttonConnectSpartan.setEnabled(false);
+                }
+
+                if (device_id.equals("obd")) {
+                    buttonConnectObd.setText("Connecting");
+                    buttonConnectObd.setEnabled(false);
+                }
                 break;
 
             case BluetoothStates.STATE_BT_NONE:
             case BluetoothStates.STATE_BT_DISCONNECTED:
             case BluetoothStates.STATE_BT_UNPAIRED:
-                buttonConnectSpartan.setText("Connect");
-                buttonConnectSpartan.setEnabled(true);
+                if (device_id.equals("spartan")) {
+                    buttonConnectSpartan.setText("Connect");
+                    buttonConnectSpartan.setEnabled(true);
+                }
+
+                if (device_id.equals("obd")) {
+                    buttonConnectObd.setText("Connect");
+                    buttonConnectObd.setEnabled(true);
+                }
                 break;
 
             case BluetoothStates.STATE_BT_DISABLED:
                 Permissions.promptEnableBluetooth(this);
                 buttonConnectSpartan.setEnabled(true);
+                buttonConnectObd.setEnabled(true);
                 break;
 
             case BluetoothStates.STATE_BT_ENABLED:
                 BT_connect_spartan();
 
             default:
+                buttonConnectObd.setText("Connect");
+                buttonConnectObd.setEnabled(true);
                 buttonConnectSpartan.setText("Connect");
                 buttonConnectSpartan.setEnabled(true);
 
+
         }
 
-        mTextStatus.setText(BluetoothStates.labelOfState(state));
+        if (device_id.equals("obd")) {
+            mTextStatusObd.setText(BluetoothStates.labelOfState(state));
+        } else if (device_id.equals("spartan")) {
+            mTextStatusSpartan.setText(BluetoothStates.labelOfState(state));
+        } else {
+            mTextStatusGeneric.setText(BluetoothStates.labelOfState(state));
+        }
     }
 
     @Override
@@ -474,5 +540,20 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
     protected void onDestroy() {
         super.onDestroy();
     }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        // If request is cancelled, the result arrays are empty.
+        if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            // Permission granted, do the location-related task.
+            // You can use the location now.
+        } else {
+            Log.e("Permissions", "Permission denied for : "  + requestCode);
+        }
+    }
+
 }
+
 

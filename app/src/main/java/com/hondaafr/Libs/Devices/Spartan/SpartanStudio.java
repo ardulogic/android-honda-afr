@@ -10,6 +10,7 @@ import android.os.Looper;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.view.menu.MenuBuilder;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
@@ -17,6 +18,7 @@ import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.Priority;
 import com.hondaafr.Libs.Bluetooth.Services.BluetoothService;
+import com.hondaafr.Libs.Devices.Obd.ObdStudio;
 import com.hondaafr.Libs.Helpers.Debuggable;
 
 import java.util.ArrayList;
@@ -28,23 +30,13 @@ import java.util.concurrent.TimeUnit;
 public class SpartanStudio extends Debuggable {
     private final Context context;
     private SpartanStudioListener listener;
-    public ArrayList<Double> mAfrHistory = new ArrayList<>();
-    public ArrayList<Long> mTimestampHistory = new ArrayList<>();
-
-    public ArrayList<Double> mTempHistory = new ArrayList<>();
-    public ArrayList<Double> mSpeedHistory = new ArrayList<>();
 
     private boolean readingsOn = false;
 
     private ScheduledExecutorService scheduler;
 
-    private static final long UPDATE_INTERVAL_MS = 1000;
-    private static final long FASTEST_UPDATE_INTERVAL_MS = 500;
-    private FusedLocationProviderClient fusedLocationClient;
-    private LocationCallback locationCallback;
-
-    private Double lastGpsSpeedKmh = 0.0D;
-    private Double lastSensorTemp = 0.0D;
+    public Double lastSensorTemp = 0.0D;
+    public Double lastSensorAfr = 0.0D;
 
     public void startRequestingSensorReadings() {
         if (scheduler == null) {
@@ -81,10 +73,6 @@ public class SpartanStudio extends Debuggable {
     public SpartanStudio(Context mContext, SpartanStudioListener listener) {
         this.listener = listener;
         this.context = mContext;
-
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(context);
-        startLocationUpdates();
-        Log.d("Speed", "Started");
     }
 
     public static void requestCurrentAFR(Context context) {
@@ -105,44 +93,16 @@ public class SpartanStudio extends Debuggable {
         }
 
         if (SpartanCommands.dataIsSensorAfr(data)) {
-            Double afr = SpartanCommands.parseSensorAfr(data);
-            mAfrHistory.add(afr);
-            mSpeedHistory.add((double) lastGpsSpeedKmh);
-            mTempHistory.add(lastSensorTemp);
-            mTimestampHistory.add(System.currentTimeMillis());
-            listener.onSensorAfrReceived(afr);
+            lastSensorAfr = SpartanCommands.parseSensorAfr(data);
+            listener.onSensorAfrReceived(lastSensorAfr);
             updateLastTrackingDataTimestamp();
         }
 
         if (SpartanCommands.dataIsSensorTemp(data)) {
-            Double temp = SpartanCommands.parseSensorTemp(data);
-            lastSensorTemp = temp;
-            listener.onSensorTempReceived(temp);
+            lastSensorTemp = SpartanCommands.parseSensorTemp(data);
+            listener.onSensorTempReceived(lastSensorTemp);
             updateLastTrackingDataTimestamp();
         }
-    }
-
-
-    public List<String[]> getDataAsTable() {
-        List<String[]> table = new ArrayList<>();
-        table.add(new String[]{"Timestamp", "AfrValue", "Temperature", "Speed (Km/h)"});
-
-        // Determine the number of rows based on the size of the lists
-        int rowCount = mAfrHistory.size();
-        if (mTimestampHistory.size() != rowCount || mTempHistory.size() != rowCount) {
-            throw new IllegalStateException("The size of the lists do not match.");
-        }
-
-        for (int i = 0; i < rowCount; i++) {
-            String[] row = new String[4];
-            row[0] = mTimestampHistory.get(i).toString(); // Convert timestamp to String
-            row[1] = mAfrHistory.get(i).toString(); // Convert AfrValue to String
-            row[2] = mTempHistory.get(i).toString(); // Convert Temperature to String
-            row[3] = mSpeedHistory.get(i).toString(); // Convert Temperature to String
-            table.add(row);
-        }
-
-        return table;
     }
 
     public void start() {
@@ -171,42 +131,9 @@ public class SpartanStudio extends Debuggable {
 
     public void setAFR(double target) {
         targetAfr = target;
-        BluetoothService.send(context, SpartanCommands.setAFR(targetAfr));
+        BluetoothService.send(context, SpartanCommands.setAFR(targetAfr), "spartan");
 
         listener.onTargetAfrUpdated(targetAfr);
-    }
-
-    @SuppressLint("MissingPermission")
-    private void startLocationUpdates() {
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-            Log.d("Speed", "Building location request");
-            LocationRequest locationRequest = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY)
-                    .setMinUpdateIntervalMillis(FASTEST_UPDATE_INTERVAL_MS)
-                    .build();
-
-
-            Log.d("Speed", "Building location callback");
-
-            locationCallback = new LocationCallback() {
-                @Override
-                public void onLocationResult(@NonNull LocationResult locationResult) {
-                    if (locationResult == null) {
-                        Log.d("Speed", "No locaiton result");
-                        return;
-                    }
-                    for (Location location : locationResult.getLocations()) {
-                        // Calculate speed in km/h
-                        lastGpsSpeedKmh = (double) (location.getSpeed() * 3.6f);
-                        listener.onSpeedUpdated(lastGpsSpeedKmh);
-                    }
-                }
-            };
-
-            Log.d("Speed", "Location updates requested");
-            fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
-        } else {
-            Log.d("Speed", "Bad sdk");
-        }
     }
 
 }

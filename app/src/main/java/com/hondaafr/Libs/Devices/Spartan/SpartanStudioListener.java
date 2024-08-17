@@ -8,5 +8,5 @@ public interface SpartanStudioListener {
 
     void onSensorTempReceived(Double temp);
 
-    void onSpeedUpdated(Double speedKmh);
+    void onGpsSpeedUpdated(Double speedKmh);
 }

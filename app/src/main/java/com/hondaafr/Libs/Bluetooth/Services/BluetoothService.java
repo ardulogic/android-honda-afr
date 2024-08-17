@@ -12,11 +12,12 @@ import android.content.IntentFilter;
 import android.os.IBinder;
 import android.util.Log;
 
+import androidx.annotation.Nullable;
+
 import com.hondaafr.Libs.Bluetooth.BluetoothConnection;
 import com.hondaafr.Libs.Bluetooth.BluetoothDeviceData;
 import com.hondaafr.Libs.Bluetooth.BluetoothHelper;
 import com.hondaafr.Libs.Bluetooth.BluetoothStates;
-import com.hondaafr.MainActivity;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -43,6 +44,9 @@ public class BluetoothService extends Service {
     public static final String PARAM_DATA = "data";
     public static final String PARAM_SSID = "ssid";
     public static final String PARAM_LINES = "lines";
+
+    public static final String PARAM_UUID = "uuid";
+
 
     private static final boolean AUTO_NEWLINE = false;
 
@@ -109,7 +113,7 @@ public class BluetoothService extends Service {
 
     }
 
-    public void connectTo(String ssid_or_mac, String device_id) {
+    public void connectTo(String ssid_or_mac, String device_id, @Nullable String uuid) {
         if (!mBtHelper.isEnabled()) {
             notifyUIOfBtStateChange(BluetoothStates.STATE_BT_DISABLED, device_id);
             return;
@@ -131,7 +135,7 @@ public class BluetoothService extends Service {
         if (device != null) {
             BluetoothDeviceData deviceData = new BluetoothDeviceData(device, "BT Device");
 
-            BluetoothConnection btConnection = new BluetoothConnection(this, deviceData, mBtListener, device_id);
+            BluetoothConnection btConnection = new BluetoothConnection(this, deviceData, mBtListener, device_id, uuid);
             btConnection.connect();
             mBtConnections.put(device_id, btConnection);
         } else {
@@ -146,7 +150,7 @@ public class BluetoothService extends Service {
 
 
     public void connectTo(String ssid) {
-        this.connectTo(ssid, "default");
+        this.connectTo(ssid, "default", null);
     }
 
     public class BluetoothConnectionListener implements com.hondaafr.Libs.Bluetooth.BluetoothConnectionListener {
@@ -193,6 +197,16 @@ public class BluetoothService extends Service {
         context.sendBroadcast(intent);
     }
 
+    public static void connect(Context context, String ssid_or_mac, String uuid, String device_id) {
+        Intent intent = new Intent(ACTION_BT_COMMAND);
+        intent.putExtra(KEY_COMMAND, COMMAND_BT_CONNECT);
+        intent.putExtra(PARAM_SSID, ssid_or_mac);
+        intent.putExtra(PARAM_UUID, uuid);
+        intent.putExtra(PARAM_DEVICE_ID, device_id);
+        context.sendBroadcast(intent);
+    }
+
+
     public static void connect(Context context, String ssid_or_mac) {
         Intent intent = new Intent(ACTION_BT_COMMAND);
         intent.putExtra(KEY_COMMAND, COMMAND_BT_CONNECT);
@@ -232,10 +246,10 @@ public class BluetoothService extends Service {
         mBtConnections.clear();
     }
 
-    public static void send(Context context, ArrayList<String> lines, String id) {
+    public static void send(Context context, ArrayList<String> lines, String device_id) {
         Intent intent = new Intent(ACTION_BT_COMMAND);
         intent.putExtra(KEY_COMMAND, COMMAND_BT_SEND);
-        intent.putExtra(PARAM_DEVICE_ID, id);
+        intent.putExtra(PARAM_DEVICE_ID, device_id);
         intent.putStringArrayListExtra(PARAM_LINES, lines);
         context.sendBroadcast(intent);
     }
@@ -244,10 +258,10 @@ public class BluetoothService extends Service {
         send(context, lines, "default");
     }
 
-    public static void send(Context context, String line, String id) {
+    public static void send(Context context, String line, String device_id) {
         ArrayList<String> lines = new ArrayList<>();
         lines.add(line);
-        send(context, lines, id);
+        send(context, lines, device_id);
     }
 
     public static void send(Context context, String line) {
@@ -270,14 +284,24 @@ public class BluetoothService extends Service {
         sendQueuedLines("default");
     }
 
-    private void sendQueuedLines(String id) {
-        for (Map.Entry<String, BluetoothConnection> entry : mBtConnections.entrySet()) {
-            BluetoothConnection connection = entry.getValue();
-            ArrayList<String> queuedLinesForDevice = this.queuedLines.get(id);
+    private void sendQueuedLines(String device_id) {
+        // Retrieve the Bluetooth connection for the specified device_id
+        BluetoothConnection connection = mBtConnections.get(device_id);
+
+        if (connection != null) {
+            // Get the queued lines for the specified device_id
+            ArrayList<String> queuedLinesForDevice = this.queuedLines.get(device_id);
+
             if (queuedLinesForDevice != null && !queuedLinesForDevice.isEmpty()) {
+                // Write the queued lines to the Bluetooth connection
                 connection.write(queuedLinesForDevice, AUTO_NEWLINE);
-                this.queuedLines.get(id).clear();
+
+                // Clear the queued lines for the specified device_id
+                this.queuedLines.get(device_id).clear();
             }
+        } else {
+            // Handle the case where there is no connection for the specified device_id
+            System.out.println("No connection found for device_id: " + device_id);
         }
     }
 
@@ -356,12 +380,14 @@ public class BluetoothService extends Service {
     private void processUiCommandIntent(Intent intent) {
         final int cmd = intent.getIntExtra(KEY_COMMAND, 0);
         String device_id = intent.getStringExtra(PARAM_DEVICE_ID);
-        String ssid = intent.getStringExtra(PARAM_SSID);
 
         switch (cmd) {
             case COMMAND_BT_CONNECT:
                 d("Command: connect", 1);
-                connectTo(ssid, device_id);
+                String ssid = intent.getStringExtra(PARAM_SSID);
+                String uuid = intent.getStringExtra(PARAM_UUID);
+                connectTo(ssid, device_id, uuid);
+
                 break;
             case COMMAND_BT_DISCONNECT:
                 d("Command: disconnect", 1);
