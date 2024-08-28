@@ -62,7 +62,10 @@ public class DataLog {
                     if (outputStream != null) {
                         OutputStreamWriter writer = new OutputStreamWriter(outputStream);
                         CSVWriter csvWriter = new CSVWriter(writer);
-                        csvWriter.writeNext(DataLogEntry.getHeader());
+
+                        if (!this.entries.isEmpty()) {
+                            csvWriter.writeNext(this.entries.get(0).getHeader());
+                        }
 
                         for (DataLogEntry row : this.entries) {
                             csvWriter.writeNext(row.toStringArray());

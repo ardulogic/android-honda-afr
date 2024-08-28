@@ -78,10 +78,10 @@
         android:id="@+id/clearAfrBoundsGroup"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="32dp"
         app:layout_constraintBottom_toTopOf="@+id/textTargetAFR"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/graph"
         app:singleSelection="true">
 
         <Button
@@ -111,13 +111,13 @@
     </com.google.android.material.button.MaterialButtonToggleGroup>
 
     <Button
-        android:id="@+id/buttonSave"
+        android:id="@+id/buttonRecord"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:layout_marginTop="16dp"
         android:backgroundTint="#575757"
-        android:text="Save"
+        android:text="Record"
         app:layout_constraintStart_toStartOf="@+id/graph"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -215,6 +215,7 @@
         app:layout_constraintStart_toStartOf="parent" />
 
     <LinearLayout
+        android:id="@+id/linearLayoutConnectButtons"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
@@ -247,6 +248,7 @@
     </LinearLayout>
 
     <LinearLayout
+        android:id="@+id/linearLayoutObd1"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="64dp"
@@ -258,11 +260,12 @@
         app:layout_constraintStart_toStartOf="parent">
 
         <TextView
-            android:id="@+id/textTps"
+            android:id="@+id/textEct"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="0dp"
-            android:text="-.- %" />
+            android:padding="15dp"
+            android:text="ECT" />
 
         <Space
             android:layout_width="wrap_content"
@@ -270,11 +273,47 @@
             android:layout_weight="1" />
 
         <TextView
-            android:id="@+id/textGpsSpeed"
+            android:id="@+id/textSpeed"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="0dp"
-            android:text="- km/h" />
+            android:padding="15dp"
+            android:text="SPD" />
+
+        <Space
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
+        <TextView
+            android:id="@+id/textStft"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="0"
+            android:padding="15dp"
+            android:text="STFT" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/linearLayoutObd2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="64dp"
+        android:layout_marginEnd="64dp"
+        android:orientation="horizontal"
+        app:layout_constraintBottom_toTopOf="@+id/linearLayoutObd1"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <TextView
+            android:id="@+id/textRpm"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_marginBottom="0dp"
+            android:padding="15dp"
+            android:text="RPM" />
 
         <Space
             android:layout_width="wrap_content"
@@ -286,7 +325,70 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="0"
-            android:text="- kPa" />
+            android:padding="15dp"
+            android:text="MAP" />
+
+        <Space
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
+        <TextView
+            android:id="@+id/textLtft"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="0"
+            android:padding="15dp"
+            android:text="LTFT" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/linearLayoutObd3"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="64dp"
+        android:layout_marginEnd="64dp"
+        android:orientation="horizontal"
+        app:layout_constraintBottom_toTopOf="@+id/linearLayoutObd2"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <TextView
+            android:id="@+id/textTps"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_marginBottom="0dp"
+            android:padding="15dp"
+            android:text="TPS" />
+
+        <Space
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
+        <TextView
+            android:id="@+id/textIat"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="0dp"
+            android:padding="15dp"
+            android:text="IAT" />
+
+        <Space
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
+        <TextView
+            android:id="@+id/textLambdaVoltage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="0dp"
+            android:padding="15dp"
+            android:text="VOLT" />
+
 
     </LinearLayout>
 

@@ -1,0 +1,33 @@
+package com.hondaafr.Libs.Devices.Obd.Readings;
+
+/**
+ * Long-term fuel trim
+ */
+public class ObdLtftTrim extends ObdReading {
+
+    @Override
+    public String getName() {
+        return "ltft";
+    }
+
+    @Override
+    public String getMeasurement() {
+        return "%";
+    }
+
+    @Override
+    public String getPid() {
+        return "07";  // Typically, PID 07 is used for LTFT, but this may vary
+    }
+
+    @Override
+    public int getDataByteCount() {
+        return 1;
+    }
+
+    @Override
+    public Object parseIntValue(int value) {
+        // Convert the raw byte value to a percentage
+        return (double) (value - 128) * 100 / 128.0;
+    }
+}

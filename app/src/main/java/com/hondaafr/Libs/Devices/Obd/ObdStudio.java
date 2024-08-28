@@ -3,9 +3,12 @@ package com.hondaafr.Libs.Devices.Obd;
 import android.content.Context;
 
 import com.hondaafr.Libs.Bluetooth.Services.BluetoothService;
+import com.hondaafr.Libs.Devices.Obd.Readings.ObdReading;
 import com.hondaafr.Libs.Helpers.Debuggable;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -13,24 +16,25 @@ import java.util.concurrent.TimeUnit;
 public class ObdStudio extends Debuggable {
     private final Context context;
     private final ObdStudioListener listener;
-    public static Double tps = 0D;
-    public static Integer speed = 0;
-    public static Integer rpm = 0;
-    public static Integer map = 0;
-    public static Integer intakeTemp = 0;
+
+    public final ObdReadings readings;
 
     private boolean readingsOn = false;
 
     private ScheduledExecutorService scheduler;
-    private Long lastReadingTimestamp = 0L;
+
+    private long lastReadingTimestamp = 0L;
+
+    private Long lastResponseTimestamp = 0L;
     private boolean isBusy = false;
     private boolean ecuConnected = false;
 
-    ArrayList<String> pendingCommands = new ArrayList<>();
 
-    public ObdStudio(Context mContext, ObdStudioListener listener) {
+    public ObdStudio(Context mContext, ArrayList<String> pid_names, ObdStudioListener listener) {
         this.listener = listener;
         this.context = mContext;
+
+        this.readings = new ObdReadings(context, pid_names);
     }
 
     public void startRequestingSensorReadings() {
@@ -62,30 +66,22 @@ public class ObdStudio extends Debuggable {
 
 
     public void requestSensorReadings() {
-        if (deviceIsNotBusy()) {
-            if (!ecuConnected) {
-                initBtConnection();
-            } else {
-                if (pendingCommands.isEmpty()) {
-                    pendingCommands.add(ObdCommands.requestTps());
-                    pendingCommands.add(ObdCommands.requestMap());
-//                    pendingCommands.add(ObdCommands.requestSpeed());
-//                    pendingCommands.add(ObdCommands.requestRpm());
+        if (!this.readings.active.isEmpty()) {
+            if (ecuConnected) {
+                if (timeSinceLastReading() > 3000) {
+                    this.readings.requestNextReading();
                 }
-
-
-                String pendingCommand = pendingCommands.get(0);
-                pendingCommands.remove(0);
-
-                BluetoothService.send(context, pendingCommand, "obd");
-                isBusy = true;
+            } else {
+                if (timeSinceLastResponse() > 3000) {
+                    initBtConnection();
+                }
             }
         }
     }
 
 
     private boolean deviceIsNotBusy() {
-        return !isBusy || timeSinceLastSensorReadings() > 10000;
+        return !isBusy || timeSinceLastResponse() > 10000;
     }
 
     public void initBtConnection() {
@@ -97,55 +93,11 @@ public class ObdStudio extends Debuggable {
         BluetoothService.send(context, lines, "obd");
     }
 
-    public void requestTps() {
-
-        BluetoothService.send(context, ObdCommands.requestTps(), "obd");
-    }
-
-    public void requestSpeed() {
-        BluetoothService.send(context, ObdCommands.requestSpeed(), "obd");
-    }
-
-    public void requestRpm() {
-        BluetoothService.send(context, ObdCommands.requestRpm(), "obd");
-    }
-
     public void onDataReceived(String data) {
         d(data, 1);
         isBusy = false;
 
         if (ObdCommands.dataIsBusy(data)) {
-            isBusy = true;
-        }
-
-        if (ObdCommands.dataIsTps(data)) {
-            tps = ObdCommands.parseTpsData(data);
-//            mTpsHistory.add(tps);
-            listener.onObdTpsReceived(tps);
-        }
-
-        if (ObdCommands.dataIsSpeed(data)) {
-            speed = ObdCommands.parseSpeedData(data);
-            listener.onObdSpeedReceived(speed);
-        }
-
-        if (ObdCommands.dataIsRpm(data)) {
-            rpm = ObdCommands.parseRpmData(data);
-            listener.onObdRpmReceived(rpm);
-        }
-
-        if (ObdCommands.dataIsMap(data)) {
-            map = ObdCommands.parseMapData(data);
-            listener.onObdMapReceived(map);
-        }
-
-        if (ObdCommands.dataIsIntakeTemp(data)) {
-            intakeTemp = ObdCommands.parseIntakeTempData(data);
-            listener.onObdIntakeTempReceived(intakeTemp);
-        }
-
-        if (ObdCommands.dataInitComplete(data)) {
-            BluetoothService.send(context, ObdCommands.requestPids(), "obd");
             isBusy = true;
         }
 
@@ -157,7 +109,19 @@ public class ObdStudio extends Debuggable {
             ecuConnected = true;
         }
 
-        updateLastTrackingDataTimestamp();
+        if (ecuConnected) {
+            for (ObdReading reading : readings.active) {
+                if (reading.incomingDataIsReply(data)) {  // assuming reading is passed correctly
+                    reading.onData(data);  // Handle the data.
+                    updateTimeSinceLastReading();
+
+                    listener.onObdReadingUpdate(reading);  // Notify the listener of the update.
+                    this.readings.requestNextReading();
+                }
+            }
+        }
+
+        updateTimeSinceLastResponse();
     }
 
     public void start() {
@@ -171,13 +135,30 @@ public class ObdStudio extends Debuggable {
     }
 
 
-    public void updateLastTrackingDataTimestamp() {
+    public void updateTimeSinceLastResponse() {
+        lastResponseTimestamp = System.currentTimeMillis();
+    }
+
+    public long timeSinceLastResponse() {
+        return System.currentTimeMillis() - lastResponseTimestamp;
+    }
+
+    public void updateTimeSinceLastReading() {
         lastReadingTimestamp = System.currentTimeMillis();
     }
 
-    public long timeSinceLastSensorReadings() {
+    public long timeSinceLastReading() {
         return System.currentTimeMillis() - lastReadingTimestamp;
     }
 
+    public Map<String, String> getReadings() {
+        LinkedHashMap<String, String> readings = new LinkedHashMap<>();
 
+        // Populate the map with some sample readings
+        for (ObdReading r : this.readings.available) {
+            readings.put(r.getDisplayName(), r.getValueAsString());
+        }
+
+        return readings;
+    }
 }

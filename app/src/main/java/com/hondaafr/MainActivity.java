@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.Typeface;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -25,11 +26,11 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.hondaafr.Libs.Bluetooth.BluetoothStates;
 import com.hondaafr.Libs.Bluetooth.BluetoothUtils;
 import com.hondaafr.Libs.Bluetooth.Services.BluetoothService;
+import com.hondaafr.Libs.Devices.Obd.Readings.ObdReading;
 import com.hondaafr.Libs.Devices.Obd.ObdStudio;
 import com.hondaafr.Libs.Devices.Obd.ObdStudioListener;
 import com.hondaafr.Libs.Devices.Phone.GpsSpeed;
@@ -42,8 +43,9 @@ import com.hondaafr.Libs.Helpers.DataLogEntry;
 import com.hondaafr.Libs.Helpers.Permissions;
 import com.hondaafr.Libs.Helpers.TimeChart;
 
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 
@@ -77,17 +79,14 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
     private Button mToggleClearAfrMax;
     private Button mToggleClearAfrAll;
     private Button buttonClearLog;
-    private Button buttonSaveToCsv;
-
-    private TextView mTextTps;
-    private TextView mTextMap;
-    private TextView mTextGpsSpeed;
-    private TextView mTextRpm;
+    private Button buttonRecord;
+    private TextView mTextSpeed;
 
     private Double sportPlusAfr = 12.7;
     private Double sportAfr = 14.7;
     private Double ecoAfr = 15.4;
     private Double ecoPlusAfr = 16.4;
+    private boolean recording = false;
 
     private final AverageList shortAfrAvg = new AverageList(100);
 
@@ -141,14 +140,27 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
             startTimestamp = System.currentTimeMillis();
         });
 
-        buttonSaveToCsv = findViewById(R.id.buttonSave);
-        buttonSaveToCsv.setOnClickListener(view -> {
-            mDataLog.saveAsCsv();
+        buttonRecord = findViewById(R.id.buttonRecord);
+        buttonRecord.setOnClickListener(view -> {
+            if (recording) {
+                mDataLog.saveAsCsv();
+                recording = false;
+                buttonRecord.setText("Record");
+            } else {
+                mDataLog.clearAllEntries();
+                recording = true;
+                buttonRecord.setText("Stop");
+            }
         });
 
 
+        ArrayList<String> obdPids = new ArrayList<>();
+        obdPids.add("tps");
+        obdPids.add("map");
+        obdPids.add("stft");
+
         mSpartanStudio = new SpartanStudio(this, this);
-        mObdStudio = new ObdStudio(this, this);
+        mObdStudio = new ObdStudio(this, obdPids, this);
         mDataLog = new DataLog(this);
         mGpsSpeed = new GpsSpeed(this, this);
 
@@ -159,10 +171,8 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
         mTextTargetAfr = findViewById(R.id.textTargetAFR);
         mTextTargetAfr.setOnClickListener(v -> SpartanStudio.requestCurrentAFR(mContext));
 
-        mTextGpsSpeed = findViewById(R.id.textGpsSpeed);
-        mTextTps = findViewById(R.id.textTps);
-        mTextMap = findViewById(R.id.textMap);
-//        mTextRpm = findViewById(R.id.textRpm);
+        mTextSpeed = findViewById(R.id.textSpeed);
+        setObdOnClickListeners();
 
         mToggleClearAfrMin = findViewById(R.id.buttonClearAfrMin);
         mToggleClearAfrMin.setOnClickListener(v -> afrMin = null);
@@ -200,8 +210,8 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
         setLongClickListenersToAfrButtons();
 
         Handler handler = new Handler();
-//        handler.postDelayed(this::BT_connect_spartan, 2000);// Delay in milliseconds
-//        handler.postDelayed(this::BT_connect_obd, 2000);// Delay in milliseconds
+        handler.postDelayed(this::BT_connect_spartan, 2000);// Delay in milliseconds
+        handler.postDelayed(this::BT_connect_obd, 2000);// Delay in milliseconds
 
 
         textShortAfrAvg = findViewById(R.id.textRecentAfrAvg);
@@ -228,6 +238,7 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
 
         loadSettings(); // So the variables are reloaded
     }
+
 
     public void setLongClickListenersToAfrButtons() {
         View.OnLongClickListener longClickListener = v -> {
@@ -274,7 +285,7 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
 
             mChart.setLimitLines(null, null, (float) targetAfr);
 
-//            addEntryToShortAfr(targetAfr);
+            addEntryToShortAfr(targetAfr);
         });
     }
 
@@ -312,19 +323,19 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
 
             addEntryToShortAfr(afr);
 
-            mDataLog.addEntry(new DataLogEntry(
-                    mSpartanStudio.targetAfr,
-                    afr,
-                    ObdStudio.tps,
-                    ObdStudio.map,
-                    mGpsSpeed.speed.intValue(),
-                    mSpartanStudio.lastSensorTemp
-            ));
+            if (recording) {
+                logReadings();
+            }
         });
     }
 
-    public List<ILineDataSet> getAfrData() {
-        return mChart.data.getDataSets();
+    private void logReadings() {
+        LinkedHashMap<String, String> values = new LinkedHashMap<>();
+        values.putAll(mSpartanStudio.getReadings());
+        values.putAll(mObdStudio.getReadings());
+        values.putAll(mGpsSpeed.getReadings());
+
+        mDataLog.addEntry(new DataLogEntry(values));
     }
 
     @Override
@@ -333,34 +344,82 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
     }
 
     @Override
+    public void onObdReadingUpdate(ObdReading reading) {
+        final String name = reading.getName();
+
+        switch (name) {
+            case "ect":
+                setObdReadingText(R.id.textEct, reading);
+                break;
+            case "tps":
+                setObdReadingText(R.id.textTps, reading);
+                break;
+            case "map":
+                setObdReadingText(R.id.textMap, reading);
+                break;
+            case "iat":
+                setObdReadingText(R.id.textIat, reading);
+                break;
+            case "stft":
+                setObdReadingText(R.id.textStft, reading);
+                break;
+            case "speed":
+                setObdReadingText(R.id.textSpeed, reading);
+                break;
+            case "rpm":
+                setObdReadingText(R.id.textRpm, reading);
+                break;
+            case "ltft":
+                setObdReadingText(R.id.textLtft, reading);
+                break;
+            case "uo2v":
+                setObdReadingText(R.id.textLambdaVoltage, reading);
+                break;
+        }
+    }
+
+    private void setObdReadingText(int textViewId, ObdReading reading) {
+        TextView textView = findViewById(textViewId);
+        textView.setText(reading.getDisplayValue());
+        updateToggleAppearance(textView, true);
+    }
+
+    private void setObdOnClickListeners() {
+        initObdButton(R.id.textIat, "iat");
+        initObdButton(R.id.textStft, "stft");
+        initObdButton(R.id.textMap, "map");
+        initObdButton(R.id.textTps, "tps");
+        initObdButton(R.id.textEct, "ect");
+        initObdButton(R.id.textSpeed, "speed");
+        initObdButton(R.id.textLtft, "ltft");
+        initObdButton(R.id.textRpm, "rpm");
+        initObdButton(R.id.textLambdaVoltage, "uo2v");
+    }
+
+    private void initObdButton(int textViewId, String reading_name) {
+        TextView textView = findViewById(textViewId);
+        updateToggleAppearance(textView, mObdStudio.readings.isActive(reading_name));
+
+        textView.setOnClickListener(v -> {
+            boolean isActive = mObdStudio.readings.toggleActive(reading_name);
+            updateToggleAppearance(textView, isActive);
+        });
+    }
+
+    private void updateToggleAppearance(TextView textView, boolean isActive) {
+        textView.setTypeface(null, isActive ? Typeface.BOLD : Typeface.NORMAL);
+    }
+
+
+    @Override
+    @SuppressLint({"DefaultLocale", "SetTextI18n"})
     public void onGpsSpeedUpdated(Double speedKmh) {
-        mTextStatusGeneric.setText("GPS speed acquired");
-        mTextGpsSpeed.setText(String.format("%.1f km/h", speedKmh));
-    }
+        String s = String.format("%.1f km/h", speedKmh);
+        mTextStatusGeneric.setText("GPS speed: " + s);
 
-    @Override
-    public void onObdTpsReceived(Double throttle_position) {
-        mTextTps.setText(String.format("%.1f %%", throttle_position));
-    }
-
-    @Override
-    public void onObdSpeedReceived(Integer speed) {
-
-    }
-
-    @Override
-    public void onObdRpmReceived(Integer rpm) {
-        mTextRpm.setText(String.format("%d RPM", rpm));
-    }
-
-    @Override
-    public void onObdMapReceived(Integer mapKpa) {
-        mTextMap.setText(String.format("%d kPa", mapKpa));
-    }
-
-    @Override
-    public void onObdIntakeTempReceived(Integer tempC) {
-
+        if (!mObdStudio.readings.isActive("speed")) {
+            mTextSpeed.setText(s);
+        }
     }
 
 
@@ -442,7 +501,7 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
             case BluetoothStates.STATE_BT_CONNECTED:
                 if (device_id.equals("spartan")) {
                     mTextStatusSpartan.setText("Connected");
-                    buttonConnectSpartan.setText(   "Connected");
+                    buttonConnectSpartan.setText("Connected");
                     buttonConnectSpartan.setEnabled(false);
                     mSpartanStudio.start();
                 }
@@ -528,6 +587,10 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
         super.onResume();
 
         BT_startService();
+
+        Handler handler = new Handler();
+        handler.postDelayed(this::BT_connect_spartan, 2000);// Delay in milliseconds
+        handler.postDelayed(this::BT_connect_obd, 2000);// Delay in milliseconds
     }
 
     @Override
@@ -550,9 +613,10 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
             // Permission granted, do the location-related task.
             // You can use the location now.
         } else {
-            Log.e("Permissions", "Permission denied for : "  + requestCode);
+            Log.e("Permissions", "Permission denied for : " + requestCode);
         }
     }
+
 
 }
 

@@ -22,7 +22,9 @@ import com.hondaafr.Libs.Devices.Obd.ObdStudio;
 import com.hondaafr.Libs.Helpers.Debuggable;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -136,4 +138,15 @@ public class SpartanStudio extends Debuggable {
         listener.onTargetAfrUpdated(targetAfr);
     }
 
+    public Map<String, String> getReadings() {
+        LinkedHashMap<String, String> readings = new LinkedHashMap<>();
+
+        // Populate the map with some sample readings
+        readings.put("Target AFR", String.valueOf(targetAfr));
+        readings.put("AFR", String.valueOf(lastSensorAfr));
+        readings.put("o2 Temp", String.valueOf(lastSensorTemp));
+
+        // Return the populated map
+        return readings;
+    }
 }

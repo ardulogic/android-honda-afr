@@ -19,6 +19,9 @@ import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.Priority;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 public class GpsSpeed {
 
     private static final long UPDATE_INTERVAL_MS = 1000;
@@ -87,4 +90,10 @@ public class GpsSpeed {
         }
     }
 
+    @SuppressLint("DefaultLocale")
+    public Map<String, String> getReadings() {
+        LinkedHashMap<String, String> readings = new LinkedHashMap<>();
+        readings.put("GPS Speed (km/h)", String.format("%.1f", speed));
+        return readings;
+    }
 }

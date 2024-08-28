@@ -1,40 +1,32 @@
 package com.hondaafr.Libs.Helpers;
+
+import com.hondaafr.Libs.Devices.Obd.Readings.ObdReading;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Set;
+
 public class DataLogEntry {
-    public double target_afr;
-    public double afr;
-    public int map;
-    public long timestamp;
-    public double temperature;
-    public int speed;
-    public double tps;
+
+    private LinkedHashMap<String, String> values;
 
     // Constructor
-    public DataLogEntry(double targetAfr, Double afr, Double tps, Integer map, int speed, Double sensorTemp) {
-        this.timestamp = System.currentTimeMillis();
-        this.target_afr = targetAfr;
-        this.afr = afr;
-        this.tps = tps;
-        this.map = map;
-        this.speed = speed;
-        this.temperature = sensorTemp;
+    public DataLogEntry(HashMap<String, String> values) {
+        this.values = new LinkedHashMap<>();
 
+        this.values.put("Timestamp", String.valueOf(System.currentTimeMillis()));
+        this.values.putAll(values);
     }
 
 
-    public static String[] getHeader() {
-        return new String[]{"Timestamp",  "TAFR",  "AFR", "Throttle", "MAP", "Speed", "Temperature"};
+    // Method to return the keys of LinkedHashMap as an array of strings
+    public String[] getHeader() {
+        return this.values.keySet().toArray(new String[0]);
     }
 
 
     public String[] toStringArray() {
-        return new String[] {
-                String.valueOf(timestamp),
-                String.valueOf(target_afr),
-                String.valueOf(afr),
-                String.valueOf(tps),
-                String.valueOf(map),
-                String.valueOf(speed),
-                String.valueOf(temperature),
-        };
+        return this.values.values().toArray(new String[0]);
     }
 }
