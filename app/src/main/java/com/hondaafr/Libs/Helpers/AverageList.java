@@ -59,6 +59,36 @@ public class AverageList {
         return totalDistance / numbers.size();
     }
 
+    public double getMaxValue() {
+        if (numbers.isEmpty()) {
+            return 0; // Avoid division by zero
+        }
+
+        double maxValue = Double.NEGATIVE_INFINITY;
+        for (Double number : numbers) {
+            if (number > maxValue) {
+                maxValue = number;
+            }
+        }
+
+        return maxValue;
+    }
+
+    public double getMinValue() {
+        if (numbers.isEmpty()) {
+            return 0; // Or throw an exception if that fits your use case better
+        }
+
+        double minValue = Double.POSITIVE_INFINITY;
+        for (Double number : numbers) {
+            if (number < minValue) {
+                minValue = number;
+            }
+        }
+
+        return minValue;
+    }
+
     // Clear all numbers and reset the sum
     public void clear() {
         numbers.clear();

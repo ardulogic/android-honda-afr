@@ -69,9 +69,6 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
     private Button buttonDecreaseAfr;
     private Button buttonIncreaseAfr;
 
-    private Double afrMin = null;
-    private Double afrMax = null;
-
     private TimeChart mChart;
 
     private long startTimestamp = 0L;
@@ -88,7 +85,9 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
     private Double ecoPlusAfr = 16.4;
     private boolean recording = false;
 
-    private final AverageList shortAfrAvg = new AverageList(100);
+    private final AverageList shortAfrAvgHistory = new AverageList(100);
+    private final AverageList shortAfrMinHistory = new AverageList(80);
+    private final AverageList shortAfrMaxHistory = new AverageList(80);
 
     private SharedPreferences settings;
     private SharedPreferences.Editor editor;
@@ -117,11 +116,9 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
         mContext = this;
 
         buttonConnectSpartan = findViewById(R.id.buttonConnectSpartan);
-//        buttonConnect.setOnClickListener(view -> BT_connect_spartan());
         buttonConnectSpartan.setOnClickListener(view -> BT_connect_spartan());
 
         buttonConnectObd = findViewById(R.id.buttonConnectObd);
-//        buttonConnect.setOnClickListener(view -> BT_connect_spartan());
         buttonConnectObd.setOnClickListener(view -> BT_connect_obd());
 
         buttonIncreaseAfr = findViewById(R.id.buttonIncreaseAFR);
@@ -175,15 +172,15 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
         setObdOnClickListeners();
 
         mToggleClearAfrMin = findViewById(R.id.buttonClearAfrMin);
-        mToggleClearAfrMin.setOnClickListener(v -> afrMin = null);
+        mToggleClearAfrMin.setOnClickListener(v -> shortAfrMinHistory.clear());
         mToggleClearAfrAll = findViewById(R.id.buttonClearAfrAll);
         mToggleClearAfrAll.setOnClickListener(v -> {
-            afrMin = null;
-            afrMax = null;
-            shortAfrAvg.clear();
+            shortAfrAvgHistory.clear();
+            shortAfrMinHistory.clear();
+            shortAfrMaxHistory.clear();
         });
         mToggleClearAfrMax = findViewById(R.id.buttonClearAfrMax);
-        mToggleClearAfrMax.setOnClickListener(v -> afrMax = null);
+        mToggleClearAfrMax.setOnClickListener(v -> shortAfrMaxHistory.clear());
 
         // Keep the screen on while this activity is visible
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -208,11 +205,6 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
         });
 
         setLongClickListenersToAfrButtons();
-
-        Handler handler = new Handler();
-        handler.postDelayed(this::BT_connect_spartan, 2000);// Delay in milliseconds
-        handler.postDelayed(this::BT_connect_obd, 2000);// Delay in milliseconds
-
 
         textShortAfrAvg = findViewById(R.id.textRecentAfrAvg);
         textShortAfrAvgDeviation = findViewById(R.id.textShortAfrAvgDeviation);
@@ -285,16 +277,20 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
 
             mChart.setLimitLines(null, null, (float) targetAfr);
 
-            addEntryToShortAfr(targetAfr);
+            addEntryToAfrShortHistory(targetAfr);
         });
     }
 
     @SuppressLint("DefaultLocale")
-    public void addEntryToShortAfr(Double value) {
-        shortAfrAvg.addNumber(value);
-        textShortAfrAvg.setText(String.format("%.2f", shortAfrAvg.getAvg()));
+    public void addEntryToAfrShortHistory(Double value) {
+        shortAfrAvgHistory.addNumber(value);
+        shortAfrMinHistory.addNumber(value);
+        shortAfrMaxHistory.addNumber(value);
 
-        textShortAfrAvgDeviation.setText(String.format("%.2f", shortAfrAvg.getAverageDistanceFromTarget(mSpartanStudio.targetAfr)));
+        textShortAfrAvg.setText(String.format("%.2f", shortAfrAvgHistory.getAvg()));
+        textShortAfrAvgDeviation.setText(String.format("%.2f", shortAfrAvgHistory.getAverageDistanceFromTarget(mSpartanStudio.targetAfr)));
+        mToggleClearAfrMin.setText(String.format("%.1f", shortAfrMinHistory.getMinValue()));
+        mToggleClearAfrMax.setText(String.format("%.1f", shortAfrMaxHistory.getMaxValue()));
     }
 
     @SuppressLint("DefaultLocale")
@@ -310,18 +306,7 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
             float time = System.currentTimeMillis() - startTimestamp; // Cant use full timestamp, too big
             mChart.addToData(time, afr.floatValue(), true);
 
-            if (afrMax == null || afr > afrMax) {
-                afrMax = afr;
-            }
-
-            if (afrMin == null || afr < afrMin) {
-                afrMin = afr;
-            }
-
-            mToggleClearAfrMin.setText(String.format("%.1f", afrMin));
-            mToggleClearAfrMax.setText(String.format("%.1f", afrMax));
-
-            addEntryToShortAfr(afr);
+            addEntryToAfrShortHistory(afr);
 
             if (recording) {
                 logReadings();
@@ -430,13 +415,21 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
     }
 
     public void BT_connect_spartan() {
-        BT_startService();
         BluetoothService.connect(this, "AutoLights", "spartan");
     }
 
+    public void BT_connect_spartan_soon() {
+        Handler handler = new Handler();
+        handler.postDelayed(this::BT_connect_spartan, 2000);// Delay in milliseconds
+    }
+
     public void BT_connect_obd() {
-        BT_startService();
         BluetoothService.connect(this, "OBDII", BluetoothUtils.OBD_UUID, "obd");
+    }
+
+    public void BT_connect_obd_soon() {
+        Handler handler = new Handler();
+        handler.postDelayed(this::BT_connect_obd, 2000);// Delay in milliseconds
     }
 
     private final BroadcastReceiver btReceiver = new BroadcastReceiver() {
@@ -496,77 +489,98 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
     }
 
     public void OnBluetoothStateChanged(int state, String device_id) {
-        Log.d("MainActivity bluetoothStateChanged:", device_id);
-        switch (state) {
-            case BluetoothStates.STATE_BT_CONNECTED:
-                if (device_id.equals("spartan")) {
-                    mTextStatusSpartan.setText("Connected");
-                    buttonConnectSpartan.setText("Connected");
-                    buttonConnectSpartan.setEnabled(false);
-                    mSpartanStudio.start();
-                }
+        if (device_id != null) {
+            Log.d("MainActivity bluetoothStateChanged:", device_id);
 
-                if (device_id.equals("obd")) {
-                    mTextStatusObd.setText("Connected");
-                    buttonConnectObd.setText("Connected");
-                    buttonConnectObd.setEnabled(false);
-                    mObdStudio.start();
-                }
-                break;
+            if (device_id.equals("obd")) {
+                mTextStatusObd.setText(BluetoothStates.labelOfState(state));
+            } else if (device_id.equals("spartan")) {
+                mTextStatusSpartan.setText(BluetoothStates.labelOfState(state));
+            }
 
-            case BluetoothStates.STATE_BT_BUSY:
-            case BluetoothStates.STATE_BT_CONNECTING:
-            case BluetoothStates.STATE_BT_ENABLING:
-                if (device_id.equals("spartan")) {
-                    buttonConnectSpartan.setText("Connecting");
-                    buttonConnectSpartan.setEnabled(false);
-                }
+            switch (state) {
+                case BluetoothStates.STATE_BT_CONNECTED:
+                    if (device_id.equals("spartan")) {
+                        mTextStatusSpartan.setText("Connected");
+                        buttonConnectSpartan.setText("Connected");
+                        buttonConnectSpartan.setEnabled(false);
+                        mSpartanStudio.start();
+                    }
 
-                if (device_id.equals("obd")) {
-                    buttonConnectObd.setText("Connecting");
-                    buttonConnectObd.setEnabled(false);
-                }
-                break;
+                    if (device_id.equals("obd")) {
+                        mTextStatusObd.setText("Connected");
+                        buttonConnectObd.setText("Connected");
+                        buttonConnectObd.setEnabled(false);
+                        mObdStudio.start();
+                    }
+                    break;
 
-            case BluetoothStates.STATE_BT_NONE:
-            case BluetoothStates.STATE_BT_DISCONNECTED:
-            case BluetoothStates.STATE_BT_UNPAIRED:
-                if (device_id.equals("spartan")) {
-                    buttonConnectSpartan.setText("Connect");
+                case BluetoothStates.STATE_BT_BUSY:
+                case BluetoothStates.STATE_BT_CONNECTING:
+                case BluetoothStates.STATE_BT_ENABLING:
+                    if (device_id.equals("spartan")) {
+                        buttonConnectSpartan.setText("Connecting");
+                        buttonConnectSpartan.setEnabled(false);
+                        Log.d("STATE", "Busy/connecting/enabling");
+                    }
+
+                    if (device_id.equals("obd")) {
+                        buttonConnectObd.setText("Connecting");
+                        buttonConnectObd.setEnabled(false);
+                    }
+                    break;
+
+                case BluetoothStates.STATE_BT_DISCONNECTED:
+                    if (device_id.equals("spartan")) {
+                        buttonConnectSpartan.setText("Connect Spartan");
+                        buttonConnectSpartan.setEnabled(true);
+                        BT_connect_spartan_soon();
+                    }
+
+                    if (device_id.equals("obd")) {
+                        buttonConnectObd.setText("Connect OBD");
+                        buttonConnectObd.setEnabled(true);
+                        BT_connect_obd_soon();
+                    }
+                    break;
+
+                case BluetoothStates.STATE_BT_NONE:
+                case BluetoothStates.STATE_BT_UNPAIRED:
+                    if (device_id.equals("spartan")) {
+                        buttonConnectSpartan.setText("Connect Spartan");
+                        buttonConnectSpartan.setEnabled(true);
+                        Log.d("STATE", "None or disconnected or unpaired");
+                    }
+
+                    if (device_id.equals("obd")) {
+                        buttonConnectObd.setText("Connect OBD");
+                        buttonConnectObd.setEnabled(true);
+                    }
+                    break;
+
+                case BluetoothStates.STATE_BT_DISABLED:
+                    Permissions.promptEnableBluetooth(this);
                     buttonConnectSpartan.setEnabled(true);
-                }
-
-                if (device_id.equals("obd")) {
-                    buttonConnectObd.setText("Connect");
                     buttonConnectObd.setEnabled(true);
-                }
-                break;
+                    break;
 
-            case BluetoothStates.STATE_BT_DISABLED:
-                Permissions.promptEnableBluetooth(this);
-                buttonConnectSpartan.setEnabled(true);
-                buttonConnectObd.setEnabled(true);
-                break;
-
-            case BluetoothStates.STATE_BT_ENABLED:
-                BT_connect_spartan();
-
-            default:
-                buttonConnectObd.setText("Connect");
-                buttonConnectObd.setEnabled(true);
-                buttonConnectSpartan.setText("Connect");
-                buttonConnectSpartan.setEnabled(true);
-
-
-        }
-
-        if (device_id.equals("obd")) {
-            mTextStatusObd.setText(BluetoothStates.labelOfState(state));
-        } else if (device_id.equals("spartan")) {
-            mTextStatusSpartan.setText(BluetoothStates.labelOfState(state));
+                default:
+                    buttonConnectObd.setText("Connect OBD");
+                    buttonConnectObd.setEnabled(true);
+                    buttonConnectSpartan.setText("Connect Spartan");
+                    buttonConnectSpartan.setEnabled(true);
+            }
         } else {
-            mTextStatusGeneric.setText(BluetoothStates.labelOfState(state));
+            switch (state) {
+                case BluetoothStates.STATE_BT_ENABLED:
+                    mTextStatusGeneric.setText("Bluetooth enabled.");
+                    break;
+
+                default:
+                    mTextStatusGeneric.setText(BluetoothStates.labelOfState(state));
+            }
         }
+
     }
 
     @Override
@@ -588,9 +602,8 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
 
         BT_startService();
 
-        Handler handler = new Handler();
-        handler.postDelayed(this::BT_connect_spartan, 2000);// Delay in milliseconds
-        handler.postDelayed(this::BT_connect_obd, 2000);// Delay in milliseconds
+        BT_connect_spartan();
+        BT_connect_obd();
     }
 
     @Override

@@ -26,8 +26,8 @@ public class BluetoothStates {
     public static final int STATE_BT_DISABLING = 8;
     public static final int STATE_BT_ENABLED = 9;
 
-    public static final int STATE_SERVICE_STOPPED = 1;
-    public static final int STATE_SERVICE_STARTED = 2;
+    public static final int STATE_SERVICE_STOPPED = 100;
+    public static final int STATE_SERVICE_STARTED = 101;
 
     public static final int NOTIFICATION_CONNECTED_TO_SSID = 0;
 

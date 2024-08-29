@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.Context;
 import android.text.TextUtils;
+import android.util.Log;
 
 import com.hondaafr.Libs.Helpers.Debuggable;
 
@@ -13,6 +14,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Objects;
 
 /**
  * Bluetooth connector is used as a helper for the bluetooth service
@@ -36,7 +38,9 @@ public class BluetoothConnection extends Debuggable {
     private final String deviceName;
     public boolean isSending = false;
 
-    private String id; // Id for simultaneous connections
+
+
+    public String id; // Id for simultaneous connections
 
     public BluetoothConnection(Context mContext, BluetoothDeviceData deviceData, BluetoothConnectionListener listener, String id, String uuid) {
         this.mContext = mContext;
@@ -49,6 +53,14 @@ public class BluetoothConnection extends Debuggable {
         this.serviceUuid = uuid;
     }
 
+    public BluetoothSocket getConnectedSocket() {
+        if (mConnectedThread != null) {
+            return mConnectedThread.getSocket();
+        }
+
+        return null;
+    }
+
     public synchronized void connect() {
         d("Connecting to: " + connectedDevice, 1);
 
@@ -57,7 +69,6 @@ public class BluetoothConnection extends Debuggable {
         // Start the thread to connect with the given device
         mConnectThread = new ConnectThread(connectedDevice);
         mConnectThread.start();
-        setState(BluetoothStates.STATE_BT_CONNECTING);
     }
 
     public synchronized void stop() {
@@ -75,7 +86,10 @@ public class BluetoothConnection extends Debuggable {
      * @param state
      */
     private synchronized void setState(int state) {
-        d("setState() " + BluetoothStates.labelOfState(mState) + " -> " + BluetoothStates.labelOfState(state), 1);
+        if (Objects.equals(this.id, "spartan") && BluetoothStates.labelOfState(mState).equals("Idle.") && BluetoothStates.labelOfState(state).equals("Connecting...")) {
+            Log.d("setState", "Connection stared.");
+        }
+        d("setState(" + this.id + ") " + BluetoothStates.labelOfState(mState) + " -> " + BluetoothStates.labelOfState(state), 1);
         mState = state;
         listener.onStateChanged(state, this.id);
     }
@@ -153,6 +167,16 @@ public class BluetoothConnection extends Debuggable {
         setState(BluetoothStates.STATE_BT_DISCONNECTED);
     }
 
+    public boolean isConnected() {
+        if (mConnectedThread != null) {
+            if (mConnectedThread.getSocket() != null) {
+                return mConnectedThread.getSocket().isConnected();
+            }
+        }
+
+        return false;
+    }
+
 
     /**
      * Handles bluetooth connection to a certain device
@@ -192,14 +216,18 @@ public class BluetoothConnection extends Debuggable {
             try {
                 // This is a blocking call and will only return on a
                 // successful connection or an exception
+                setState(BluetoothStates.STATE_BT_CONNECTING);
                 mmSocket.connect();
+
             } catch (IOException e) {
+                // read failed, socket might closed or timeout, read ret: -1
                 // Close the socket
                 try {
                     mmSocket.close();
                 } catch (IOException e2) {
                     d("Unable to close socket during connection.", 1);
                 }
+
                 connectionFailed();
                 return;
             }
@@ -235,6 +263,10 @@ public class BluetoothConnection extends Debuggable {
         private final BluetoothSocket mmSocket;
         private final InputStream mmInStream;
         private final OutputStream mmOutStream;
+
+        public BluetoothSocket getSocket() {
+            return mmSocket;
+        }
 
         public ConnectedThread(BluetoothSocket socket) {
             d( "Creating 'ConnectedThread'", 2);

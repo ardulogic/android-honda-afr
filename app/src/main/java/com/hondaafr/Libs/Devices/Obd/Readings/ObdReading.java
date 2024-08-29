@@ -91,9 +91,9 @@ public abstract class ObdReading {
 
                 // Convert hex values to integers
                 int A = Integer.parseInt(hexValueA, 16); // Convert 'B3' to an integer
-                int B = Integer.parseInt(hexValueB, 16); // Convert '82' to an integer
+                int B = Integer.parseInt(hexValueB, 16); // Apparently this is a fuel trim
 
-                return (A * 256 + B) / 200.0;
+                return A / 200.0;
             } catch (NumberFormatException e) {
                 // Handle cases where parsing fails
                 System.err.println("Error parsing value: " + e.getMessage());

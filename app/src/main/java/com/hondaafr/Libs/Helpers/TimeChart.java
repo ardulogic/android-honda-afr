@@ -66,6 +66,7 @@ public class TimeChart {
 
         // set an alternative background color
         mChart.setBackgroundColor(Color.WHITE);
+        mChart.setNoDataTextColor(Color.GRAY);
         mChart.setViewPortOffsets(0f, 0f, 0f, 0f);
     }
 

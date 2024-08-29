@@ -119,9 +119,18 @@ public class BluetoothService extends Service {
             return;
         }
 
+        // Check if the device is already in the connection map
         if (mBtConnections.containsKey(device_id)) {
-            notifyUIOfBtStateChange(BluetoothStates.STATE_BT_CONNECTED, device_id);
-            return;
+            BluetoothConnection existingConnection = mBtConnections.get(device_id);
+
+            // Ensure the connection is actually connected
+            if (existingConnection.isConnected()) {
+                notifyUIOfBtStateChange(BluetoothStates.STATE_BT_CONNECTED, device_id);
+                return;
+            } else {
+                existingConnection.connect();
+                return;
+            }
         }
 
         BluetoothDevice device = null;
@@ -136,8 +145,8 @@ public class BluetoothService extends Service {
             BluetoothDeviceData deviceData = new BluetoothDeviceData(device, "BT Device");
 
             BluetoothConnection btConnection = new BluetoothConnection(this, deviceData, mBtListener, device_id, uuid);
-            btConnection.connect();
             mBtConnections.put(device_id, btConnection);
+            btConnection.connect();
         } else {
             notifyUIOfBtStateChange(BluetoothStates.STATE_BT_UNPAIRED, device_id);
         }
