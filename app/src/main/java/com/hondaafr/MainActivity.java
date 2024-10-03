@@ -45,9 +45,11 @@ import com.hondaafr.Libs.Helpers.TimeChart;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 public class MainActivity extends AppCompatActivity implements SpartanStudioListener, ObdStudioListener, GpsSpeedListener {
 
@@ -151,13 +153,8 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
         });
 
 
-        ArrayList<String> obdPids = new ArrayList<>();
-        obdPids.add("tps");
-        obdPids.add("map");
-        obdPids.add("stft");
-
         mSpartanStudio = new SpartanStudio(this, this);
-        mObdStudio = new ObdStudio(this, obdPids, this);
+        mObdStudio = new ObdStudio(this, loadObdPids(), this);
         mDataLog = new DataLog(this);
         mGpsSpeed = new GpsSpeed(this, this);
 
@@ -432,6 +429,11 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
         handler.postDelayed(this::BT_connect_obd, 2000);// Delay in milliseconds
     }
 
+    public void BT_disconnect() {
+        BluetoothService.disconnect(this, "obd");
+        BluetoothService.disconnect(this, "spartan");
+    }
+
     private final BroadcastReceiver btReceiver = new BroadcastReceiver() {
 
         @Override
@@ -586,6 +588,7 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
     @Override
     public void onStop() {
         super.onStop();
+        BT_disconnect();
         unregisterReceiver(btReceiver);
     }
 
@@ -601,7 +604,6 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
         super.onResume();
 
         BT_startService();
-
         BT_connect_spartan();
         BT_connect_obd();
     }
@@ -609,12 +611,39 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
     @Override
     public void onPause() {
         super.onPause();
+        BT_disconnect();
     }
-
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+
+        saveObdPids();
+    }
+
+    private ArrayList<String> loadObdPids() {
+        SharedPreferences sharedPreferences = getSharedPreferences("ObdPrefs", MODE_PRIVATE);
+
+        // Retrieve the saved Set, return a default empty Set if not found
+        Set<String> obdPidsSet = sharedPreferences.getStringSet("obdPids", new HashSet<>());
+
+        // Convert the Set back to ArrayList
+        return new ArrayList<>(obdPidsSet);
+    }
+
+    private void saveObdPids() {
+        ArrayList<String> obdPids = mObdStudio.readings.getActiveIds();
+        
+        // Convert ArrayList to a Set or JSON string and save it to SharedPreferences
+        SharedPreferences sharedPreferences = getSharedPreferences("ObdPrefs", MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+
+        // Convert ArrayList to Set
+        Set<String> obdPidsSet = new HashSet<>(obdPids);
+
+        // Save the Set to SharedPreferences
+        editor.putStringSet("obdPids", obdPidsSet);
+        editor.apply();  // Commit changes asynchronously
     }
 
     @Override

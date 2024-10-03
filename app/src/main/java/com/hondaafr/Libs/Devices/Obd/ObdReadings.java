@@ -74,6 +74,16 @@ public class ObdReadings {
         return r;
     }
 
+    public ArrayList<String> getActiveIds() {
+        ArrayList<String> obdPids = new ArrayList<>();
+        for (ObdReading reading : this.active) {
+            obdPids.add(reading.getName());
+        }
+
+        return obdPids;
+    }
+
+
     public boolean toggleActive(String name) {
         // Search for the reading in the targetReadings list
         ObdReading t = getActive(name);
