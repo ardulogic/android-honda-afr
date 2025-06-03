@@ -41,6 +41,23 @@
         app:layout_constraintBottom_toBottomOf="@+id/graph"
         app:layout_constraintEnd_toEndOf="parent" />
 
+    <com.hondaafr.Libs.UI.ImageButtonRounded
+        android:id="@+id/buttonToggleShowGasConsumption"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginEnd="16dp"
+        android:background="@drawable/image_button_on"
+        android:padding="13dp"
+        android:src="@drawable/gas"
+        android:scaleType="centerInside"
+        android:contentDescription="Toggle Gas Consumption"
+        app:layout_constraintBottom_toBottomOf="@+id/buttonRecord"
+        app:layout_constraintEnd_toStartOf="@+id/buttonClear"
+        app:layout_constraintStart_toEndOf="@+id/buttonRecord"
+        app:layout_constraintTop_toTopOf="@+id/buttonRecord"
+        app:tint="#000" />
+
+
     <Button
         android:id="@+id/buttonIncreaseAFR"
         android:layout_width="wrap_content"
@@ -163,7 +180,7 @@
     </com.google.android.material.button.MaterialButtonToggleGroup>
 
     <TextView
-        android:id="@+id/textRecentAfrAvg"
+        android:id="@+id/textMeasurementBig"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
@@ -174,14 +191,14 @@
         app:layout_constraintStart_toStartOf="@+id/graph" />
 
     <TextView
-        android:id="@+id/textShortAfrAvgDeviation"
+        android:id="@+id/textMeasurementSmall"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="00.0"
         android:textSize="34sp"
-        app:layout_constraintBottom_toTopOf="@+id/textRecentAfrAvg"
-        app:layout_constraintEnd_toEndOf="@+id/textRecentAfrAvg"
-        app:layout_constraintStart_toStartOf="@+id/textRecentAfrAvg" />
+        app:layout_constraintBottom_toTopOf="@+id/textMeasurementBig"
+        app:layout_constraintEnd_toEndOf="@+id/textMeasurementBig"
+        app:layout_constraintStart_toStartOf="@+id/textMeasurementBig" />
 
     <TextView
         android:id="@+id/textStatusObd"
@@ -234,6 +251,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="0dp"
+            android:backgroundTint="#595959"
             android:text="Connect OBD" />
 
         <Space
@@ -246,7 +264,6 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="0dp"
-            android:backgroundTint="#595959"
             android:text="Connect Spartan" />
     </LinearLayout>
 

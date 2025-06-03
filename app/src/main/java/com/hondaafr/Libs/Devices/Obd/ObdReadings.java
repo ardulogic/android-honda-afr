@@ -117,4 +117,7 @@ public class ObdReadings {
     }
 
 
+    public void setAllInactive() {
+        this.active.clear();
+    }
 }

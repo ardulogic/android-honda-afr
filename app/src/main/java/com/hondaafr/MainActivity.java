@@ -25,6 +25,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.hondaafr.Libs.Bluetooth.BluetoothStates;
@@ -33,20 +34,25 @@ import com.hondaafr.Libs.Bluetooth.Services.BluetoothService;
 import com.hondaafr.Libs.Devices.Obd.Readings.ObdReading;
 import com.hondaafr.Libs.Devices.Obd.ObdStudio;
 import com.hondaafr.Libs.Devices.Obd.ObdStudioListener;
+import com.hondaafr.Libs.Devices.Phone.PhoneBarometer;
 import com.hondaafr.Libs.Devices.Phone.GpsSpeed;
 import com.hondaafr.Libs.Devices.Phone.GpsSpeedListener;
 import com.hondaafr.Libs.Devices.Spartan.SpartanStudio;
 import com.hondaafr.Libs.Devices.Spartan.SpartanStudioListener;
-import com.hondaafr.Libs.Helpers.AverageList;
 import com.hondaafr.Libs.Helpers.DataLog;
 import com.hondaafr.Libs.Helpers.DataLogEntry;
+import com.hondaafr.Libs.Helpers.FuelConsumption;
+import com.hondaafr.Libs.Helpers.FuelTotalHistory;
 import com.hondaafr.Libs.Helpers.Permissions;
+import com.hondaafr.Libs.Helpers.ReadingHistory;
 import com.hondaafr.Libs.Helpers.TimeChart;
+import com.hondaafr.Libs.UI.ImageButtonRounded;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -59,9 +65,8 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
 
     private SpartanStudio mSpartanStudio;
     private ObdStudio mObdStudio;
-
+    private final Map<String, TextView> obdButtons = new HashMap<>();
     private GpsSpeed mGpsSpeed;
-
     private DataLog mDataLog;
     private TextView mTextStatusSpartan;
     private TextView mTextStatusObd;
@@ -70,7 +75,6 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
     private TextView mTextTargetAfr;
     private Button buttonDecreaseAfr;
     private Button buttonIncreaseAfr;
-
     private TimeChart mChart;
 
     private long startTimestamp = 0L;
@@ -78,7 +82,9 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
     private Button mToggleClearAfrMax;
     private Button mToggleClearAfrAll;
     private Button buttonClearLog;
+
     private Button buttonRecord;
+    private ImageButtonRounded mToggleShowFuelCons;
     private TextView mTextSpeed;
 
     private Double sportPlusAfr = 12.7;
@@ -87,15 +93,19 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
     private Double ecoPlusAfr = 16.4;
     private boolean recording = false;
 
-    private final AverageList shortAfrAvgHistory = new AverageList(100);
-    private final AverageList shortAfrMinHistory = new AverageList(80);
-    private final AverageList shortAfrMaxHistory = new AverageList(80);
+    private final ReadingHistory afrHistory = new ReadingHistory();
+    private final ReadingHistory fuelLitrageHistory = new ReadingHistory();
+
+    private final FuelTotalHistory fuelTotalHistory = new FuelTotalHistory();
 
     private SharedPreferences settings;
     private SharedPreferences.Editor editor;
-    private TextView textShortAfrAvg;
-    private TextView textShortAfrAvgDeviation;
+    private TextView textMeasurementBig;
+    private TextView textMeasurementSmall;
 
+    private MainViewModel viewModel;
+
+    private PhoneBarometer phoneBarometer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -116,6 +126,10 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
         startTimestamp = System.currentTimeMillis();
 
         mContext = this;
+
+        viewModel = new ViewModelProvider(this).get(MainViewModel.class);
+
+        phoneBarometer = new PhoneBarometer(this);
 
         buttonConnectSpartan = findViewById(R.id.buttonConnectSpartan);
         buttonConnectSpartan.setOnClickListener(view -> BT_connect_spartan());
@@ -169,15 +183,15 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
         setObdOnClickListeners();
 
         mToggleClearAfrMin = findViewById(R.id.buttonClearAfrMin);
-        mToggleClearAfrMin.setOnClickListener(v -> shortAfrMinHistory.clear());
+        mToggleClearAfrMin.setOnClickListener(v -> afrHistory.clearMin());
         mToggleClearAfrAll = findViewById(R.id.buttonClearAfrAll);
-        mToggleClearAfrAll.setOnClickListener(v -> {
-            shortAfrAvgHistory.clear();
-            shortAfrMinHistory.clear();
-            shortAfrMaxHistory.clear();
-        });
+        mToggleClearAfrAll.setOnClickListener(v -> afrHistory.clear());
+
         mToggleClearAfrMax = findViewById(R.id.buttonClearAfrMax);
-        mToggleClearAfrMax.setOnClickListener(v -> shortAfrMaxHistory.clear());
+        mToggleClearAfrMax.setOnClickListener(v -> afrHistory.clearMax());
+
+        mToggleShowFuelCons = findViewById(R.id.buttonToggleShowGasConsumption);
+        mToggleShowFuelCons.setOnClickListener(new ButtonShowFuelConsOnClickListener());
 
         // Keep the screen on while this activity is visible
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -203,8 +217,18 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
 
         setLongClickListenersToAfrButtons();
 
-        textShortAfrAvg = findViewById(R.id.textRecentAfrAvg);
-        textShortAfrAvgDeviation = findViewById(R.id.textShortAfrAvgDeviation);
+        textMeasurementBig = findViewById(R.id.textMeasurementBig);
+        textMeasurementSmall = findViewById(R.id.textMeasurementSmall);
+
+        viewModel.showFuelConsumption.observe(this, show -> {
+            if (show != null) {
+                mToggleShowFuelCons.setState(show);
+            }
+        });
+
+        viewModel.fuelConsumptionAvailable.observe(this, fuelAvailable -> {
+            mToggleShowFuelCons.setIconState(fuelAvailable);
+        });
     }
 
     IntentFilter intentFilter = new IntentFilter(BluetoothService.ACTION_UI_UPDATE);
@@ -273,21 +297,18 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
             mTextTargetAfr.setText(formattedTargetAfr);
 
             mChart.setLimitLines(null, null, (float) targetAfr);
-
-            addEntryToAfrShortHistory(targetAfr);
         });
     }
 
     @SuppressLint("DefaultLocale")
-    public void addEntryToAfrShortHistory(Double value) {
-        shortAfrAvgHistory.addNumber(value);
-        shortAfrMinHistory.addNumber(value);
-        shortAfrMaxHistory.addNumber(value);
-
-        textShortAfrAvg.setText(String.format("%.2f", shortAfrAvgHistory.getAvg()));
-        textShortAfrAvgDeviation.setText(String.format("%.2f", shortAfrAvgHistory.getAverageDistanceFromTarget(mSpartanStudio.targetAfr)));
-        mToggleClearAfrMin.setText(String.format("%.1f", shortAfrMinHistory.getMinValue()));
-        mToggleClearAfrMax.setText(String.format("%.1f", shortAfrMaxHistory.getMaxValue()));
+    public void updateDisplayedMeasurements() {
+        if (!viewModel.showFuelConsumption.getValue()) {
+            textMeasurementBig.setText(String.format("%.2f", afrHistory.getAvg()));
+            textMeasurementSmall.setText(String.format("%.2f", afrHistory.getAverageDistanceFromTarget(mSpartanStudio.targetAfr)));
+        } else {
+            textMeasurementBig.setText(String.format("%.2f", fuelLitrageHistory.getAvg()));
+            textMeasurementSmall.setText(String.format("%.2f", afrHistory.getAvg()));
+        }
     }
 
     @SuppressLint("DefaultLocale")
@@ -300,10 +321,14 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
 
             // Set the formatted text to mTextTargetAfr
             mToggleClearAfrAll.setText(formattedTargetAfr);
+
             float time = System.currentTimeMillis() - startTimestamp; // Cant use full timestamp, too big
             mChart.addToData(time, afr.floatValue(), true);
+            afrHistory.add(afr);
 
-            addEntryToAfrShortHistory(afr);
+            // Calculate fuel consumption if possible
+            calculateFuelConsumption(afr);
+            updateDisplayedMeasurements();
 
             if (recording) {
                 logReadings();
@@ -311,11 +336,33 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
         });
     }
 
+    private void calculateFuelConsumption(Double afr) {
+        if (mObdStudio.readingsForFuelConsAvailable()) {
+            Map<String, ObdReading> mObdReadings = mObdStudio.getReadings();
+            double fuelConsPerHour = FuelConsumption.calculateFuelConsumptionLperHour(
+                    afr,
+                    mObdReadings.get("rpm").intValue,
+                    mObdReadings.get("map").intValue,
+                    mObdReadings.get("iat").intValue,
+                    phoneBarometer.getPressureKPa(),
+                    1.590);
+
+            fuelTotalHistory.add(fuelConsPerHour);
+
+            Double fuelConsPer100km = FuelConsumption.calculateFuelConsumptionPer100km(fuelConsPerHour, mGpsSpeed.getReading());
+            fuelLitrageHistory.add(fuelConsPer100km);
+
+            viewModel.fuelConsumptionAvailable.postValue(true);
+        } else {
+            viewModel.fuelConsumptionAvailable.postValue(false);
+        }
+    }
+
     private void logReadings() {
         LinkedHashMap<String, String> values = new LinkedHashMap<>();
-        values.putAll(mSpartanStudio.getReadings());
-        values.putAll(mObdStudio.getReadings());
-        values.putAll(mGpsSpeed.getReadings());
+        values.putAll(mSpartanStudio.getReadingsAsString());
+        values.putAll(mObdStudio.getReadingsAsString());
+        values.putAll(mGpsSpeed.getReadingsAsString());
 
         mDataLog.addEntry(new DataLogEntry(values));
     }
@@ -380,12 +427,37 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
 
     private void initObdButton(int textViewId, String reading_name) {
         TextView textView = findViewById(textViewId);
+        obdButtons.put(reading_name, textView);
         updateToggleAppearance(textView, mObdStudio.readings.isActive(reading_name));
 
         textView.setOnClickListener(v -> {
             boolean isActive = mObdStudio.readings.toggleActive(reading_name);
             updateToggleAppearance(textView, isActive);
+
+            if (!mObdStudio.readingsForFuelConsAvailable()) {
+                viewModel.showFuelConsumption.postValue(false);
+                viewModel.fuelConsumptionAvailable.postValue(false);
+            }
         });
+    }
+
+    private void setActiveObdReadings(List<String> readingNames) {
+        mObdStudio.readings.setAllInactive();
+        mObdStudio.readings.setAsActive(new ArrayList<>(readingNames));
+
+        for (String name : readingNames) {
+            TextView textView = obdButtons.get(name);
+            if (textView != null) {
+                updateToggleAppearance(textView, true);
+            }
+        }
+
+        // Optionally deactivate all others
+        for (Map.Entry<String, TextView> entry : obdButtons.entrySet()) {
+            if (!readingNames.contains(entry.getKey())) {
+                updateToggleAppearance(entry.getValue(), false);
+            }
+        }
     }
 
     private void updateToggleAppearance(TextView textView, boolean isActive) {
@@ -403,7 +475,6 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
             mTextSpeed.setText(s);
         }
     }
-
 
     public void BT_startService() {
         if (!BluetoothService.isRunning(this)) {
@@ -430,6 +501,12 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
     }
 
     public void BT_disconnect() {
+        try {
+            unregisterReceiver(btReceiver);
+        } catch (IllegalArgumentException e) {
+            Log.w("BTReceiver", "Receiver was already unregistered");
+        }
+
         BluetoothService.disconnect(this, "obd");
         BluetoothService.disconnect(this, "spartan");
     }
@@ -585,11 +662,34 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
 
     }
 
+    public class ButtonShowFuelConsOnClickListener implements View.OnClickListener {
+        @Override
+        public void onClick(View v) {
+            if (!viewModel.showFuelConsumption.getValue()) {
+                saveObdPids();
+                setActiveObdReadings(ObdStudio.FUEL_CONS_OBD_READINGS);
+                viewModel.showFuelConsumption.postValue(true);
+            } else {
+                mObdStudio.readings.setAsActive(loadObdPids());
+
+                for (Map.Entry<String, TextView> entry : obdButtons.entrySet()) {
+                    String readingName = entry.getKey();
+                    TextView textView = entry.getValue();
+
+                    boolean isActive = mObdStudio.readings.isActive(readingName);
+                    updateToggleAppearance(textView, isActive);
+                }
+
+                viewModel.showFuelConsumption.postValue(false);
+            }
+        }
+    }
+
     @Override
     public void onStop() {
         super.onStop();
+
         BT_disconnect();
-        unregisterReceiver(btReceiver);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
@@ -603,9 +703,16 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
     public void onResume() {
         super.onResume();
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(btReceiver, intentFilter, Context.RECEIVER_EXPORTED);
+        } else {
+            registerReceiver(btReceiver, intentFilter);
+        }
+
         BT_startService();
         BT_connect_spartan();
         BT_connect_obd();
+        phoneBarometer = new PhoneBarometer(this);
     }
 
     @Override
@@ -619,6 +726,10 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
         super.onDestroy();
 
         saveObdPids();
+
+        if (phoneBarometer != null) {
+            phoneBarometer.stop();
+        }
     }
 
     private ArrayList<String> loadObdPids() {
@@ -633,7 +744,7 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
 
     private void saveObdPids() {
         ArrayList<String> obdPids = mObdStudio.readings.getActiveIds();
-        
+
         // Convert ArrayList to a Set or JSON string and save it to SharedPreferences
         SharedPreferences sharedPreferences = getSharedPreferences("ObdPrefs", MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();

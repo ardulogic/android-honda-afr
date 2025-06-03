@@ -7,7 +7,9 @@ import com.hondaafr.Libs.Devices.Obd.Readings.ObdReading;
 import com.hondaafr.Libs.Helpers.Debuggable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -29,6 +31,7 @@ public class ObdStudio extends Debuggable {
     private boolean isBusy = false;
     private boolean ecuConnected = false;
 
+    public static final List<String> FUEL_CONS_OBD_READINGS = Arrays.asList( "rpm", "map", "iat");
 
     public ObdStudio(Context mContext, ArrayList<String> pid_names, ObdStudioListener listener) {
         this.listener = listener;
@@ -151,12 +154,45 @@ public class ObdStudio extends Debuggable {
         return System.currentTimeMillis() - lastReadingTimestamp;
     }
 
-    public Map<String, String> getReadings() {
+    public Map<String, String> getReadingsAsString() {
         LinkedHashMap<String, String> readings = new LinkedHashMap<>();
 
         // Populate the map with some sample readings
         for (ObdReading r : this.readings.available) {
             readings.put(r.getDisplayName(), r.getValueAsString());
+        }
+
+        return readings;
+    }
+
+    public boolean readingsForFuelConsAvailable() {
+        Map<String, ObdReading> readings = getActiveReadings();
+
+        for (String key : FUEL_CONS_OBD_READINGS) {
+            if (!readings.containsKey(key.toUpperCase())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public Map<String, ObdReading> getReadings() {
+        LinkedHashMap<String, ObdReading> readings = new LinkedHashMap<>();
+
+        // Populate the map with some sample readings
+        for (ObdReading r : this.readings.available) {
+            readings.put(r.getDisplayName(), r);
+        }
+
+        return readings;
+    }
+
+    public Map<String, ObdReading> getActiveReadings() {
+        LinkedHashMap<String, ObdReading> readings = new LinkedHashMap<>();
+
+        // Populate the map with some sample readings
+        for (ObdReading r : this.readings.active) {
+            readings.put(r.getDisplayName(), r);
         }
 
         return readings;

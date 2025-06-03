@@ -91,9 +91,14 @@ public class GpsSpeed {
     }
 
     @SuppressLint("DefaultLocale")
-    public Map<String, String> getReadings() {
+    public Map<String, String> getReadingsAsString() {
         LinkedHashMap<String, String> readings = new LinkedHashMap<>();
         readings.put("GPS Speed (km/h)", String.format("%.1f", speed));
         return readings;
+    }
+
+    @SuppressLint("DefaultLocale")
+    public Double getReading() {
+        return speed;
     }
 }
