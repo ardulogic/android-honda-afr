@@ -1,7 +1,7 @@
 package com.hondaafr.Libs.Helpers;
 
 public class ReadingHistory {
-    private final AverageList shortAfrAvgHistory = new AverageList(100);
+    private final AverageList shortAfrAvgHistory = new AverageList(80);
     private final AverageList shortAfrMinHistory = new AverageList(80);
     private final AverageList shortAfrMaxHistory = new AverageList(80);
 
@@ -31,5 +31,13 @@ public class ReadingHistory {
 
     public Object getAverageDistanceFromTarget(double target) {
         return shortAfrAvgHistory.getAverageDistanceFromTarget(target);
+    }
+
+    public double getMinValue() {
+        return shortAfrMinHistory.getMinValue();
+    }
+
+    public double getMaxValue() {
+        return shortAfrMaxHistory.getMaxValue();
     }
 }

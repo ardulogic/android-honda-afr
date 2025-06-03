@@ -84,7 +84,7 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
     private Button buttonClearLog;
 
     private Button buttonRecord;
-    private ImageButtonRounded mToggleShowFuelCons;
+    private ImageButtonRounded mToggleFuelCons;
     private TextView mTextSpeed;
 
     private Double sportPlusAfr = 12.7;
@@ -94,7 +94,7 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
     private boolean recording = false;
 
     private final ReadingHistory afrHistory = new ReadingHistory();
-    private final ReadingHistory fuelLitrageHistory = new ReadingHistory();
+    private final ReadingHistory fuelConsHistory = new ReadingHistory();
 
     private final FuelTotalHistory fuelTotalHistory = new FuelTotalHistory();
 
@@ -184,14 +184,15 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
 
         mToggleClearAfrMin = findViewById(R.id.buttonClearAfrMin);
         mToggleClearAfrMin.setOnClickListener(v -> afrHistory.clearMin());
+
         mToggleClearAfrAll = findViewById(R.id.buttonClearAfrAll);
         mToggleClearAfrAll.setOnClickListener(v -> afrHistory.clear());
 
         mToggleClearAfrMax = findViewById(R.id.buttonClearAfrMax);
         mToggleClearAfrMax.setOnClickListener(v -> afrHistory.clearMax());
 
-        mToggleShowFuelCons = findViewById(R.id.buttonToggleShowGasConsumption);
-        mToggleShowFuelCons.setOnClickListener(new ButtonShowFuelConsOnClickListener());
+        mToggleFuelCons = findViewById(R.id.buttonToggleShowGasConsumption);
+        mToggleFuelCons.setOnClickListener(new ButtonShowFuelConsOnClickListener());
 
         // Keep the screen on while this activity is visible
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -222,12 +223,12 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
 
         viewModel.showFuelConsumption.observe(this, show -> {
             if (show != null) {
-                mToggleShowFuelCons.setState(show);
+                mToggleFuelCons.setState(show);
             }
         });
 
         viewModel.fuelConsumptionAvailable.observe(this, fuelAvailable -> {
-            mToggleShowFuelCons.setIconState(fuelAvailable);
+            mToggleFuelCons.setIconState(fuelAvailable);
         });
     }
 
@@ -305,8 +306,10 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
         if (!viewModel.showFuelConsumption.getValue()) {
             textMeasurementBig.setText(String.format("%.2f", afrHistory.getAvg()));
             textMeasurementSmall.setText(String.format("%.2f", afrHistory.getAverageDistanceFromTarget(mSpartanStudio.targetAfr)));
+            mToggleClearAfrMin.setText(String.format("%.1f", afrHistory.getMinValue()));
+            mToggleClearAfrMax.setText(String.format("%.1f", afrHistory.getMaxValue()));
         } else {
-            textMeasurementBig.setText(String.format("%.2f", fuelLitrageHistory.getAvg()));
+            textMeasurementBig.setText(String.format("%.2f", fuelConsHistory.getAvg()));
             textMeasurementSmall.setText(String.format("%.2f", afrHistory.getAvg()));
         }
     }
@@ -349,8 +352,10 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
 
             fuelTotalHistory.add(fuelConsPerHour);
 
-            Double fuelConsPer100km = FuelConsumption.calculateFuelConsumptionPer100km(fuelConsPerHour, mGpsSpeed.getReading());
-            fuelLitrageHistory.add(fuelConsPer100km);
+            double speed = mObdReadings.get("speed").intValue < 30 ? mObdReadings.get("speed").intValue : mGpsSpeed.getReading();
+
+            Double fuelConsPer100km = FuelConsumption.calculateFuelConsumptionPer100km(fuelConsPerHour, speed);
+            fuelConsHistory.add(fuelConsPer100km);
 
             viewModel.fuelConsumptionAvailable.postValue(true);
         } else {
