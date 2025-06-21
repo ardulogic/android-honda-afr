@@ -303,14 +303,15 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
 
     @SuppressLint("DefaultLocale")
     public void updateDisplayedMeasurements() {
+        mToggleClearAfrMin.setText(String.format("%.1f", afrHistory.getMinValue()));
+        mToggleClearAfrMax.setText(String.format("%.1f", afrHistory.getMaxValue()));
+
         if (!viewModel.showFuelConsumption.getValue()) {
             textMeasurementBig.setText(String.format("%.2f", afrHistory.getAvg()));
             textMeasurementSmall.setText(String.format("%.2f", afrHistory.getAverageDistanceFromTarget(mSpartanStudio.targetAfr)));
-            mToggleClearAfrMin.setText(String.format("%.1f", afrHistory.getMinValue()));
-            mToggleClearAfrMax.setText(String.format("%.1f", afrHistory.getMaxValue()));
         } else {
             textMeasurementBig.setText(String.format("%.2f", fuelConsHistory.getAvg()));
-            textMeasurementSmall.setText(String.format("%.2f", afrHistory.getAvg()));
+            textMeasurementSmall.setText(String.format("%.2f", fuelTotalHistory.getLitresPer100Km()));
         }
     }
 
@@ -342,20 +343,22 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
     private void calculateFuelConsumption(Double afr) {
         if (mObdStudio.readingsForFuelConsAvailable()) {
             Map<String, ObdReading> mObdReadings = mObdStudio.getReadings();
+            double iatObd = mObdStudio.getAvailableReading("iat").intValue;
+            double iat = iatObd > 0 ? iatObd : 35;
+
             double fuelConsPerHour = FuelConsumption.calculateFuelConsumptionLperHour(
                     afr,
                     mObdReadings.get("rpm").intValue,
                     mObdReadings.get("map").intValue,
-                    mObdReadings.get("iat").intValue,
+                    iat,
                     phoneBarometer.getPressureKPa(),
                     1.590);
 
-            fuelTotalHistory.add(fuelConsPerHour);
-
             double speed = mObdReadings.get("speed").intValue < 30 ? mObdReadings.get("speed").intValue : mGpsSpeed.getReading();
 
-            Double fuelConsPer100km = FuelConsumption.calculateFuelConsumptionPer100km(fuelConsPerHour, speed);
-            fuelConsHistory.add(fuelConsPer100km);
+//            Double fuelConsPer100km = FuelConsumption.calculateFuelConsumptionPer100km(fuelConsPerHour, speed);
+            fuelConsHistory.add(fuelConsPerHour);
+            fuelTotalHistory.add(fuelConsPerHour, speed);
 
             viewModel.fuelConsumptionAvailable.postValue(true);
         } else {

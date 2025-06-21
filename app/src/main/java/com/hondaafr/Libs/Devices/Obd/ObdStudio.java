@@ -31,7 +31,7 @@ public class ObdStudio extends Debuggable {
     private boolean isBusy = false;
     private boolean ecuConnected = false;
 
-    public static final List<String> FUEL_CONS_OBD_READINGS = Arrays.asList( "rpm", "map", "iat", "speed");
+    public static final List<String> FUEL_CONS_OBD_READINGS = Arrays.asList( "rpm", "map", "speed");
 
     public ObdStudio(Context mContext, ArrayList<String> pid_names, ObdStudioListener listener) {
         this.listener = listener;
@@ -185,6 +185,10 @@ public class ObdStudio extends Debuggable {
         }
 
         return readings;
+    }
+
+    public ObdReading getAvailableReading(String name) {
+        return this.readings.getAvailable(name);
     }
 
     public Map<String, ObdReading> getActiveReadings() {
