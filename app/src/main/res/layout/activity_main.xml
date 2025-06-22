@@ -197,7 +197,6 @@
         android:text="00.0"
         android:textSize="34sp"
         app:layout_constraintBottom_toTopOf="@+id/textMeasurementBig"
-        app:layout_constraintEnd_toEndOf="@+id/textMeasurementBig"
         app:layout_constraintStart_toStartOf="@+id/textMeasurementBig" />
 
     <TextView

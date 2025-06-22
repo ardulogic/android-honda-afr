@@ -5,7 +5,8 @@ import java.time.Instant;
 
 public class FuelTotalHistory {
 
-    private final AverageList rateHistory = new AverageList(20);
+    private final AverageList fuelPerHourHistory = new AverageList(20);
+    private final AverageList fuelPer100KmHistory = new AverageList(20);
     private double totalConsumedLitres = 0.0;
     private double totalDistanceKm = 0.0;
 
@@ -21,7 +22,11 @@ public class FuelTotalHistory {
      */
     public void add(double litresPerHour, double speedKmh) {
         Instant now = Instant.now();
-        rateHistory.addNumber(litresPerHour);
+        fuelPerHourHistory.addNumber(litresPerHour);
+
+        if (speedKmh > 0) {
+            fuelPer100KmHistory.addNumber(FuelConsumption.calculateLiters100km(litresPerHour, speedKmh));
+        }
 
         if (lastSampleTime != null) {
             double deltaHours = Duration.between(lastSampleTime, now).toMillis() / 3_600_000.0;
@@ -39,7 +44,8 @@ public class FuelTotalHistory {
     }
 
     public void clear() {
-        rateHistory.clear();
+        fuelPerHourHistory.clear();
+        fuelPer100KmHistory.clear();
         totalConsumedLitres = 0.0;
         totalDistanceKm = 0.0;
         lastSampleTime = null;
@@ -47,8 +53,12 @@ public class FuelTotalHistory {
         lastSpeedKmh = null;
     }
 
-    public double getAverageRate() {
-        return rateHistory.getAvg();
+    public double getAverageFuelPerHour() {
+        return fuelPerHourHistory.getAvg();
+    }
+
+    public double getAverageFuelPer100km() {
+        return fuelPer100KmHistory.getAvg();
     }
 
     public double getTotalConsumedLitres() {
@@ -63,7 +73,4 @@ public class FuelTotalHistory {
         return totalDistanceKm > 0.0 ? (totalConsumedLitres / totalDistanceKm) * 100.0 : 0.0;
     }
 
-    public double getAverageDistanceFromTarget(double targetLph) {
-        return rateHistory.getAverageDistanceFromTarget(targetLph);
-    }
 }

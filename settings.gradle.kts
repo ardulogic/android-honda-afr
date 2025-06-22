@@ -9,6 +9,11 @@ pluginManagement {
         }
         mavenCentral()
         gradlePluginPortal()
+
+
+        flatDir {
+            dirs("Libs")
+        }
     }
 }
 dependencyResolutionManagement {

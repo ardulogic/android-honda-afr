@@ -1,107 +1,135 @@
-package com.hondaafr.Libs.Helpers;
+    package com.hondaafr.Libs.Helpers;
 
-public class FuelConsumption {
+    public class FuelConsumption {
 
-    // Constants
-    private static final double GASOLINE_DENSITY = 0.745; // kg/L
-    private static final double VE = 0.85; // Volumetric Efficiency (typical)
-    private static final double R_SPECIFIC_AIR = 287.058; // J/(kg·K)
-    private static final double ATM_PRESSURE = 101.325; // kPa (for total pressure calc)
+        // Constants
+        private static final double GASOLINE_DENSITY = 0.745; // kg/L
+        private static final double VE = 0.85; // Volumetric Efficiency (typical)
+        private static final double R_SPECIFIC_AIR = 287.058; // J/(kg·K)
+        private static final double ATM_PRESSURE = 101.325; // kPa (for total pressure calc)
 
-    /**
-     * Calculates air density using ideal gas law.
-     *
-     * @param pressureKPa Absolute pressure in kPa (e.g., MAP)
-     * @param tempC Temperature in Celsius (IAT)
-     * @return Air density in kg/m³
-     */
-    public static double calculateAirDensity(double pressureKPa, double tempC) {
-        double pressurePa = pressureKPa * 1000.0;
-        double tempK = tempC + 273.15;
-        return pressurePa / (R_SPECIFIC_AIR * tempK);
-    }
+        public static double estimateVE(double rpm, double mapKpa, double atmPressureKpa) {
+            // RPM breakpoints (x-axis)
+            final double[] rpmBins = {1000, 2000, 3000, 4000, 5000, 6000};
 
+            // MAP breakpoints (y-axis, in kPa)
+            final double[] mapBins = {30, 50, 70, 90, 100};
 
-    /* ───────────── VE table with part-throttle correction ───────────── */
-    /*  Look-up VE at WOT from a 1 k-rpm table, then
-     *  scale linearly with manifold pressure.          */
-    public static double estimateVE(double rpm,
-                                    double mapKpa,
-                                    double atmPressureKpa) {
+            // VE table: veTable[rpmIdx][mapIdx]
+            final double[][] veTable = {
+                    {0.28, 0.38, 0.45, 0.52, 0.60}, // 1000 rpm
+                    {0.32, 0.45, 0.58, 0.65, 0.70}, // 2000 rpm
+                    {0.35, 0.52, 0.65, 0.72, 0.78}, // 3000 rpm
+                    {0.40, 0.60, 0.70, 0.78, 0.85}, // 4000 rpm
+                    {0.42, 0.65, 0.75, 0.82, 0.88}, // 5000 rpm
+                    {0.44, 0.68, 0.78, 0.85, 0.87}  // 6000 rpm
+            };
 
-        /* D16W7 WOT VE, 1 000 → 6 000 rpm               */
-        final double[] wotVe = { 0.68, 0.78, 0.86, 0.92, 0.88, 0.80 };
+            // Clamp values to table bounds
+            rpm = Math.max(rpmBins[0], Math.min(rpm, rpmBins[rpmBins.length - 1]));
+            mapKpa = Math.max(mapBins[0], Math.min(mapKpa, mapBins[mapBins.length - 1]));
 
-        int idx = (int) (rpm / 1_000);
-        if (idx >= wotVe.length) idx = wotVe.length - 1;
+            // Find bounding RPM indices
+            int rpmIdx = 0;
+            while (rpmIdx < rpmBins.length - 1 && rpm > rpmBins[rpmIdx + 1]) {
+                rpmIdx++;
+            }
 
-        double veWot    = wotVe[idx];
-        double mapFactor = mapKpa / atmPressureKpa;      // 0.0–1.0
+            // Find bounding MAP indices
+            int mapIdx = 0;
+            while (mapIdx < mapBins.length - 1 && mapKpa > mapBins[mapIdx + 1]) {
+                mapIdx++;
+            }
 
-//        return veWot * mapFactor;                        // no TPS!
-        return 0.85;                        // no TPS!ddddddddd
-    }
+            // Axis ranges
+            double rpmLow = rpmBins[rpmIdx];
+            double rpmHigh = rpmBins[rpmIdx + 1];
+            double mapLow = mapBins[mapIdx];
+            double mapHigh = mapBins[mapIdx + 1];
 
+            // VE values at the 4 corners
+            double ve00 = veTable[rpmIdx][mapIdx];         // lower-left
+            double ve10 = veTable[rpmIdx + 1][mapIdx];     // lower-right
+            double ve01 = veTable[rpmIdx][mapIdx + 1];     // upper-left
+            double ve11 = veTable[rpmIdx + 1][mapIdx + 1]; // upper-right
 
+            // Bilinear interpolation
+            double t = (rpm - rpmLow) / (rpmHigh - rpmLow);
+            double u = (mapKpa - mapLow) / (mapHigh - mapLow);
 
+            double veLower = ve00 + t * (ve10 - ve00);
+            double veUpper = ve01 + t * (ve11 - ve01);
+            double ve = veLower + u * (veUpper - veLower);
 
-    /**
-     * Calculates estimated fuel consumption in L/100km using dynamic air density.
-     *
-     * @param afr Air-Fuel Ratio
-     * @param rpm Engine RPM
-     * @param map MAP in kPa
-     * @param iat Intake Air Temp in °C
-     * @param displacement Engine displacement in liters
-     * @return Fuel consumption in L/100km
-     */
-    public static double calculateFuelConsumptionLperHour(double afr, double rpm, double map, double iat, double atm,
-                                                  double displacement) {
-
-        if (afr <= 0 || rpm <= 0 || map <= 0 || displacement <= 0) {
-            return 0;
+            return ve * 1.48;
         }
 
-        // Calculate dynamic air density
-        double airDensity = calculateAirDensity(map, iat); // kg/m³
 
-        // Calculate engine airflow in m³/s
-        double engineCyclesPerSec = rpm / 120.0;
-        double airVolumePerCycle =       (displacement / 1000.0) * estimateVE(rpm, map, atm);
-        double airFlowVolumePerSec = engineCyclesPerSec * airVolumePerCycle;
 
-        // Airflow in kg/s
-        double airMassFlowKgPerSec = airFlowVolumePerSec * airDensity;
+        /**
+         * Calculates estimated fuel consumption in L/100km using dynamic air density.
+         *
+         * @param afr Air-Fuel Ratio
+         * @param rpm Engine RPM
+         * @param map MAP in kPa
+         * @param iat Intake Air Temp in °C
+         * @param displacement Engine displacement in liters
+         * @return Fuel consumption in L/100km
+         */
+        public static double calculateFuelConsumptionLperHour(double afr, double rpm, double map, double iat, double atm,
+                                                      double displacement) {
 
-        // Fuel flow in kg/s
-        double fuelMassFlowKgPerSec = airMassFlowKgPerSec / afr;
+            if (afr <= 0 || rpm <= 0 || map <= 0 || displacement <= 0) {
+                return 0;
+            }
 
-        // Convert to L/h
-        double fuelVolumeLPerHour = (fuelMassFlowKgPerSec * 3600.0) / GASOLINE_DENSITY;
+            // Calculate dynamic air density
+            double airDensity = calculateAirDensity(map, iat); // kg/m³
 
-        return fuelVolumeLPerHour;
-    }
+            // Calculate engine airflow in m³/s
+            double engineCyclesPerSec = rpm / 120.0;
+            double airVolumePerCycle =       (displacement / 1000.0) * estimateVE(rpm, map, atm);
+            double airFlowVolumePerSec = engineCyclesPerSec * airVolumePerCycle;
 
-    /**
-     * Calculates estimated fuel consumption in L/100km using dynamic air density.
-     *
-     * @param speedKmH Vehicle speed in km/h
-     * @return Fuel consumption in L/100km
-     */
-    public static double calculateFuelConsumptionPer100km(double fuelVolumeLPerHour, double speedKmH) {
+            // Airflow in kg/s
+            double airMassFlowKgPerSec = airFlowVolumePerSec * airDensity;
 
-        // Fuel consumption in L/100km
-        if (speedKmH > 10) {
-            return (fuelVolumeLPerHour / speedKmH) * 100.0;
-        } else {
+            // Fuel flow in kg/s
+            double fuelMassFlowKgPerSec = airMassFlowKgPerSec / afr;
+
+            // Convert to L/h
+            double fuelVolumeLPerHour = (fuelMassFlowKgPerSec * 3600.0) / GASOLINE_DENSITY;
+
             return fuelVolumeLPerHour;
         }
-    }
 
-    public static double calculateFuelConsumptionPer100km(double afr, double rpm, double map, double iat,
-                                                          double atm, double displacement, double speedKmh) {
+        /**
+         * Calculates air density using the Ideal Gas Law.
+         *
+         * @param pressureKPa Absolute manifold pressure in kPa (from MAP sensor)
+         * @param tempC Intake Air Temperature in Celsius (from IAT sensor)
+         * @return Air density in kg/m³
+         */
+        public static double calculateAirDensity(double pressureKPa, double tempC) {
+            final double R = 287.058; // Specific gas constant for dry air [J/(kg·K)]
 
-        return calculateFuelConsumptionPer100km(calculateFuelConsumptionLperHour(afr, rpm, map, iat, atm, displacement), speedKmh);
+            // Convert pressure to Pascals and temperature to Kelvin
+            double pressurePa = pressureKPa * 1000.0;
+            double tempK = tempC + 273.15;
+
+            // Ideal gas law: ρ = p / (R * T)
+            return pressurePa / (R * tempK);
+        }
+
+
+        public static double calculateLiters100km(double litersPerHour, double speedKmh) {
+            if (speedKmh <= 0) {
+                // Avoid division by zero and handle vehicle at rest
+                return 0;
+            }
+
+            return (litersPerHour / speedKmh) * 100.0;
+        }
+
     }
-}
 

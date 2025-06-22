@@ -39,6 +39,7 @@ import com.hondaafr.Libs.Devices.Phone.GpsSpeed;
 import com.hondaafr.Libs.Devices.Phone.GpsSpeedListener;
 import com.hondaafr.Libs.Devices.Spartan.SpartanStudio;
 import com.hondaafr.Libs.Devices.Spartan.SpartanStudioListener;
+import com.hondaafr.Libs.EngineSound.EngineSoundPlayer;
 import com.hondaafr.Libs.Helpers.DataLog;
 import com.hondaafr.Libs.Helpers.DataLogEntry;
 import com.hondaafr.Libs.Helpers.FuelConsumption;
@@ -47,6 +48,8 @@ import com.hondaafr.Libs.Helpers.Permissions;
 import com.hondaafr.Libs.Helpers.ReadingHistory;
 import com.hondaafr.Libs.Helpers.TimeChart;
 import com.hondaafr.Libs.UI.ImageButtonRounded;
+
+import org.fmod.FMOD;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -230,7 +233,13 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
         viewModel.fuelConsumptionAvailable.observe(this, fuelAvailable -> {
             mToggleFuelCons.setIconState(fuelAvailable);
         });
+
+        FMOD.init(this);  // Initialize FMOD
+
+        testFmod();
     }
+
+
 
     IntentFilter intentFilter = new IntentFilter(BluetoothService.ACTION_UI_UPDATE);
 
@@ -251,6 +260,10 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
         editor.apply();
 
         loadSettings(); // So the variables are reloaded
+    }
+
+    public void testFmod() {
+        EngineSoundPlayer.test();
     }
 
 
@@ -310,8 +323,8 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
             textMeasurementBig.setText(String.format("%.2f", afrHistory.getAvg()));
             textMeasurementSmall.setText(String.format("%.2f", afrHistory.getAverageDistanceFromTarget(mSpartanStudio.targetAfr)));
         } else {
-            textMeasurementBig.setText(String.format("%.2f", fuelConsHistory.getAvg()));
-            textMeasurementSmall.setText(String.format("%.2f", fuelTotalHistory.getLitresPer100Km()));
+            textMeasurementBig.setText(String.format("%.1f l/h", fuelTotalHistory.getAverageFuelPerHour()));
+            textMeasurementSmall.setText(String.format("%.1f l (%.1f l/100km)", fuelTotalHistory.getTotalConsumedLitres()));
         }
     }
 
@@ -731,13 +744,14 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
 
     @Override
     protected void onDestroy() {
-        super.onDestroy();
-
         saveObdPids();
+        FMOD.close();  // Shutdown FMOD
 
         if (phoneBarometer != null) {
             phoneBarometer.stop();
         }
+
+        super.onDestroy();
     }
 
     private ArrayList<String> loadObdPids() {
