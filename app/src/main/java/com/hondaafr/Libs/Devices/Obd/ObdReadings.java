@@ -15,123 +15,109 @@ import com.hondaafr.Libs.Devices.Obd.Readings.ObdUpstreamLambdaVoltage;
 
 import java.util.ArrayList;
 
+import java.util.HashMap;
+
 public class ObdReadings {
     private final Context context;
-    public final ArrayList<ObdReading> available = new ArrayList<>();
-    public final ArrayList<ObdReading> active = new ArrayList<>();
-    private int requestIndex = 0; // We're requesting data one-by-one
-
+    public final HashMap<String, ObdReading> available = new HashMap<>();
+    public final HashMap<String, ObdReading> active = new HashMap<>();
+    private int requestIndex = 0;
+    private final ArrayList<String> activeKeys = new ArrayList<>();
 
     public ObdReadings(Context context, ArrayList<String> pid_names) {
         this.context = context;
 
-        this.available.add(new ObdCoolantTemp());
-        this.available.add(new ObdRpm());
-        this.available.add(new ObdIntakeTemp());
-        this.available.add(new ObdLtftTrim());
-        this.available.add(new ObdStftTrim());
-        this.available.add(new ObdRpm());
-        this.available.add(new ObdMap());
-        this.available.add(new ObdTps());
-        this.available.add(new ObdSpeed());
-        this.available.add(new ObdUpstreamLambdaVoltage());
+        addAvailable(new ObdCoolantTemp());
+        addAvailable(new ObdIntakeTemp());
+        addAvailable(new ObdLtftTrim());
+        addAvailable(new ObdStftTrim());
+        addAvailable(new ObdRpm());
+        addAvailable(new ObdMap());
+        addAvailable(new ObdTps());
+        addAvailable(new ObdSpeed());
+        addAvailable(new ObdUpstreamLambdaVoltage());
 
-        setAsActive(pid_names);
+        setAsActiveAdd(pid_names);
     }
 
-    public void setAsActive(ArrayList<String> pid_names) {
-        this.active.clear();
+    private void addAvailable(ObdReading reading) {
+        available.put(reading.getName(), reading);
+    }
+
+    public void setAsActiveOnly(ArrayList<String> pid_names) {
+        active.clear();
+        activeKeys.clear();
 
         for (String pid_name : pid_names) {
-            for (ObdReading reading : this.available) {
-                if (reading.getName().equals(pid_name)) {
-                    this.active.add(reading);
-                }
+            ObdReading reading = available.get(pid_name);
+            if (reading != null) {
+                active.put(pid_name, reading);
+                activeKeys.add(pid_name);
+            }
+        }
+    }
+
+    public void setAsActiveAdd(ArrayList<String> pid_names) {
+        for (String pid_name : pid_names) {
+            ObdReading reading = available.get(pid_name);
+            if (reading != null) {
+                active.put(pid_name, reading);
+                activeKeys.add(pid_name);
             }
         }
     }
 
     public void addActive(String name) {
-        for (ObdReading reading : this.available) {
-            if (reading.getName().equals(name)) {
-                this.active.add(reading);
-                break;
+        if (!active.containsKey(name)) {
+            ObdReading reading = available.get(name);
+            if (reading != null) {
+                active.put(name, reading);
+                activeKeys.add(name);
             }
         }
     }
 
     public ObdReading getActive(String name) {
-        // Search for the reading in the targetReadings list
-        ObdReading r = null;
-
-        for (ObdReading reading : this.active) {
-            if (reading.getName().equals(name)) {
-                r = reading;
-                break;
-            }
-        }
-
-        return r;
+        return active.get(name);
     }
 
     public ObdReading getAvailable(String name) {
-        // Search for the reading in the targetReadings list
-        ObdReading r = null;
-
-        for (ObdReading reading : this.available) {
-            if (reading.getName().equals(name)) {
-                r = reading;
-                break;
-            }
-        }
-
-        return r;
+        return available.get(name);
     }
 
     public ArrayList<String> getActiveIds() {
-        ArrayList<String> obdPids = new ArrayList<>();
-        for (ObdReading reading : this.active) {
-            obdPids.add(reading.getName());
-        }
-
-        return obdPids;
+        return new ArrayList<>(active.keySet());
     }
 
-
     public boolean toggleActive(String name) {
-        // Search for the reading in the targetReadings list
-        ObdReading t = getActive(name);
-
-        if (t != null) {
-            this.active.remove(t);
-
+        if (active.containsKey(name)) {
+            active.remove(name);
+            activeKeys.remove(name);
             return false;
         } else {
             addActive(name);
-
             return true;
         }
     }
 
-
     public void requestNextReading() {
-        if (this.active.isEmpty()) {
-            return; // Handle the case where there are no readings.
+        if (active.isEmpty()) return;
+
+        requestIndex = (requestIndex + 1) % activeKeys.size();
+        String key = activeKeys.get(requestIndex);
+        ObdReading reading = active.get(key);
+        if (reading != null) {
+            reading.request(context);
         }
-
-        requestIndex = (requestIndex + 1) % this.active.size(); // Wraps around when it reaches the end.
-
-        this.active.get(requestIndex).request(this.context);
     }
 
     public boolean isActive(String name) {
-        ObdReading r = getActive(name);
-
-        return r != null;
+        return active.containsKey(name);
     }
-
 
     public void setAllInactive() {
-        this.active.clear();
+        active.clear();
+        activeKeys.clear();
     }
 }
+

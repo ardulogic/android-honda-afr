@@ -12,6 +12,7 @@ public abstract class ObdReading {
 
     public int intValue = 0;
     public Object value = 0;
+    public Long timeUpdated = null;
 
     abstract public String getPid();
 
@@ -36,6 +37,8 @@ public abstract class ObdReading {
     public void onData(String data) {
         if (incomingDataIsReply(data)) {
             this.intValue = parseReading(data);
+
+            timeUpdated = System.currentTimeMillis();
         }
 
         this.value = parseIntValue(this.intValue);
@@ -144,5 +147,13 @@ public abstract class ObdReading {
 
     public String getDisplayValue() {
         return getDisplayName() + ": " + getFormattedValue() + " " + getMeasurement();
+    }
+
+    public Long getTimeSinceLastUpdate() {
+        if (timeUpdated != null) {
+            return System.currentTimeMillis() - timeUpdated;
+        }
+
+        return Long.MAX_VALUE; // Acts as a stand-in for infinity
     }
 }

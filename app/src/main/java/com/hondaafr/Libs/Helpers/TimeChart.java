@@ -39,6 +39,7 @@ public class TimeChart {
 
     public TimeChart(Activity activity, LineChart chart) {
         this.mChart = chart;
+        this.mChart.setNoDataText("");
 
         mFormat = new SimpleDateFormat(DATE_FORMAT, Locale.ENGLISH);
         legendFont = ResourcesCompat.getFont(activity, R.font.opensans_bold);

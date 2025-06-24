@@ -4,9 +4,6 @@
 
         // Constants
         private static final double GASOLINE_DENSITY = 0.745; // kg/L
-        private static final double VE = 0.85; // Volumetric Efficiency (typical)
-        private static final double R_SPECIFIC_AIR = 287.058; // J/(kg·K)
-        private static final double ATM_PRESSURE = 101.325; // kPa (for total pressure calc)
 
         public static double estimateVE(double rpm, double mapKpa, double atmPressureKpa) {
             // RPM breakpoints (x-axis)

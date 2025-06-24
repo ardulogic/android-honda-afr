@@ -29,7 +29,7 @@ public class ReadingHistory {
         return shortAfrAvgHistory.getAvg();
     }
 
-    public Object getAverageDistanceFromTarget(double target) {
+    public Object getAvgDeviation(double target) {
         return shortAfrAvgHistory.getAverageDistanceFromTarget(target);
     }
 

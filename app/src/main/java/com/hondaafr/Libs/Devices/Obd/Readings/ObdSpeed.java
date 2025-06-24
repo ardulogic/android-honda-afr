@@ -13,6 +13,11 @@ public class ObdSpeed extends ObdReading {
     }
 
     @Override
+    public String getDisplayName() {
+        return "OSPD";
+    }
+
+    @Override
     public String getMeasurement() {
         return "km/h";
     }

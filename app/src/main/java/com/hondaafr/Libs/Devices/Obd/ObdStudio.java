@@ -1,16 +1,22 @@
 package com.hondaafr.Libs.Devices.Obd;
 
+import static android.content.Context.MODE_PRIVATE;
+
 import android.content.Context;
+import android.content.SharedPreferences;
 
 import com.hondaafr.Libs.Bluetooth.Services.BluetoothService;
 import com.hondaafr.Libs.Devices.Obd.Readings.ObdReading;
 import com.hondaafr.Libs.Helpers.Debuggable;
+import com.hondaafr.MainActivity;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -19,7 +25,7 @@ public class ObdStudio extends Debuggable {
     private final Context context;
     private final ObdStudioListener listener;
 
-    public final ObdReadings readings;
+    public ObdReadings readings;
 
     private boolean readingsOn = false;
 
@@ -38,6 +44,18 @@ public class ObdStudio extends Debuggable {
         this.context = mContext;
 
         this.readings = new ObdReadings(context, pid_names);
+    }
+
+    public ObdStudio(MainActivity mContext,  ObdStudioListener listener) {
+        this(mContext, new ArrayList<>(),  listener);
+
+        loadAndSetActivePids();
+    }
+
+    public void loadAndSetActivePids() {
+        this.readings = new ObdReadings(context, loadActivePids());
+
+        listener.onObdReadingsToggled();
     }
 
     public void startRequestingSensorReadings() {
@@ -93,6 +111,14 @@ public class ObdStudio extends Debuggable {
         // Example usage of the send method
         ArrayList<String> lines = new ArrayList<>();
         lines.add(ObdCommands.resetObd());
+
+        // Extra commands
+//        lines.add("ATE0\r");    // Echo off
+//        lines.add("ATL0\r");    // Linefeeds off
+//        lines.add("ATS0\r");    // Spaces off
+//        lines.add("ATH0\r");    // Headers off
+//        lines.add("ATSP0\r");   // Set protocol to auto
+
         BluetoothService.send(context, lines, "obd");
     }
 
@@ -113,14 +139,22 @@ public class ObdStudio extends Debuggable {
         }
 
         if (ecuConnected) {
-            for (ObdReading reading : readings.active) {
+            for (ObdReading reading : readings.active.values()) {
                 if (reading.incomingDataIsReply(data)) {  // assuming reading is passed correctly
                     reading.onData(data);  // Handle the data.
                     updateTimeSinceLastReading();
 
                     listener.onObdReadingUpdate(reading);  // Notify the listener of the update.
-                    this.readings.requestNextReading();
                 }
+            }
+
+            if (readings.active.size() == 1) {
+                this.readings.requestNextReading();
+            } else {
+                ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+                scheduler.schedule(() -> {
+                    readings.requestNextReading();
+                }, 100, TimeUnit.MILLISECONDS);
             }
         }
 
@@ -157,8 +191,7 @@ public class ObdStudio extends Debuggable {
     public Map<String, String> getReadingsAsString() {
         LinkedHashMap<String, String> readings = new LinkedHashMap<>();
 
-        // Populate the map with some sample readings
-        for (ObdReading r : this.readings.available) {
+        for (ObdReading r : this.readings.available.values()) {
             readings.put(r.getDisplayName(), r.getValueAsString());
         }
 
@@ -176,15 +209,8 @@ public class ObdStudio extends Debuggable {
         return true;
     }
 
-    public Map<String, ObdReading> getReadings() {
-        LinkedHashMap<String, ObdReading> readings = new LinkedHashMap<>();
-
-        // Populate the map with some sample readings
-        for (ObdReading r : this.readings.available) {
-            readings.put(r.getName(), r);
-        }
-
-        return readings;
+    public Map<String, ObdReading> getAvailableReadings() {
+        return this.readings.available;
     }
 
     public ObdReading getAvailableReading(String name) {
@@ -192,13 +218,43 @@ public class ObdStudio extends Debuggable {
     }
 
     public Map<String, ObdReading> getActiveReadings() {
-        LinkedHashMap<String, ObdReading> readings = new LinkedHashMap<>();
+        return this.readings.active;
+    }
 
-        // Populate the map with some sample readings
-        for (ObdReading r : this.readings.active) {
-            readings.put(r.getName(), r);
-        }
+    public void saveActivePids() {
+        ArrayList<String> obdPids = readings.getActiveIds();
 
-        return readings;
+        // Convert ArrayList to a Set or JSON string and save it to SharedPreferences
+        SharedPreferences sharedPreferences = context.getSharedPreferences("ObdPrefs", MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+
+        // Convert ArrayList to Set
+        Set<String> obdPidsSet = new HashSet<>(obdPids);
+
+        // Save the Set to SharedPreferences
+        editor.putStringSet("obdPids", obdPidsSet);
+        editor.apply();  // Commit changes asynchronously
+    }
+
+    private ArrayList<String> loadActivePids() {
+        SharedPreferences sharedPreferences = context.getSharedPreferences("ObdPrefs", MODE_PRIVATE);
+
+        // Retrieve the saved Set, return a default empty Set if not found
+        Set<String> obdPidsSet = sharedPreferences.getStringSet("obdPids", new HashSet<>());
+
+        // Convert the Set back to ArrayList
+        return new ArrayList<>(obdPidsSet);
+    }
+
+    public void setAsActiveOnly(ArrayList<String> pid_names) {
+        readings.setAsActiveOnly(pid_names);
+
+        listener.onObdReadingsToggled();
+    }
+
+    public void setAsActiveAdd(ArrayList<String> pid_names) {
+        readings.setAsActiveAdd(pid_names);
+
+        listener.onObdReadingsToggled();
     }
 }

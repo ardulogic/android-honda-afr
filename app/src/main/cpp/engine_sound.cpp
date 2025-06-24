@@ -15,28 +15,11 @@ FMOD::Studio::System* studioSystem = nullptr;
 FMOD::Studio::EventInstance* engineEvent = nullptr;
 FMOD::Studio::Bank* bank = nullptr;
 
+extern "C" FMOD_DSP_DESCRIPTION* FMODGetDSPDescription();
+
 extern "C"
-JNIEXPORT void JNICALL
+JNIEXPORT bool JNICALL
 Java_com_hondaafr_Libs_EngineSound_EngineSoundPlayer_init(JNIEnv* env, jobject /*thiz*/) {
-    FMOD::Studio::System::create(&studioSystem);
-    studioSystem->initialize(1024, FMOD_STUDIO_INIT_NORMAL, FMOD_INIT_NORMAL, nullptr);
-
-    studioSystem->loadBankFile("file:///android_asset/bmw_1m.bank", FMOD_STUDIO_LOAD_BANK_NORMAL, &bank);
-
-    FMOD::Studio::EventDescription* engineDesc = nullptr;
-    studioSystem->getEvent("event:/Engine", &engineDesc);
-
-    if (engineDesc) {
-        engineDesc->createInstance(&engineEvent);
-        engineEvent->start();
-    } else {
-        LOGE("Engine event not found");
-    }
-}
-
-extern "C"
-JNIEXPORT jboolean JNICALL
-Java_com_hondaafr_Libs_EngineSound_EngineSoundPlayer_test(JNIEnv* env, jobject /*thiz*/) {
     LOGD("Calling FMOD::Studio::System::create()");
     FMOD_RESULT result = FMOD::Studio::System::create(&studioSystem);
     if (result != FMOD_OK) {
@@ -54,7 +37,36 @@ Java_com_hondaafr_Libs_EngineSound_EngineSoundPlayer_test(JNIEnv* env, jobject /
 
     LOGD("FMOD initialize success");
 
-    result = studioSystem->loadBankFile("file:///android_asset/dodge_challenger.bank", FMOD_STUDIO_LOAD_BANK_NORMAL, &bank);
+    // Get the Core FMOD System
+    FMOD::System* coreSystem = nullptr;
+    result = studioSystem->getCoreSystem(&coreSystem);
+    if (result != FMOD_OK || !coreSystem) {
+        LOGE("Failed to get core system: %s", FMOD_ErrorString(result));
+        return JNI_FALSE;
+    }
+
+    // Register custom DSP
+    FMOD_DSP_DESCRIPTION* desc = FMODGetDSPDescription();
+    if (desc) {
+        result = coreSystem->registerDSP(desc, nullptr);  // now using coreSystem
+        if (result != FMOD_OK) {
+            LOGE("FMOD DSP registration failed: %s", FMOD_ErrorString(result));
+        }
+    } else {
+        LOGE("FMOD DSP description is null");
+    }
+
+    FMOD::Studio::Bank* stringsBank = nullptr;
+
+// Load Master.strings.bank first
+    result = studioSystem->loadBankFile("file:///android_asset/Master.strings.bank", FMOD_STUDIO_LOAD_BANK_NORMAL, &stringsBank);
+    if (result != FMOD_OK) {
+        LOGE("Failed to load strings bank: %s", FMOD_ErrorString(result));
+        return JNI_FALSE;
+    }
+
+    // Load bank
+    result = studioSystem->loadBankFile("file:///android_asset/Master.bank", FMOD_STUDIO_LOAD_BANK_NORMAL, &bank);
     if (result != FMOD_OK) {
         LOGE("Failed to load bank: %s", FMOD_ErrorString(result));
         return JNI_FALSE;
@@ -62,61 +74,67 @@ Java_com_hondaafr_Libs_EngineSound_EngineSoundPlayer_test(JNIEnv* env, jobject /
 
     LOGD("FMOD load bank success");
 
-    // Log all DSPs for events in this bank
-    FMOD::Studio::EventDescription* events[128];
-    int count = 0;
-    result = bank->getEventList(events, 128, &count);
-    if (result != FMOD_OK) {
-        LOGE("Failed to get event list: %s", FMOD_ErrorString(result));
-        return JNI_FALSE;
-    }
-
-    LOGD("Found %d events in bank", count);
-
-    for (int i = 0; i < count; ++i) {
-        char path[256];
-        int retrieved = 0;
-        events[i]->getPath(path, sizeof(path), &retrieved);
-        LOGD("Inspecting event: %s", path);
-
-        FMOD::Studio::EventInstance* instance = nullptr;
-        result = events[i]->createInstance(&instance);
-        if (result != FMOD_OK || !instance) {
-            LOGE("  Failed to create instance: %s", FMOD_ErrorString(result));
-            continue;
-        }
-
-        instance->start();
-        instance->setPaused(true);
-
-        FMOD::ChannelGroup* channelGroup = nullptr;
-        result = instance->getChannelGroup(&channelGroup);
-        if (result != FMOD_OK || !channelGroup) {
-            LOGE("  No channel group found");
-            instance->release();
-            continue;
-        }
-
-        int numDSPs = 0;
-        channelGroup->getNumDSPs(&numDSPs);
-        LOGD("  DSP count: %d", numDSPs);
-
-        for (int d = 0; d < numDSPs; ++d) {
-            FMOD::DSP* dsp = nullptr;
-            channelGroup->getDSP(d, &dsp);
-            if (!dsp) continue;
-
-            char dspName[256] = {};
-            dsp->getInfo(dspName, nullptr, nullptr, nullptr, nullptr);
-            LOGD("    DSP[%d]: %s", d, dspName);
-        }
-
-        instance->stop(FMOD_STUDIO_STOP_IMMEDIATE);
-        instance->release();
-    }
-
     return JNI_TRUE;
 }
+
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_hondaafr_Libs_EngineSound_EngineSoundPlayer_playEngine(JNIEnv* env, jobject /*thiz*/, jfloat rpm) {
+    LOGD("FMOD: Playing engine at RPM: %f", rpm);
+
+    if (!studioSystem) {
+        LOGE("FMOD error: Studio system not initialized");
+        return;
+    }
+
+    if (engineEvent) {
+        FMOD_STUDIO_PLAYBACK_STATE state;
+        engineEvent->getPlaybackState(&state);
+
+        bool isPaused = false;
+        engineEvent->getPaused(&isPaused);
+
+        if (state == FMOD_STUDIO_PLAYBACK_PLAYING && !isPaused) {
+            LOGD("FMOD: Engine already playing and not paused — skipping new instance");
+            return;
+        }
+
+        if (isPaused) {
+            LOGD("FMOD: Engine was paused — resuming playback");
+            engineEvent->setPaused(false);  // Unpause
+            engineEvent->setParameterByName("RPM", rpm);  // Update RPM
+            return;
+        }
+    }
+
+    FMOD::Studio::EventDescription* engineDesc = nullptr;
+    FMOD_RESULT result = studioSystem->getEvent("event:/Engine", &engineDesc);
+    if (result != FMOD_OK || !engineDesc) {
+        LOGE("FMOD error: Failed to get engine event: %s", FMOD_ErrorString(result));
+        return;
+    }
+
+    result = engineDesc->createInstance(&engineEvent);
+    if (result != FMOD_OK || !engineEvent) {
+        LOGE("FMOD error: Failed to create engine instance: %s", FMOD_ErrorString(result));
+        return;
+    }
+
+    result = engineEvent->setParameterByName("RPM", rpm);
+    if (result != FMOD_OK) {
+        LOGE("FMOD error: Failed to set RPM: %s", FMOD_ErrorString(result));
+    }
+
+    result = engineEvent->start();
+    if (result != FMOD_OK) {
+        LOGE("FMOD error: Failed to start engine event: %s", FMOD_ErrorString(result));
+        return;
+    }
+
+    LOGD("FMOD: Engine event started successfully");
+}
+
 
 extern "C"
 JNIEXPORT void JNICALL
@@ -133,5 +151,57 @@ Java_com_hondaafr_Libs_EngineSound_EngineSoundPlayer_release(JNIEnv* env, jobjec
     if (studioSystem) {
         studioSystem->unloadAll();
         studioSystem->release();
+    }
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_hondaafr_Libs_EngineSound_EngineSoundPlayer_pauseEngine(JNIEnv* env, jobject /*thiz*/) {
+    if (engineEvent) {
+        engineEvent->setPaused(true);  // Resume with setPaused(false)
+        LOGD("FMOD: Engine sound paused");
+    }
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_hondaafr_Libs_EngineSound_EngineSoundPlayer_update(JNIEnv* env, jobject /*thiz*/) {
+    if (studioSystem) {
+        studioSystem->update();
+    }
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_hondaafr_Libs_EngineSound_EngineSoundPlayer_shutdown(JNIEnv* env, jobject /*thiz*/) {
+    LOGD("FMOD: Shutting down");
+
+    if (engineEvent) {
+        engineEvent->stop(FMOD_STUDIO_STOP_IMMEDIATE);
+        engineEvent->release();
+        engineEvent = nullptr;
+    }
+
+    if (bank) {
+        bank->unload();
+        bank = nullptr;
+    }
+
+    // Unload all remaining banks (e.g., strings bank)
+    if (studioSystem) {
+        studioSystem->unloadAll();
+        studioSystem->release();
+        studioSystem = nullptr;
+    }
+
+    LOGD("FMOD: Shutdown complete");
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_hondaafr_Libs_EngineSound_EngineSoundPlayer_setTPS(JNIEnv *env, jclass clazz,
+                                                            jint tps) {
+    if (engineEvent) {
+        engineEvent->setParameterByName("TPS", tps);
     }
 }
