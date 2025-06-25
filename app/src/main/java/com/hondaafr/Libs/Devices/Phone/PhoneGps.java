@@ -18,7 +18,12 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.Priority;
+import com.luckycatlabs.sunrisesunset.SunriseSunsetCalculator;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.util.Calendar;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map;
@@ -37,6 +42,8 @@ public class PhoneGps {
 
     public Double speed = 0.0D;
     private boolean distanceLoggingEnabled = false;
+
+    private LocalTime sunsetTime;
 
     public PhoneGps(Context mContext, PhoneGpsListener listener) {
         this.listener = listener;
@@ -82,6 +89,10 @@ public class PhoneGps {
                         return;
                     }
                     for (Location location : locationResult.getLocations()) {
+                        if (sunsetTime == null) {
+                            acquireSunsetTime(location);
+                        }
+
                         // Calculate speed
                         speed = (double) (location.getSpeed() * 3.6f);
                         listener.onGpsSpeedUpdated(speed);
@@ -109,6 +120,27 @@ public class PhoneGps {
         } else {
             Log.d("Speed", "Bad sdk");
         }
+    }
+
+    private void acquireSunsetTime(@NonNull Location loc) {
+        // 1️⃣  Convert to the library’s Location DTO
+        com.luckycatlabs.sunrisesunset.dto.Location dto =
+                new com.luckycatlabs.sunrisesunset.dto.Location(
+                        loc.getLatitude(), loc.getLongitude());
+
+        SunriseSunsetCalculator calc =
+                new SunriseSunsetCalculator(dto, ZoneId.systemDefault().getId());
+
+        // 2️⃣  Ask for a Calendar and convert to java.time
+        Calendar sunsetCal = calc.getOfficialSunsetCalendarForDate(Calendar.getInstance());
+        sunsetTime = LocalTime.of(
+                sunsetCal.get(Calendar.HOUR_OF_DAY),
+                sunsetCal.get(Calendar.MINUTE),
+                sunsetCal.get(Calendar.SECOND));
+    }
+
+    public LocalTime getSunsetTime() {
+        return sunsetTime;
     }
 
     @SuppressLint("DefaultLocale")

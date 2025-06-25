@@ -1,25 +1,17 @@
 package com.hondaafr.Libs.Devices.Obd;
 
-import android.content.Context;
-
-import com.hondaafr.Libs.Devices.Obd.Readings.ObdCoolantTemp;
-import com.hondaafr.Libs.Devices.Obd.Readings.ObdIntakeTemp;
-import com.hondaafr.Libs.Devices.Obd.Readings.ObdLtftTrim;
-import com.hondaafr.Libs.Devices.Obd.Readings.ObdMap;
-import com.hondaafr.Libs.Devices.Obd.Readings.ObdReading;
-import com.hondaafr.Libs.Devices.Obd.Readings.ObdRpm;
-import com.hondaafr.Libs.Devices.Obd.Readings.ObdStftTrim;
-import com.hondaafr.Libs.Devices.Obd.Readings.ObdTps;
-
-import java.util.ArrayList;
-
 public class ObdCommands {
 
     public static String resetObd() {
         return "ATZ\r"; // Mode 01, PID 11 is for Throttle Position
     }
 
-    public static boolean dataIsBusy(String data) {
+    public static String turnOffEcho() {
+        return "ATE0\r"; // Mode 01, PID 11 is for Throttle Position
+    }
+
+
+    public static boolean dataIsSearching(String data) {
         return data.toLowerCase().contains("searching");
     }
 

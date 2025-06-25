@@ -8,5 +8,4 @@ public interface TripComputerListener {
 
     void onGpsUpdated(Double speed, double totalDistanceKm);
 
-    void onObdReadingsToggled();
 }

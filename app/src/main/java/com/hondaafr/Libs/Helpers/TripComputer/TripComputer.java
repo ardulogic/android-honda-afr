@@ -67,8 +67,8 @@ public class TripComputer {
 
     public boolean isGpsSpeedUsed() {
         Double speedGps = gps.getSpeed();
-        Integer speedObd = (Integer)  mObdStudio.getAvailableReading("speed").getValue();
-        Long timeSinceReading =  mObdStudio.getAvailableReading("speed").getTimeSinceLastUpdate();
+        Integer speedObd = (Integer) mObdStudio.getAvailableReading("speed").getValue();
+        Long timeSinceReading = mObdStudio.getAvailableReading("speed").getTimeSinceLastUpdate();
 
         if (timeSinceReading < 2000) {
             if (speedObd == 0) {
@@ -84,7 +84,7 @@ public class TripComputer {
     }
 
     public double getSpeed() {
-        Integer speedObd = (Integer)  mObdStudio.getAvailableReading("speed").getValue();
+        Integer speedObd = (Integer) mObdStudio.getAvailableReading("speed").getValue();
 
         if (isGpsSpeedUsed()) {
             return gps.getSpeed();
@@ -94,10 +94,10 @@ public class TripComputer {
     }
 
     private void calculateFuelConsumption(Double afr) {
-        if (mObdStudio.readingsForFuelConsAvailable()) {
+        if (mObdStudio.readingsForFuelAreActive()) {
             Integer iatObd = (Integer) mObdStudio.getAvailableReading("iat").getValue();
-            Integer rpmObd = (Integer)  mObdStudio.getAvailableReading("rpm").getValue();
-            Integer mapObd = (Integer)  mObdStudio.getAvailableReading("map").getValue();
+            Integer rpmObd = (Integer) mObdStudio.getAvailableReading("rpm").getValue();
+            Integer mapObd = (Integer) mObdStudio.getAvailableReading("map").getValue();
 
             double iat = iatObd > 0 ? iatObd : 35;
 
@@ -119,7 +119,7 @@ public class TripComputer {
 
     public Double getTripLitersPer100km() {
         double totalLitres = fuelTripHistory.getTotalConsumedLitres();
-        double totalKm =  gps.getTotalDistanceKm();
+        double totalKm = gps.getTotalDistanceKm();
 
         if (totalKm > 0) {
             return Math.min(totalLitres / totalKm * 100, 30);
@@ -133,7 +133,7 @@ public class TripComputer {
     }
 
     public Double getTripGpsDistance() {
-        return totalDistanceKm + gps.getTotalDistanceKm();
+        return gps.getTotalDistanceKm();
     }
 
     public void saveTripData(Context context) {
@@ -161,7 +161,7 @@ public class TripComputer {
 
     public Double getTotalLitersPer100km() {
         double totalLitres = getTotalLiters();
-        double totalKm =  getTotalDistanceKm();
+        double totalKm = getTotalDistanceKm();
 
         if (totalKm > 0) {
             return Math.min(totalLitres / totalKm * 100, 30);
@@ -174,7 +174,7 @@ public class TripComputer {
         return fuelTripHistory.getCurrentFuelPerHour();
     }
 
-    public Object getTripCurrentLitersPer100km() {
+    public Double getTripCurrentLitersPer100km() {
         return fuelTripHistory.getCurrentFuelPer100km();
     }
 
@@ -199,9 +199,17 @@ public class TripComputer {
     public void setObdForFuelConsumption(boolean enabled) {
         if (enabled) {
             mObdStudio.saveActivePids();
-            mObdStudio.setAsActiveOnly(new ArrayList<>(ObdStudio.FUEL_CONS_OBD_READINGS));
+            mObdStudio.setActivePids(new ArrayList<>(ObdStudio.FUEL_CONS_OBD_READINGS));
         } else {
             mObdStudio.loadAndSetActivePids();
         }
+    }
+
+    public boolean afrIsRich() {
+        return mSpartanStudio.lastSensorAfr < 12;
+    }
+
+    public boolean isObdAlive() {
+        return mObdStudio.isObdAlive();
     }
 }

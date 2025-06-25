@@ -4,7 +4,7 @@ import android.util.Log;
 
 public class Debuggable {
 
-    protected int D = 1;
+    protected int D = 0;
 
     private static long start_ts;
     private static long end_ts;

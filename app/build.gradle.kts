@@ -93,6 +93,7 @@ dependencies {
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
     implementation("com.google.android.gms:play-services-location:21.0.1")
     implementation("com.opencsv:opencsv:5.5.2")
+    implementation("com.luckycatlabs:SunriseSunsetCalculator:1.2")
     implementation(files("libs/fmod.jar"))
 
     testImplementation(libs.junit)

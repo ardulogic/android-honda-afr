@@ -8,4 +8,5 @@ public class MainViewModel extends ViewModel {
     public MutableLiveData<Boolean> showFuelConsumption = new MutableLiveData<>(false);
     public MutableLiveData<Boolean> showTotalFuelConsumption = new MutableLiveData<>(true);
     public MutableLiveData<Boolean> engineSoundsEnabled = new MutableLiveData<>(false);
+    public MutableLiveData<Boolean> showCluster = new MutableLiveData<>(true);
 }

@@ -26,6 +26,10 @@ public abstract class ObdReading {
         return getName().toUpperCase();
     }
 
+    public String getMachineName() {
+        return getName().toLowerCase();
+    }
+
     private String getRequestCommand() {
         return "01" + getPid() + "\r";
     }

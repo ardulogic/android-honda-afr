@@ -16,6 +16,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -27,7 +28,6 @@ import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
-import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.material.button.MaterialButtonToggleGroup;
@@ -40,6 +40,7 @@ import com.hondaafr.Libs.Devices.Obd.ObdStudioListener;
 import com.hondaafr.Libs.Devices.Spartan.SpartanStudio;
 import com.hondaafr.Libs.Devices.Spartan.SpartanStudioListener;
 import com.hondaafr.Libs.EngineSound.EngineSound;
+import com.hondaafr.Libs.Helpers.Cluster;
 import com.hondaafr.Libs.Helpers.DataLog;
 import com.hondaafr.Libs.Helpers.DataLogEntry;
 import com.hondaafr.Libs.Helpers.Permissions;
@@ -48,14 +49,10 @@ import com.hondaafr.Libs.Helpers.TripComputer.TripComputer;
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputerListener;
 import com.hondaafr.Libs.UI.ImageButtonRounded;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
 public class MainActivity extends AppCompatActivity implements SpartanStudioListener, ObdStudioListener, TripComputerListener {
     private static final String TAG = "MainActivity";
@@ -83,10 +80,12 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
     private Button buttonClearLog;
 
     private Button buttonRecord;
+    private ImageButton buttonToggleCluster;
     private ImageButtonRounded mToggleFuelCons;
 
     private ImageButtonRounded mToggleEngineSounds;
     private TextView mTextSpeed;
+    private TextView mTextSpeedSource;
 
     private Double sportPlusAfr = 12.7;
     private Double sportAfr = 14.7;
@@ -108,6 +107,7 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
     private EngineSound mEngineSound;
     private TripComputer mTripComputer;
     private TextView textTotalInfo;
+    private Cluster mCluster;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -115,7 +115,7 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
 
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.layoutScientific), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
@@ -179,6 +179,7 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
         mTextTargetAfr.setOnClickListener(v -> SpartanStudio.requestCurrentAFR(mContext));
 
         mTextSpeed = findViewById(R.id.textSpeed);
+        mTextSpeedSource = findViewById(R.id.textSpeedSource);
         setObdOnClickListeners();
 
         mToggleClearAfrMin = findViewById(R.id.buttonClearAfrMin);
@@ -325,6 +326,27 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
         mTripComputer = new TripComputer(this, mObdStudio, mSpartanStudio, this);
         mTripComputer.init();
 
+        buttonToggleCluster = findViewById(R.id.buttonToggleCluster);
+        buttonToggleCluster.setOnClickListener(v -> viewModel.showCluster.postValue(Boolean.FALSE.equals(viewModel.showCluster.getValue())));
+        findViewById(R.id.layoutCluster).setOnLongClickListener(v -> {
+            viewModel.showCluster.postValue(Boolean.FALSE.equals(viewModel.showCluster.getValue()));
+
+            return false;
+        });
+
+        viewModel.showCluster.observe(this, show -> {
+            findViewById(R.id.layoutScientific).setVisibility(!show ? View.VISIBLE : View.GONE);
+            findViewById(R.id.layoutCluster).setVisibility(show ? View.VISIBLE : View.GONE);
+
+            if (show && !viewModel.showFuelConsumption.getValue()) {
+                mTripComputer.setObdForFuelConsumption(true);
+                viewModel.showFuelConsumption.postValue(true);
+            }
+        });
+
+
+        mCluster = new Cluster(this, mTripComputer);
+        viewModel.showCluster.postValue(true);
         BT_startService();
     }
 
@@ -434,8 +456,23 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
     }
 
     @Override
+    public void onObdConnectionError(String s) {
+        mCluster.onDataUpdated();
+    }
+
+    @Override
+    public void onObdConnectionActive() {
+        mCluster.onDataUpdated();
+    }
+
+    @Override
+    public void onObdConnectionLost() {
+        mCluster.onDataUpdated();
+    }
+
+    @Override
     public void onObdReadingUpdate(ObdReading reading) {
-        final String name = reading.getName();
+        final String name = reading.getMachineName();
 
         switch (name) {
             case "ect":
@@ -456,6 +493,7 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
                 break;
             case "speed":
                 if (!mTripComputer.isGpsSpeedUsed()) {
+                    mTextSpeedSource.setText("OBD");
                     setObdReadingText(R.id.textSpeed, reading);
                 }
                 break;
@@ -499,7 +537,7 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
             boolean isActive = mObdStudio.readings.toggleActive(reading_name);
             updateToggleAppearance(textView, isActive);
 
-            if (!mObdStudio.readingsForFuelConsAvailable()) {
+            if (!mObdStudio.readingsForFuelAreActive()) {
                 viewModel.showFuelConsumption.postValue(false);
                 viewModel.fuelConsumptionAvailable.postValue(false);
             }
@@ -731,6 +769,8 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
 
             textMeasurementBig.setText(String.format("%.2f l/h", mTripComputer.getTripCurrentLitersPerHour()));
             textMeasurementSmall.setText(String.format("%.2f", mTripComputer.getTripCurrentLitersPer100km()));
+
+            mCluster.onDataUpdated();
         } else {
             textMeasurementBig.setText(String.format("%.2f", mTripComputer.afrHistory.getAvg()));
             textMeasurementSmall.setText(String.format("%.2f", mTripComputer.afrHistory.getAvgDeviation(mSpartanStudio.targetAfr)));
@@ -744,14 +784,17 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
         mTextStatusGeneric.setText("GPS: " + s);
 
         if (mTripComputer.isGpsSpeedUsed()) {
-            mTextSpeed.setText(String.format("%.1f km/h G", speed));
+            mTextSpeed.setText(String.format("%.1f km/h", speed));
+            mTextSpeedSource.setText("GPS");
         }
     }
 
     @Override
-    public void onObdReadingsToggled() {
+    public void onActivePidsChanged() {
         updateObdButtonsAppearance();
     }
+
+
 
     public class ButtonToggleSoundOnClickListener implements View.OnClickListener {
         @Override
