@@ -5,23 +5,32 @@ import android.content.SharedPreferences;
 import android.widget.Toast;
 
 import com.hondaafr.Libs.Devices.Obd.ObdStudio;
+import com.hondaafr.Libs.Devices.Obd.Readings.ObdReading;
 import com.hondaafr.Libs.Devices.Phone.PhoneBarometer;
 import com.hondaafr.Libs.Devices.Phone.PhoneGps;
 import com.hondaafr.Libs.Devices.Phone.PhoneGpsListener;
 import com.hondaafr.Libs.Devices.Spartan.SpartanStudio;
+import com.hondaafr.Libs.Helpers.AverageList;
 import com.hondaafr.Libs.Helpers.FuelConsumption;
-import com.hondaafr.Libs.Helpers.FuelTotalHistory;
+import com.hondaafr.Libs.Helpers.TotalLitersConsumed;
 import com.hondaafr.Libs.Helpers.ReadingHistory;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class TripComputer {
-    private final ObdStudio mObdStudio;
-    private final SpartanStudio mSpartanStudio;
+    public final ObdStudio mObdStudio;
+    public final SpartanStudio mSpartanStudio;
     public final PhoneGps gps;
     public final ReadingHistory afrHistory = new ReadingHistory();
 
-    private final FuelTotalHistory fuelTripHistory = new FuelTotalHistory();
+    private float totalDistanceKm = 0;
+    private float totalConsumedLiters = 0;
+    private final TotalLitersConsumed tripTotalLiters = new TotalLitersConsumed();
+    private double instLitersPerHour = 0;
+    private final AverageList currLitersPerHourShortHistory = new AverageList(15);
+    private final AverageList currLitersPer100ShortHistory = new AverageList(15);
     private final TripComputerListener listener;
     private final PhoneBarometer barometer;
 
@@ -30,8 +39,6 @@ public class TripComputer {
     private static final String KEY_TOTAL_DISTANCE = "totalDistance";
     private final Context context;
 
-    private float totalConsumedLiters = 0;
-    private float totalDistanceKm = 0;
 
 
     public TripComputer(Context context, ObdStudio mObdStudio, SpartanStudio mSpartanStudio, TripComputerListener listener) {
@@ -68,29 +75,27 @@ public class TripComputer {
 
     public boolean isGpsSpeedUsed() {
         Double speedGps = gps.getSpeed();
-        Integer speedObd = (Integer) mObdStudio.getAvailableReading("speed").getValue();
-        Long timeSinceReading = mObdStudio.getAvailableReading("speed").getTimeSinceLastUpdate();
+        ObdReading speedObd = mObdStudio.getAvailableReading("speed");
 
-        if (timeSinceReading < 2000) {
-            if (speedObd == 0) {
-                return speedGps > 25;
-            } else if (speedObd < 50) {
-                return false;
-            } else {
-                return speedGps > 40;
-            }
-        } else {
+        if (speedObd.getTimeSinceLastUpdate() > 3000) {
             return true;
+        } else {
+            if (gps.isAlive()) {
+
+                // Has recent readings
+                boolean isGpsValid = Math.abs(speedGps - (Double) speedObd.getValue()) <= 20;
+                return isGpsValid && gps.getSpeed() > 30 && (Integer) speedObd.getValue() > 30;
+            }
         }
+
+        return true;
     }
 
     public double getSpeed() {
-        Integer speedObd = (Integer) mObdStudio.getAvailableReading("speed").getValue();
-
         if (isGpsSpeedUsed()) {
             return gps.getSpeed();
         } else {
-            return speedObd;
+            return (Integer) mObdStudio.getAvailableReading("speed").getValue();
         }
     }
 
@@ -102,7 +107,7 @@ public class TripComputer {
 
             double iat = iatObd > 0 ? iatObd : 35;
 
-            double fuelConsPerHour = FuelConsumption.calculateFuelConsumptionLperHour(
+            double litersPerHour = FuelConsumption.calculateFuelConsumptionLperHour(
                     afr,
                     rpmObd,
                     mapObd,
@@ -110,16 +115,21 @@ public class TripComputer {
                     barometer.getPressureKPa(),
                     1.590);
 
-            fuelTripHistory.add(fuelConsPerHour, getSpeed());
+            instLitersPerHour = litersPerHour;
+
+            currLitersPerHourShortHistory.add(litersPerHour);
+            currLitersPer100ShortHistory.add(FuelConsumption.calculateLiters100km(litersPerHour, getSpeed()));
+
+            tripTotalLiters.add(litersPerHour, getSpeed());
         }
     }
 
     public Double getTripLitres() {
-        return fuelTripHistory.getTotalConsumedLitres();
+        return tripTotalLiters.getTotal();
     }
 
     public Double getTripLitersPer100km() {
-        double totalLitres = fuelTripHistory.getTotalConsumedLitres();
+        double totalLitres = tripTotalLiters.getTotal();
         double totalKm = gps.getTotalDistanceKm();
 
         if (totalKm > 0) {
@@ -157,7 +167,7 @@ public class TripComputer {
     }
 
     public double getTotalLiters() {
-        return totalConsumedLiters + fuelTripHistory.getTotalConsumedLitres();
+        return totalConsumedLiters + tripTotalLiters.getTotal();
     }
 
     public Double getTotalLitersPer100km() {
@@ -171,12 +181,16 @@ public class TripComputer {
         }
     }
 
-    public Double getTripCurrentLitersPerHour() {
-        return fuelTripHistory.getCurrentFuelPerHour();
+    public double getInstLitersPerHour() {
+        return instLitersPerHour;
     }
 
-    public Double getTripCurrentLitersPer100km() {
-        return fuelTripHistory.getCurrentFuelPer100km();
+    public Double getShortAvgLitersPerHour() {
+        return currLitersPerHourShortHistory.getAvg();
+    }
+
+    public Double getShortAvgLitersPer100() {
+        return currLitersPer100ShortHistory.getAvg();
     }
 
     public void resetTotals() {
@@ -190,7 +204,7 @@ public class TripComputer {
 
     public void resetTrip() {
         gps.resetDistance();
-        fuelTripHistory.clear();
+        tripTotalLiters.clear();
     }
 
     public void pauseUntilTick() {
@@ -210,12 +224,6 @@ public class TripComputer {
         return mSpartanStudio.lastSensorAfr < 12;
     }
 
-    public boolean isObdAlive() {
-        return mObdStudio.isAlive();
-    }
-
-    public boolean isAfrAlive() { return mSpartanStudio.isAlive(); }
-
     public void ensureObdAndAfrAreAlive() {
         if (!mObdStudio.isRunning()) {
             mObdStudio.start();
@@ -224,5 +232,22 @@ public class TripComputer {
         if (!mSpartanStudio.isRunning()) {
             mSpartanStudio.start();
         }
+    }
+
+    public Map<String, String> getReadingsAsString() {
+        LinkedHashMap<String, String> readings = new LinkedHashMap<>();
+
+        readings.put("Total km", String.format("%.1f", getTotalDistanceKm()));
+        readings.put("Total l", String.format("%.1f", getTotalLiters()));
+
+        readings.put("Trip km", String.format("%.1f", getTripGpsDistance()));
+        readings.put("Trip l", String.format("%.1f", getTripLitres()));
+        readings.put("Trip l / hour", String.format("%.1f", getTripLitersPer100km()));
+
+        readings.put("Inst l / hour", String.format("%.1f", getInstLitersPerHour()));
+        readings.put("ShrtAvg l / hour", String.format("%.1f", getShortAvgLitersPerHour()));
+        readings.put("ShrtAvg l / 100", String.format("%.1f", getShortAvgLitersPer100()));
+
+        return readings;
     }
 }

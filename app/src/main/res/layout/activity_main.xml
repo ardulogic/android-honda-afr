@@ -64,6 +64,7 @@
             android:foregroundTintMode="add"
             android:scaleType="fitXY"
             android:tint="#222222"
+            android:paddingLeft="1dp"
             app:layout_constraintBottom_toBottomOf="@+id/imageClusterNeedle"
             app:layout_constraintEnd_toEndOf="@+id/imageClusterNeedle"
             app:layout_constraintHorizontal_bias="0.697"
@@ -71,6 +72,23 @@
             app:layout_constraintTop_toTopOf="@+id/imageClusterNeedle"
             app:layout_constraintVertical_bias="0.44"
             app:srcCompat="@drawable/fuel_gauge_rich_fuel" />
+
+        <ImageView
+            android:id="@+id/imageClusterGps"
+            android:layout_width="28dp"
+            android:layout_height="26dp"
+            android:foregroundGravity="center"
+            android:foregroundTintMode="add"
+            android:scaleType="fitXY"
+            android:tint="#5F9529"
+            app:layout_constraintBottom_toBottomOf="@+id/imageClusterRichFuel"
+            app:layout_constraintEnd_toEndOf="@+id/imageClusterNeedle"
+            app:layout_constraintHorizontal_bias="0.3"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/imageClusterRichFuel"
+            app:layout_constraintVertical_bias="0.43"
+            app:srcCompat="@drawable/gps" />
+
 
         <ImageView
             android:id="@+id/imageClusterObd"
@@ -121,7 +139,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="@+id/imageClusterGauge"
             app:layout_constraintVertical_bias="0.903"
-            app:srcCompat="@drawable/trip_knob" />
+            app:srcCompat="@drawable/trip_knob_day" />
 
         <TextView
             android:id="@+id/textClusterLcdMode1"

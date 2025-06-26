@@ -444,8 +444,8 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
         LinkedHashMap<String, String> values = new LinkedHashMap<>();
         values.putAll(mSpartanStudio.getReadingsAsString());
         values.putAll(mObdStudio.getReadingsAsString());
-
         values.putAll(mTripComputer.gps.getReadingsAsString());
+        values.putAll(mTripComputer.getReadingsAsString());
 
         mDataLog.addEntry(new DataLogEntry(values));
     }
@@ -779,8 +779,8 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
             textTotalConsLiters.setText(String.format("%.2f l", totalLiters));
             textTotalConsPer100km.setText(String.format("%.1f l", totalLitersPer100km));
 
-            textMeasurementBig.setText(String.format("%.2f l/h", mTripComputer.getTripCurrentLitersPerHour()));
-            textMeasurementSmall.setText(String.format("%.2f", mTripComputer.getTripCurrentLitersPer100km()));
+            textMeasurementBig.setText(String.format("%.2f l/h", mTripComputer.getShortAvgLitersPerHour()));
+            textMeasurementSmall.setText(String.format("%.2f", mTripComputer.getShortAvgLitersPer100()));
 
             mCluster.onDataUpdated();
         } else {

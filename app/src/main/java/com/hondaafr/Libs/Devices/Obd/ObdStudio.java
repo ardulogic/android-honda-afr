@@ -270,6 +270,7 @@ public class ObdStudio extends Debuggable {
 
     public long timeSinceLastResponse() { return System.currentTimeMillis() - lastResponseTimestamp; }
     public long timeSinceLastReading()  { return System.currentTimeMillis() - lastReadingTimestamp; }
+    public boolean isReading()         { return timeSinceLastReading() < LINK_TIMEOUT_MS; }
     public boolean isAlive()         { return timeSinceLastResponse() < LINK_TIMEOUT_MS; }
 
     public boolean isRunning() {

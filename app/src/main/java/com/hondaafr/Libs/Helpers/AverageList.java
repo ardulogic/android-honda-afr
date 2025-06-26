@@ -15,7 +15,7 @@ public class AverageList {
         this.sum = 0D;
     }
 
-    public void addNumber(double number) {
+    public void add(double number) {
         if (numbers.size() == maxCount) {
             Double removedNumber = numbers.poll(); // Remove the oldest number
             sum -= removedNumber;

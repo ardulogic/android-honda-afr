@@ -29,12 +29,19 @@ LABEL_DISTANCE           = 0.13
 MINOR_TICKS_PER_MAJOR    = 10
 NUM_RED_TICKS_AFTER_LAST_MAJOR = 4  # <--- CONFIGURABLE
 
-# Colors
-COLOR_MAJOR_TICK         = '#adb1b1'
-COLOR_MIDDLE_MINOR_TICK  = '#adb1b1'
-COLOR_MINOR_TICK         = '#7c8083'
-COLOR_LABELS             = '#adb1b1'
-COLOR_RED_TICK           = '#a36564'
+# Colors Night
+COLOR_MAJOR_TICK         = '#cdc28a'
+COLOR_MIDDLE_MINOR_TICK  = '#cdc28a'
+COLOR_MINOR_TICK         = '#626473'
+COLOR_LABELS             = '#cdc28a'
+COLOR_RED_TICK           = '#fb5c3e'
+
+# Colors Day
+COLOR_MAJOR_TICK         = '#f3f0f0'
+COLOR_MIDDLE_MINOR_TICK  = '#f3f0f0'
+COLOR_MINOR_TICK         = '#858685'
+COLOR_LABELS             = '#f3f0f0'
+COLOR_RED_TICK           = '#af4837'
 
 # Tick value range and spacing
 MAJOR_TICK_START_VAL     = 0

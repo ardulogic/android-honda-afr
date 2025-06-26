@@ -30,20 +30,21 @@ import java.util.Map;
 
 public class PhoneGps {
 
-    private static final long UPDATE_INTERVAL_MS = 1000;
+    private static final long UPDATE_INTERVAL_MS = 2000;
     private final PhoneGpsListener listener;
     private final Context context;
     private FusedLocationProviderClient fusedLocationClient;
     private LocationCallback locationCallback;
 
-    private static final float DISTANCE_THRESHOLD_METERS = 5.0f; // Adjustable threshold
+    private static final float DISTANCE_THRESHOLD_METERS = 15.0f; // Adjustable threshold
     private final LinkedList<Location> locationHistory = new LinkedList<>();
     private double totalDistanceMeters = 0.0;
-
     public Double speed = 0.0D;
     private boolean distanceLoggingEnabled = false;
 
+    private long timeDistanceLogged = 0L;
     private LocalTime sunsetTime;
+    private long timeLastUpdated = 0L;
 
     public PhoneGps(Context mContext, PhoneGpsListener listener) {
         this.listener = listener;
@@ -65,6 +66,8 @@ public class PhoneGps {
 
     @SuppressLint("MissingPermission")
     private void startLocationUpdates() {
+        Log.d("GPS", "Starting Location Updates...");
+
         if (hasLocationPermission(this.context)) {
             Log.d("Permission", "OK");
         } else {
@@ -73,19 +76,20 @@ public class PhoneGps {
         }
 
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-            Log.d("Speed", "Building location request");
+            Log.d("GPS", "Building location request");
             LocationRequest locationRequest = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY)
-                    .setMinUpdateIntervalMillis(UPDATE_INTERVAL_MS)
+                    .setPriority(Priority.PRIORITY_HIGH_ACCURACY )
+                    .setIntervalMillis(UPDATE_INTERVAL_MS)
                     .build();
 
 
-            Log.d("Speed", "Building location callback");
+            Log.d("GPS", "Building location callback");
 
             locationCallback = new LocationCallback() {
                 @Override
                 public void onLocationResult(@NonNull LocationResult locationResult) {
                     if (locationResult == null) {
-                        Log.d("Speed", "No locaiton result");
+                        Log.d("Speed", "No location result");
                         return;
                     }
                     for (Location location : locationResult.getLocations()) {
@@ -93,9 +97,13 @@ public class PhoneGps {
                             acquireSunsetTime(location);
                         }
 
+                        Log.d("GPS", "Location updated.");
+
                         // Calculate speed
                         speed = (double) (location.getSpeed() * 3.6f);
                         listener.onGpsSpeedUpdated(speed);
+
+                        timeLastUpdated = System.currentTimeMillis();
 
                         // Track location and calculate distance
                         if (!locationHistory.isEmpty() && distanceLoggingEnabled) {
@@ -105,6 +113,7 @@ public class PhoneGps {
                             if (distance >= DISTANCE_THRESHOLD_METERS) {
                                 totalDistanceMeters += distance;
                                 locationHistory.add(location);
+                                timeDistanceLogged = System.currentTimeMillis();
                             } else {
                                 Log.d("GPS Filter", "Ignored small movement: " + distance + " meters");
                             }
@@ -147,7 +156,13 @@ public class PhoneGps {
     public Map<String, String> getReadingsAsString() {
         LinkedHashMap<String, String> readings = new LinkedHashMap<>();
         readings.put("GPS Speed (km/h)", String.format("%.1f", speed));
-        readings.put("Total Distance (km)", String.format("%.1f", getTotalDistanceKm()));
+        readings.put("GPS Distance (km)", String.format("%.1f", getTotalDistanceKm()));
+
+        if (locationHistory.getLast() != null) {
+            readings.put("GPS Latitude", String.valueOf(locationHistory.getLast().getLatitude()));
+            readings.put("GPS Longitude", String.valueOf(locationHistory.getLast().getLongitude()));
+        }
+
         return readings;
     }
 
@@ -174,5 +189,13 @@ public class PhoneGps {
         if (!enabled) {
             locationHistory.clear();
         }
+    }
+
+    public boolean isLoggingDistance() {
+        return System.currentTimeMillis() - this.timeDistanceLogged < UPDATE_INTERVAL_MS * 2;
+    }
+
+    public boolean isAlive() {
+        return System.currentTimeMillis() - this.timeLastUpdated < UPDATE_INTERVAL_MS * 1.5;
     }
 }

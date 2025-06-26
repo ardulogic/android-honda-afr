@@ -20,9 +20,9 @@ public class ReadingHistory {
     }
 
     public void add(Double value) {
-        shortAfrAvgHistory.addNumber(value);
-        shortAfrMinHistory.addNumber(value);
-        shortAfrMaxHistory.addNumber(value);
+        shortAfrAvgHistory.add(value);
+        shortAfrMinHistory.add(value);
+        shortAfrMaxHistory.add(value);
     }
 
     public Double getAvg() {

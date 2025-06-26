@@ -1,14 +1,16 @@
 package com.hondaafr.Libs.Helpers;
 
+import android.animation.ArgbEvaluator;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
-import android.graphics.Paint;
-import android.location.Location;
+import android.graphics.Color;
 import android.os.Looper;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.WindowInsets;
+import android.view.WindowInsetsController;
 import android.view.animation.OvershootInterpolator;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -18,13 +20,12 @@ import com.hondaafr.Libs.Devices.Phone.PhoneLightSensor;
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputer;
 import com.hondaafr.MainActivity;
 import com.hondaafr.R;
-import com.luckycatlabs.sunrisesunset.SunriseSunsetCalculator;
 
 import android.os.Handler;
 
-import java.time.LocalDate;
+import androidx.constraintlayout.widget.ConstraintLayout;
+
 import java.time.LocalTime;
-import java.time.ZoneId;
 
 public class Cluster {
 
@@ -36,6 +37,8 @@ public class Cluster {
     private final ImageView imageRichFuel;
     private final ImageView imageObd;
     private final ImageView imageAfr;
+
+    private final ImageView imageGps;
     private final PhoneLightSensor lightSensor;
     private final ImageView imageGauge;
     private final ImageButton buttonTripKnob;
@@ -50,10 +53,14 @@ public class Cluster {
 
     private final TripComputer mTripComputer;
     private final ImageView imageLcd;
+    private final ConstraintLayout layoutCluster;
     private boolean isNightMode = false;
     private float currentNeedleRotation = 0f;
     private float targetNeedleRotation = 0f;
     private ValueAnimator needleAnimator;
+
+    private ValueAnimator gpsAnimator; // Add this as a class field
+
     private float lastNeedleRotation = Float.NaN;
 
     public int mode = MODE_TRIP_KM;
@@ -68,9 +75,11 @@ public class Cluster {
         this.textClusterLcdMode1 = mainActivity.findViewById(R.id.textClusterLcdMode1);
         this.textClusterLcdMode2 = mainActivity.findViewById(R.id.textClusterLcdMode2);
         this.imageRichFuel = mainActivity.findViewById(R.id.imageClusterRichFuel);
-        this.imageObd= mainActivity.findViewById(R.id.imageClusterObd);
-        this.imageAfr= mainActivity.findViewById(R.id.imageClusterAfr);
+        this.imageObd = mainActivity.findViewById(R.id.imageClusterObd);
+        this.imageAfr = mainActivity.findViewById(R.id.imageClusterAfr);
+        this.imageGps = mainActivity.findViewById(R.id.imageClusterGps);
         this.buttonTripKnob = mainActivity.findViewById(R.id.buttonClusterTripKnob);
+        this.layoutCluster = mainActivity.findViewById(R.id.layoutCluster);
 
         this.lightSensor = new PhoneLightSensor(mainActivity, intensity -> {
             Log.d("Light", String.valueOf(intensity));
@@ -94,6 +103,44 @@ public class Cluster {
         onDataUpdated();
 
         startSupervisor();
+
+        View clusterLayout = mainActivity.findViewById(R.id.layoutCluster);
+        clusterLayout.setOnClickListener(v -> toggleSystemUI());
+    }
+
+    private void toggleSystemUI() {
+        View decorView = mainActivity.getWindow().getDecorView();
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+            WindowInsetsController insetsController = mainActivity.getWindow().getInsetsController();
+            if (insetsController != null) {
+                boolean isVisible = mainActivity.getWindow()
+                        .getDecorView()
+                        .getRootWindowInsets()
+                        .isVisible(WindowInsets.Type.navigationBars());
+
+                if (isVisible) {
+                    insetsController.hide(WindowInsets.Type.navigationBars());
+                    insetsController.setSystemBarsBehavior(
+                            WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+                } else {
+                    insetsController.show(WindowInsets.Type.navigationBars());
+                }
+            }
+        } else {
+            // For Android 10 and below
+            int uiOptions = decorView.getSystemUiVisibility();
+            boolean isVisible = (uiOptions & View.SYSTEM_UI_FLAG_HIDE_NAVIGATION) == 0;
+
+            if (isVisible) {
+                decorView.setSystemUiVisibility(
+                        View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                                | View.SYSTEM_UI_FLAG_FULLSCREEN
+                                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
+            } else {
+                decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
+            }
+        }
     }
 
     private void startSupervisor() {
@@ -172,10 +219,14 @@ public class Cluster {
             this.imageNeedle.setImageResource(R.drawable.fuel_gauge_needle_night);
             this.imageGauge.setImageResource(R.drawable.fuel_gauge_night);
             this.imageLcd.setImageResource(R.drawable.fuel_gauge_lcd_night);
+            this.buttonTripKnob.setBackgroundResource(R.drawable.trip_knob_night);
+            this.layoutCluster.setBackgroundColor(Color.parseColor("#000000"));
         } else {
             this.imageNeedle.setImageResource(R.drawable.fuel_gauge_needle_day);
             this.imageGauge.setImageResource(R.drawable.fuel_gauge_day);
             this.imageLcd.setImageResource(R.drawable.fuel_gauge_lcd_day);
+            this.buttonTripKnob.setBackgroundResource(R.drawable.trip_knob_day);
+            this.layoutCluster.setBackgroundColor(Color.parseColor("#0E0E0E"));
         }
     }
 
@@ -204,18 +255,48 @@ public class Cluster {
         }
 
         // Animate needle rotation
-        float targetRotation = calculateNeedleRotation(mTripComputer.getTripCurrentLitersPerHour());
+        float targetRotation = calculateNeedleRotation(mTripComputer.getShortAvgLitersPerHour());
         this.targetNeedleRotation = targetRotation;
 
-        // Animate rich fuel indicator color (optional: fade transition)
-        int richFuelIconColor = mTripComputer.afrIsRich() && mTripComputer.isAfrAlive() ? 0xFFFFA500 : 0xFF222222;
-        imageRichFuel.setColorFilter(richFuelIconColor); // quick, or see optional below
+        int richFuelIconColor = mTripComputer.afrIsRich() && mTripComputer.mSpartanStudio.isAlive() ? 0xFFFFA500 : 0xFF222222;
+        imageRichFuel.setColorFilter(richFuelIconColor);
 
-        int obdConnectionColor = mTripComputer.isObdAlive() ? 0xFF222222 : 0xFFFFA500;
-        imageObd.setColorFilter(obdConnectionColor); // quick, or see optional below
+        int obdConnectionColor = mTripComputer.mObdStudio.isAlive() ? 0xFFC82B28 : 0xFFFFA500;
+        obdConnectionColor = mTripComputer.mObdStudio.isReading() ? 0xFF222222 : obdConnectionColor;
+        imageObd.setColorFilter(obdConnectionColor);
 
-        int afrConnectionColor = mTripComputer.isAfrAlive() ? 0xFF222222 : 0xFFFFA500;
-        imageAfr.setColorFilter(afrConnectionColor); // quick, or see optional below
+        int afrConnectionColor = mTripComputer.mSpartanStudio.isAlive() ? 0xFFC82B28 : 0xFFFFA500;
+        afrConnectionColor = mTripComputer.mSpartanStudio.isReading() ? 0xFF222222 : afrConnectionColor;
+        imageAfr.setColorFilter(afrConnectionColor);
+
+        int gpsColor = mTripComputer.gps.isAlive() ? 0xFFC82B28 :  0xFFFFA500;
+
+        if (mTripComputer.gps.isAlive() && !mTripComputer.gps.isLoggingDistance()) {
+            animateGpsIcon();
+            // make image tint fade from 0xFFC82B28 ti 0xFFFFA500 while this is true, otherwise;
+        } else {
+            imageGps.setColorFilter(gpsColor);
+        }
+
+    }
+
+    private void animateGpsIcon() {
+        if (gpsAnimator != null && gpsAnimator.isRunning()) {
+            return; // Avoid restarting if already animating
+        }
+
+        int startColor = 0xFF222222;
+        int endColor = 0xFF5F9529;   // green
+
+        gpsAnimator = ValueAnimator.ofObject(new ArgbEvaluator(), startColor, endColor);
+        gpsAnimator.setDuration(1000); // 1 second
+        gpsAnimator.setRepeatMode(ValueAnimator.REVERSE);
+        gpsAnimator.setRepeatCount(ValueAnimator.INFINITE);
+        gpsAnimator.addUpdateListener(animation -> {
+            int animatedColor = (int) animation.getAnimatedValue();
+            imageGps.setColorFilter(animatedColor);
+        });
+        gpsAnimator.start();
     }
 
     private static class ModeDescriptor {

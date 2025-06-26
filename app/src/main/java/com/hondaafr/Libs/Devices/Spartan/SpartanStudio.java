@@ -25,6 +25,10 @@ public class SpartanStudio extends Debuggable {
     private ScheduledFuture<?> supervisorTask;
     private ScheduledFuture<?> readingTask;
 
+    public boolean isReading() {
+        return isAlive() && lastSensorAfr > 0;
+    }
+
     private enum Phase { RUNNING, STOPPED }
     private Phase phase = Phase.STOPPED;
 

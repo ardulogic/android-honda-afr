@@ -3,10 +3,8 @@ package com.hondaafr.Libs.Helpers;
 import java.time.Duration;
 import java.time.Instant;
 
-public class FuelTotalHistory {
+public class TotalLitersConsumed {
 
-    private final AverageList fuelPerHourShortHistory = new AverageList(15);
-    private final AverageList fuelPer100kmShortHistory = new AverageList(15);
     private double totalConsumedLitres = 0.0;
     private Instant lastSampleTime = null;
     private Double lastRateLph = null;
@@ -19,11 +17,6 @@ public class FuelTotalHistory {
      */
     public void add(double litresPerHour, double speedKmh) {
         Instant now = Instant.now();
-        fuelPerHourShortHistory.addNumber(litresPerHour);
-
-        if (speedKmh > 0) {
-            fuelPer100kmShortHistory.addNumber(FuelConsumption.calculateLiters100km(litresPerHour, speedKmh));
-        }
 
         if (lastSampleTime != null) {
             double deltaHours = Duration.between(lastSampleTime, now).toMillis() / 3_600_000.0;
@@ -37,22 +30,12 @@ public class FuelTotalHistory {
     }
 
     public void clear() {
-        fuelPerHourShortHistory.clear();
-        fuelPer100kmShortHistory.clear();
         totalConsumedLitres = 0.0;
         lastSampleTime = null;
         lastRateLph = null;
     }
 
-    public double getCurrentFuelPerHour() {
-        return fuelPerHourShortHistory.getAvg();
-    }
-
-    public double getCurrentFuelPer100km() {
-        return Math.max(fuelPer100kmShortHistory.getAvg(), 50);
-    }
-
-    public double getTotalConsumedLitres() {
+    public double getTotal() {
         return totalConsumedLitres;
     }
 
