@@ -9,64 +9,105 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 public class SpartanStudio extends Debuggable {
+
+    private static final long LINK_TIMEOUT_MS = 500L;     // Sensor considered dead after this
+    private static final long READING_PERIOD_MS = 50L;    // Read every 50ms
+    private static final long SUPERVISOR_PERIOD_MS = 1000L;
+
     private final Context context;
-    private SpartanStudioListener listener;
+    private final SpartanStudioListener listener;
 
-    private boolean readingsOn = false;
+    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+    private ScheduledFuture<?> supervisorTask;
+    private ScheduledFuture<?> readingTask;
 
-    private ScheduledExecutorService scheduler;
-
-    public Double lastSensorTemp = 0.0D;
-    public Double lastSensorAfr = 0.0D;
-
-    public void startRequestingSensorReadings() {
-        if (scheduler == null) {
-            scheduler = Executors.newScheduledThreadPool(2);
-        }
-
-        final Runnable requestTask = this::requestSensorReadings;
-
-        scheduler.scheduleAtFixedRate(requestTask, 0, 50, TimeUnit.MILLISECONDS);
-        readingsOn = true;
-    }
-
-    public void stopRequestingSensorReadings() {
-
-        scheduler.shutdown();
-        try {
-            if (!scheduler.awaitTermination(1, TimeUnit.SECONDS)) {
-                scheduler.shutdownNow();
-            }
-        } catch (InterruptedException e) {
-            scheduler.shutdownNow();
-            Thread.currentThread().interrupt();
-        }
-
-        readingsOn = false;
-        scheduler = null;
-    }
+    private enum Phase { RUNNING, STOPPED }
+    private Phase phase = Phase.STOPPED;
 
     public double targetAfr = 14.7;
+    public double lastSensorAfr = 0.0;
+    public double lastSensorTemp = 0.0;
 
-    private Long lastSensorReadingsTimestamp = 0L;
+    private long lastSensorReadingsTimestamp = 0L;
+    private boolean linkPreviouslyAlive = false;
 
-
-    public SpartanStudio(Context mContext, SpartanStudioListener listener) {
+    public SpartanStudio(Context context, SpartanStudioListener listener) {
+        this.context = context;
         this.listener = listener;
-        this.context = mContext;
+    }
+
+    // ────────────────────────────────────────────────────────────────────────────────
+    // Lifecycle
+    // ────────────────────────────────────────────────────────────────────────────────
+
+    public void start() {
+        if (phase == Phase.RUNNING) return;
+
+        requestCurrentAFR(context);
+        startReadingTask();
+        startSupervisor();
+        phase = Phase.RUNNING;
+    }
+
+    public void stop() {
+        if (phase == Phase.STOPPED) return;
+
+        if (readingTask != null) readingTask.cancel(true);
+        if (supervisorTask != null) supervisorTask.cancel(true);
+        scheduler.shutdownNow();
+        phase = Phase.STOPPED;
+    }
+
+    private void startReadingTask() {
+        readingTask = scheduler.scheduleAtFixedRate(
+                this::requestSensorReadings,
+                0, READING_PERIOD_MS,
+                TimeUnit.MILLISECONDS
+        );
+    }
+
+    private void startSupervisor() {
+        supervisorTask = scheduler.scheduleAtFixedRate(() -> {
+            boolean alive = isAlive();
+            if (alive && !linkPreviouslyAlive) {
+                listener.onAfrConnectionActive();
+                linkPreviouslyAlive = true;
+            } else if (!alive && linkPreviouslyAlive) {
+                listener.onAfrConnectionLost();
+                linkPreviouslyAlive = false;
+            }
+        }, 0, SUPERVISOR_PERIOD_MS, TimeUnit.MILLISECONDS);
+    }
+
+    // ────────────────────────────────────────────────────────────────────────────────
+    // Bluetooth interaction
+    // ────────────────────────────────────────────────────────────────────────────────
+
+    private void requestSensorReadings() {
+        BluetoothService.send(context, SpartanCommands.requestSensorReadings(), "spartan");
     }
 
     public static void requestCurrentAFR(Context context) {
         BluetoothService.send(context, SpartanCommands.getAFR(), "spartan");
     }
 
-    public void requestSensorReadings() {
-        BluetoothService.send(context, SpartanCommands.requestSensorReadings(), "spartan");
+    public void setAFR(double target) {
+        targetAfr = target;
+        BluetoothService.send(context, SpartanCommands.setAFR(targetAfr), "spartan");
+        listener.onTargetAfrUpdated(targetAfr);
     }
 
+    public void adjustAFR(double delta) {
+        setAFR(targetAfr + delta);
+    }
+
+    // ────────────────────────────────────────────────────────────────────────────────
+    // Data handling
+    // ────────────────────────────────────────────────────────────────────────────────
 
     public void onDataReceived(String data) {
         d(data, 1);
@@ -74,61 +115,48 @@ public class SpartanStudio extends Debuggable {
         if (SpartanCommands.dataIsTargetLambda(data)) {
             targetAfr = SpartanCommands.parseTargetLambdaAndConvertToAfr(data);
             listener.onTargetAfrUpdated(targetAfr);
-        }
-
-        if (SpartanCommands.dataIsSensorAfr(data)) {
+        } else if (SpartanCommands.dataIsSensorAfr(data)) {
             lastSensorAfr = SpartanCommands.parseSensorAfr(data);
             listener.onSensorAfrReceived(lastSensorAfr);
             updateLastTrackingDataTimestamp();
-        }
-
-        if (SpartanCommands.dataIsSensorTemp(data)) {
+        } else if (SpartanCommands.dataIsSensorTemp(data)) {
             lastSensorTemp = SpartanCommands.parseSensorTemp(data);
             listener.onSensorTempReceived(lastSensorTemp);
             updateLastTrackingDataTimestamp();
         }
     }
 
-    public void start() {
-        requestCurrentAFR(context);
-
-        if (!readingsOn) {
-            startRequestingSensorReadings();
-        } else {
-            stopRequestingSensorReadings();
-        }
+    private void updateLastTrackingDataTimestamp() {
+        lastSensorReadingsTimestamp = System.currentTimeMillis();
     }
 
+    // ────────────────────────────────────────────────────────────────────────────────
+    // State and metrics
+    // ────────────────────────────────────────────────────────────────────────────────
 
-    public void updateLastTrackingDataTimestamp() {
-        lastSensorReadingsTimestamp = System.currentTimeMillis();
+    public boolean isAlive() {
+        return (System.currentTimeMillis() - lastSensorReadingsTimestamp) < LINK_TIMEOUT_MS;
+    }
+
+    public boolean isRunning() {
+        return phase == Phase.RUNNING && !scheduler.isShutdown();
     }
 
     public long timeSinceLastSensorReadings() {
         return System.currentTimeMillis() - lastSensorReadingsTimestamp;
     }
 
-    public void adjustAFR(double adjustment) {
-        targetAfr += adjustment;
-        setAFR(targetAfr);
-    }
-
-    public void setAFR(double target) {
-        targetAfr = target;
-        BluetoothService.send(context, SpartanCommands.setAFR(targetAfr), "spartan");
-
-        listener.onTargetAfrUpdated(targetAfr);
-    }
-
     public Map<String, String> getReadingsAsString() {
-        LinkedHashMap<String, String> readings = new LinkedHashMap<>();
+        LinkedHashMap<String, String> map = new LinkedHashMap<>();
+        map.put("Target AFR", String.valueOf(targetAfr));
+        map.put("AFR", String.valueOf(lastSensorAfr));
+        map.put("O2 Temp", String.valueOf(lastSensorTemp));
+        return map;
+    }
 
-        // Populate the map with some sample readings
-        readings.put("Target AFR", String.valueOf(targetAfr));
-        readings.put("AFR", String.valueOf(lastSensorAfr));
-        readings.put("o2 Temp", String.valueOf(lastSensorTemp));
-
-        // Return the populated map
-        return readings;
+    public void onResume(Context ctx) {
+        if (!isRunning()) {
+            start();
+        }
     }
 }

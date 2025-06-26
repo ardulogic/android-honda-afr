@@ -49,7 +49,7 @@ public class FuelTotalHistory {
     }
 
     public double getCurrentFuelPer100km() {
-        return fuelPer100kmShortHistory.getAvg();
+        return Math.max(fuelPer100kmShortHistory.getAvg(), 50);
     }
 
     public double getTotalConsumedLitres() {

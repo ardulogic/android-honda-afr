@@ -56,6 +56,7 @@ public class TripComputer {
     }
 
     public void tick() {
+
         gps.setDistanceLoggingEnabled(true);
 
         afrHistory.add(mSpartanStudio.lastSensorAfr);
@@ -210,6 +211,18 @@ public class TripComputer {
     }
 
     public boolean isObdAlive() {
-        return mObdStudio.isObdAlive();
+        return mObdStudio.isAlive();
+    }
+
+    public boolean isAfrAlive() { return mSpartanStudio.isAlive(); }
+
+    public void ensureObdAndAfrAreAlive() {
+        if (!mObdStudio.isRunning()) {
+            mObdStudio.start();
+        }
+
+        if (!mSpartanStudio.isRunning()) {
+            mSpartanStudio.start();
+        }
     }
 }

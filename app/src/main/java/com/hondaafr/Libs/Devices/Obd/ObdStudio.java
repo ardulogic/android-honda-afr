@@ -42,7 +42,7 @@ public class ObdStudio extends Debuggable {
     private static final long LINK_TIMEOUT_MS          = 3_000L;  // liveness threshold
     private static final long SUPERVISOR_PERIOD_MS     = 1_000L;  // watchdog tick
     private static final long INIT_RESPONSE_TIMEOUT_MS = 2_000L;  // wait for OK
-    private static final long READING_DELAY = 50;
+    private static final long READING_DELAY = 75;
 
     // ────────────────────────────────────────────────────────────────────────────────
     // Types & state
@@ -68,7 +68,7 @@ public class ObdStudio extends Debuggable {
     // Queue of remaining init‑commands. Pop once each “OK” is seen.
     private Deque<String> initQueue;
 
-    public static final List<String> FUEL_CONS_OBD_READINGS = Arrays.asList("rpm", "map", "speed");
+    public static final List<String> FUEL_CONS_OBD_READINGS = Arrays.asList("rpm", "map");
 
     // ────────────────────────────────────────────────────────────────────────────────
     // Constructors
@@ -201,7 +201,7 @@ public class ObdStudio extends Debuggable {
                 lastReadingTimestamp = System.currentTimeMillis();
                 listener.onObdReadingUpdate(reading);
 
-                if (readings.active.size() >= 3) {
+                if (readings.active.size() >= 2) {
                     scheduler.schedule(() -> readings.requestNextReading(), READING_DELAY, TimeUnit.MILLISECONDS);
                 } else {
                     readings.requestNextReading();
@@ -232,7 +232,7 @@ public class ObdStudio extends Debuggable {
             }
 
             // RUNNING supervision
-            boolean alive = isObdAlive();
+            boolean alive = isAlive();
             if (alive && !linkPreviouslyAlive) {
                 listener.onObdConnectionActive();
                 linkPreviouslyAlive = true;
@@ -270,7 +270,11 @@ public class ObdStudio extends Debuggable {
 
     public long timeSinceLastResponse() { return System.currentTimeMillis() - lastResponseTimestamp; }
     public long timeSinceLastReading()  { return System.currentTimeMillis() - lastReadingTimestamp; }
-    public boolean isObdAlive()         { return timeSinceLastResponse() < LINK_TIMEOUT_MS; }
+    public boolean isAlive()         { return timeSinceLastResponse() < LINK_TIMEOUT_MS; }
+
+    public boolean isRunning() {
+        return supervisorTask != null && !supervisorTask.isCancelled() && !scheduler.isShutdown();
+    }
 
     public Map<String, String> getReadingsAsString() {
         LinkedHashMap<String, String> map = new LinkedHashMap<>();

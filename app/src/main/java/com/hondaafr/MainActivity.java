@@ -143,7 +143,7 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
         buttonDecreaseAfr = findViewById(R.id.buttonDecreaseAFR);
         buttonDecreaseAfr.setOnClickListener(view -> mSpartanStudio.adjustAFR(-0.05));
 
-        buttonTrackSensor = findViewById(R.id.buttonTrackSensor);
+        buttonTrackSensor = findViewById(R.id.buttonTrackAfr);
         buttonTrackSensor.setOnClickListener(view -> mSpartanStudio.start());
 
         buttonClearLog = findViewById(R.id.buttonClear);
@@ -456,6 +456,16 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
     }
 
     @Override
+    public void onAfrConnectionActive() {
+        mCluster.onDataUpdated();
+    }
+
+    @Override
+    public void onAfrConnectionLost() {
+        mCluster.onDataUpdated();
+    }
+
+    @Override
     public void onObdConnectionError(String s) {
         mCluster.onDataUpdated();
     }
@@ -508,6 +518,8 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
                 setObdReadingText(R.id.textLambdaVoltage, reading);
                 break;
         }
+        
+        mCluster.onDataUpdated();
     }
 
     private void setObdReadingText(int textViewId, ObdReading reading) {
@@ -848,6 +860,7 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
         BT_connect_obd();
 
         mEngineSound.onResume(this);
+        mSpartanStudio.onResume(this);
 
         super.onResume();
     }

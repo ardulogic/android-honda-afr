@@ -3,6 +3,7 @@ package com.hondaafr.Libs.Helpers;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
+import android.graphics.Paint;
 import android.location.Location;
 import android.os.Looper;
 import android.util.Log;
@@ -34,6 +35,7 @@ public class Cluster {
     private final TextView textClusterLcdMode2;
     private final ImageView imageRichFuel;
     private final ImageView imageObd;
+    private final ImageView imageAfr;
     private final PhoneLightSensor lightSensor;
     private final ImageView imageGauge;
     private final ImageButton buttonTripKnob;
@@ -44,6 +46,7 @@ public class Cluster {
     public static int MODE_TOTAL_KM = 3;
     public static int MODE_TOTAL_L = 4;
     public static int MODE_TOTAL_L100 = 5;
+    public static int MODE_AFR = 6;
 
     private final TripComputer mTripComputer;
     private final ImageView imageLcd;
@@ -54,7 +57,7 @@ public class Cluster {
     private float lastNeedleRotation = Float.NaN;
 
     public int mode = MODE_TRIP_KM;
-
+    private final Handler supervisorHandler = new Handler(Looper.getMainLooper());
 
     public Cluster(MainActivity mainActivity, TripComputer tripComputer) {
         this.mainActivity = mainActivity;
@@ -66,6 +69,7 @@ public class Cluster {
         this.textClusterLcdMode2 = mainActivity.findViewById(R.id.textClusterLcdMode2);
         this.imageRichFuel = mainActivity.findViewById(R.id.imageClusterRichFuel);
         this.imageObd= mainActivity.findViewById(R.id.imageClusterObd);
+        this.imageAfr= mainActivity.findViewById(R.id.imageClusterAfr);
         this.buttonTripKnob = mainActivity.findViewById(R.id.buttonClusterTripKnob);
 
         this.lightSensor = new PhoneLightSensor(mainActivity, intensity -> {
@@ -88,6 +92,21 @@ public class Cluster {
         startNeedleAnimator();
 
         onDataUpdated();
+
+        startSupervisor();
+    }
+
+    private void startSupervisor() {
+        supervisorHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                mTripComputer.ensureObdAndAfrAreAlive();
+            }
+        }, 1000);
+    }
+
+    public void stopSupervisor() {
+        supervisorHandler.removeCallbacksAndMessages(null);
     }
 
 
@@ -98,7 +117,7 @@ public class Cluster {
     @SuppressLint("ClickableViewAccessibility")
     private void setupTripKnobAnimation(ImageButton button) {
         button.setOnClickListener(v -> {
-            if (mode == 5) {
+            if (mode == modeDescriptors.length) {
                 mode = 0;
             } else {
                 mode += 1;
@@ -167,7 +186,8 @@ public class Cluster {
             new ModeDescriptor("TRIP", "/100", tc -> String.format("%.2f L", tc.getTripLitersPer100km())),         // MODE_TRIP_L100
             new ModeDescriptor("TOTAL", "", tc -> String.format("%05.0f", tc.getTotalDistanceKm())),               // MODE_TOTAL_KM
             new ModeDescriptor("TOTAL", "", tc -> String.format("%.2f L", tc.getTotalLiters())),                   // MODE_TOTAL_L
-            new ModeDescriptor("TOTAL", "/100", tc -> String.format("%.2f L", tc.getTotalLitersPer100km()))        // MODE_TOTAL_L100
+            new ModeDescriptor("TOTAL", "/100", tc -> String.format("%.2f L", tc.getTotalLitersPer100km())),        // MODE_TOTAL_L100
+            new ModeDescriptor("AFR", "", tc -> String.format("%.2f", tc.afrHistory.getAvg()))                     // MODE_AFR
     };
 
     public void onDataUpdated() {
@@ -188,13 +208,14 @@ public class Cluster {
         this.targetNeedleRotation = targetRotation;
 
         // Animate rich fuel indicator color (optional: fade transition)
-        int richFuelIconColor = mTripComputer.afrIsRich() ? 0xFFFFA500 : 0xFF222222;
-
-        // Use a ValueAnimator to animate the color if desired:
+        int richFuelIconColor = mTripComputer.afrIsRich() && mTripComputer.isAfrAlive() ? 0xFFFFA500 : 0xFF222222;
         imageRichFuel.setColorFilter(richFuelIconColor); // quick, or see optional below
 
         int obdConnectionColor = mTripComputer.isObdAlive() ? 0xFF222222 : 0xFFFFA500;
         imageObd.setColorFilter(obdConnectionColor); // quick, or see optional below
+
+        int afrConnectionColor = mTripComputer.isAfrAlive() ? 0xFF222222 : 0xFFFFA500;
+        imageAfr.setColorFilter(afrConnectionColor); // quick, or see optional below
     }
 
     private static class ModeDescriptor {
