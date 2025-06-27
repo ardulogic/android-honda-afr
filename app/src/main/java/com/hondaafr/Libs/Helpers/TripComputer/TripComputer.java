@@ -2,15 +2,12 @@ package com.hondaafr.Libs.Helpers.TripComputer;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.util.Log;
 
 import com.hondaafr.Libs.Devices.Obd.ObdStudio;
 import com.hondaafr.Libs.Devices.Obd.Readings.ObdReading;
-import com.hondaafr.Libs.Devices.Phone.PhoneBarometer;
 import com.hondaafr.Libs.Devices.Phone.PhoneGps;
-import com.hondaafr.Libs.Devices.Phone.PhoneGpsListener;
 import com.hondaafr.Libs.Devices.Spartan.SpartanStudio;
-import com.hondaafr.Libs.Helpers.AverageList;
-import com.hondaafr.Libs.Helpers.TotalLitersConsumed;
 import com.hondaafr.Libs.Helpers.ReadingHistory;
 
 import java.util.ArrayList;
@@ -37,37 +34,39 @@ public class TripComputer {
         this.listener = listener;
 
         // Modify GPS listener
-        this.gps = new PhoneGps(context, new PhoneGpsListener() {
-            @Override
-            public void onGpsSpeedUpdated(double speedKmh) {
-                listener.onGpsUpdated(speedKmh, tripStats.getDistanceKm());
-            }
-
-            @Override
-            public void onGpsDistanceIncrement(double deltaKm) {
-                if (mObdStudio.isAlive() && mSpartanStudio.isAlive()) {
+        this.gps = new PhoneGps(context, (speedKmh, deltaKm, accuracy) -> {
+            if (mObdStudio.isAlive() && mSpartanStudio.isAlive()) {
+                if (deltaKm > 0) {
                     tripStats.addDistance(deltaKm);
                     totalStats.addDistance(deltaKm);
 
                     timeDistanceLogged = System.currentTimeMillis();
                 }
             }
+
+            listener.onGpsUpdated(speedKmh, deltaKm);
+            listener.onTripComputerReadingsUpdated();
         });
 
         this.gps.setMinDistanceDeltaInMeters(25);
     }
 
-    public void init() {
-        totalStats.load(context);
-        tripStats.load(context);
-
-        listener.onTripComputerReadingsUpdated();
-    }
-
     public void tick() {
         afrHistory.add(mSpartanStudio.lastSensorAfr);
 
-        calculateStats(mSpartanStudio.lastSensorAfr);
+        if (mObdStudio.readingsForFuelAreActive()) {
+            Double afr = mSpartanStudio.lastSensorAfr;
+            Integer iatObd = (Integer) mObdStudio.getAvailableReading("iat").getValue();
+            Integer rpmObd = (Integer) mObdStudio.getAvailableReading("rpm").getValue();
+            Integer mapObd = (Integer) mObdStudio.getAvailableReading("map").getValue();
+
+            instStats.onReadingsReceived(afr, iatObd, rpmObd, mapObd, 1.590, getSpeed());
+
+            double litersIncrement = instStats.getLitersIncrement();
+
+            tripStats.addLiters(litersIncrement);
+            totalStats.addLiters(litersIncrement);
+        }
 
         listener.onTripComputerReadingsUpdated();
     }
@@ -102,21 +101,6 @@ public class TripComputer {
         }
     }
 
-    private void calculateStats(Double afr) {
-        if (mObdStudio.readingsForFuelAreActive()) {
-            Integer iatObd = (Integer) mObdStudio.getAvailableReading("iat").getValue();
-            Integer rpmObd = (Integer) mObdStudio.getAvailableReading("rpm").getValue();
-            Integer mapObd = (Integer) mObdStudio.getAvailableReading("map").getValue();
-
-            instStats.onReadingsReceived(afr, iatObd, rpmObd, mapObd, 1.590, getSpeed());
-
-            double litersIncrement = instStats.getLitersIncrement();
-
-            tripStats.addLiters(litersIncrement);
-            totalStats.addLiters(litersIncrement);
-        }
-    }
-
     public void onPause(Context context) {
         totalStats.save(context);
         tripStats.save(context);
@@ -127,18 +111,16 @@ public class TripComputer {
         tripStats.save(context);
     }
 
+    /**
+     * This also acts as the init() function since OnResume is called
+     * when app starts
+     *
+     * @param context
+     */
     public void onResume(Context context) {
         totalStats.load(context);
         tripStats.load(context);
-    }
 
-    public void resetTotals() {
-        totalStats.reset();
-        listener.onTripComputerReadingsUpdated();
-    }
-
-    public void resetTrip() {
-        tripStats.reset();
         listener.onTripComputerReadingsUpdated();
     }
 

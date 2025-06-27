@@ -13,16 +13,14 @@ import java.time.Instant;
 public class InstantStats {
 
     // Constants for SharedPreferences keys
-    private static final String KEY_TIMESTAMP = "timestamp";
-
     private final PhoneBarometer barometer;
 
-    private Double lastRateLph;
-    private double rateLph = 0;
-    private double rateLp100km = 0;
-    private Instant lastSampleTime = null;
-    private final AverageList lphHistory = new AverageList(15);
-    private final AverageList lp100kmHistory = new AverageList(15);
+    private static Double lastRateLph;
+    private static double rateLph = 0;
+    private static double rateLp100km = 0;
+    private static Instant lastSampleTime = null;
+    private final static AverageList lphHistory = new AverageList(15);
+    private final static AverageList lp100kmHistory = new AverageList(15);
 
     public InstantStats(Context c) {
         barometer = new PhoneBarometer(c);
@@ -39,10 +37,12 @@ public class InstantStats {
                 barometer.getPressureKPa(),
                 1.590);
 
-        rateLp100km = FuelConsumption.calculateLiters100km(rateLph, speed);
-
         lphHistory.add(rateLph);
-        lp100kmHistory.add(rateLp100km);
+
+        if (speed > 0) {
+            lp100kmHistory.add(rateLp100km);
+            rateLp100km = FuelConsumption.calculateLiters100km(rateLph, speed);
+        }
     }
 
     public double getLph() {
@@ -54,11 +54,11 @@ public class InstantStats {
     }
 
     public double getLp100km() {
-        return Math.max(rateLp100km, 30);
+        return Math.min(rateLp100km, 30);
     }
 
     public double getLp100kmAvg() {
-        return Math.max(lp100kmHistory.getAvg(), 30);
+        return Math.min(lp100kmHistory.getAvg(), 30);
     }
 
     public double getLitersIncrement() {

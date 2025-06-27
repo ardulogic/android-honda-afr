@@ -6,6 +6,6 @@ public interface TripComputerListener {
 
     void onTripComputerReadingsUpdated();
 
-    void onGpsUpdated(Double speed, double totalDistanceKm);
+    void onGpsUpdated(Double speed, double distanceIncrement);
 
 }

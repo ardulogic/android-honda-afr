@@ -281,11 +281,12 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
             viewModel.showTotalFuelConsumption.postValue(Boolean.FALSE.equals(viewModel.showTotalFuelConsumption.getValue()));
             updateDisplayedReadings();
         });
+
         textTotalDistance.setOnLongClickListener(v -> {
             if (Boolean.TRUE.equals(viewModel.showTotalFuelConsumption.getValue())) {
-                mTripComputer.resetTotals();
+                mTripComputer.totalStats.reset(this);
             } else {
-                mTripComputer.resetTrip();
+                mTripComputer.tripStats.reset(this);
             }
 
             updateDisplayedReadings();
@@ -324,7 +325,6 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
         mEngineSound.init(this);
 
         mTripComputer = new TripComputer(this, mObdStudio, mSpartanStudio, this);
-        mTripComputer.init();
 
         buttonToggleCluster = findViewById(R.id.buttonToggleCluster);
         buttonToggleCluster.setOnClickListener(v -> viewModel.showCluster.postValue(Boolean.FALSE.equals(viewModel.showCluster.getValue())));
@@ -779,17 +779,19 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
 
             textMeasurementBig.setText(String.format("%.2f l/h", mTripComputer.instStats.getLphAvg()));
             textMeasurementSmall.setText(String.format("%.2f", mTripComputer.instStats.getLp100kmAvg()));
-
-            mCluster.onDataUpdated();
         } else {
             textMeasurementBig.setText(String.format("%.2f", mTripComputer.afrHistory.getAvg()));
             textMeasurementSmall.setText(String.format("%.2f", mTripComputer.afrHistory.getAvgDeviation(mSpartanStudio.targetAfr)));
         }
+
+        if (viewModel.showCluster.getValue()) {
+            mCluster.onDataUpdated();
+        }
     }
 
     @Override
-    public void onGpsUpdated(Double speed, double totalDistanceKm) {
-        String s = String.format("%.1f km/h %.1f km", speed, totalDistanceKm);
+    public void onGpsUpdated(Double speed, double distanceIncrement) {
+        String s = String.format("%.1f km/h %.1f km", speed, distanceIncrement);
 
         mTextStatusGeneric.setText("GPS: " + s);
 
@@ -841,11 +843,16 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
     @Override
     public void onStart() {
         super.onStart();
+
         registerReceiver(btReceiver, intentFilter, Context.RECEIVER_EXPORTED);
     }
 
     @Override
     public void onResume() {
+        super.onResume();
+
+        Log.d("Lifecycle", "onResume");
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(btReceiver, intentFilter, Context.RECEIVER_EXPORTED);
         } else {
@@ -853,23 +860,23 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
         }
 
         BT_startService();
-
         BT_connect_spartan();
         BT_connect_obd();
 
         mEngineSound.onResume(this);
         mSpartanStudio.onResume(this);
         mTripComputer.onResume(this);
-
-        super.onResume();
+        mCluster.onResume(this);
     }
 
     @Override
     public void onPause() {
-        mTripComputer.onPause(this);
-        mEngineSound.onPause(this);
-
         super.onPause();
+
+        Log.d("Lifecycle", "onPause");
+        mEngineSound.onPause(this);
+        mTripComputer.onPause(this);
+        mCluster.onPause(this);
     }
 
     @Override

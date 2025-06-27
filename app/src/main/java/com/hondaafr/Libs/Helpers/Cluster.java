@@ -4,8 +4,11 @@ import android.animation.ArgbEvaluator;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.graphics.Color;
 import android.os.Looper;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -17,6 +20,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.hondaafr.Libs.Devices.Phone.PhoneLightSensor;
+import com.hondaafr.Libs.Helpers.TripComputer.TotalStats;
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputer;
 import com.hondaafr.MainActivity;
 import com.hondaafr.R;
@@ -34,6 +38,9 @@ public class Cluster {
     private final TextView textClusterLcd;
     private final TextView textClusterLcdMode1;
     private final TextView textClusterLcdMode2;
+    private final TextView textKnobTotals;
+    private final TextView textKnobTrip;
+    private final TextView textKnobInst;
     private final ImageView imageRichFuel;
     private final ImageView imageObd;
     private final ImageView imageAfr;
@@ -44,14 +51,6 @@ public class Cluster {
     private final ImageButton buttonTripKnob;
     private final ImageButton buttonTotalsKnob;
     private final ImageButton buttonInstKnob;
-
-    public static int MODE_TRIP_KM = 0;
-    public static int MODE_TRIP_L = 1;
-    public static int MODE_TRIP_L100 = 2;
-    public static int MODE_TOTAL_KM = 3;
-    public static int MODE_TOTAL_L = 4;
-    public static int MODE_TOTAL_L100 = 5;
-    public static int MODE_AFR = 6;
 
     private final TripComputer mTripComputer;
     private final ImageView imageLcd;
@@ -65,8 +64,10 @@ public class Cluster {
 
     private float lastNeedleRotation = Float.NaN;
 
-    public int mode = MODE_TRIP_KM;
+    public int mode = 0;
     private final Handler supervisorHandler = new Handler(Looper.getMainLooper());
+
+    Vibrator vibrator;
 
     int gray = 0xFF222222;
     int red = 0xFFC82B28;
@@ -87,7 +88,11 @@ public class Cluster {
         this.buttonTripKnob = mainActivity.findViewById(R.id.buttonClusterTripKnob);
         this.buttonTotalsKnob = mainActivity.findViewById(R.id.buttonClusterTotalsKnob);
         this.buttonInstKnob = mainActivity.findViewById(R.id.buttonClusterInstKnob);
+        this.textKnobTotals = mainActivity.findViewById(R.id.textViewKnobTotals);
+        this.textKnobInst = mainActivity.findViewById(R.id.textViewKnobInst);
+        this.textKnobTrip = mainActivity.findViewById(R.id.textViewKnobTrip);
         this.layoutCluster = mainActivity.findViewById(R.id.layoutCluster);
+        this.vibrator = (Vibrator) mainActivity.getSystemService(Context.VIBRATOR_SERVICE);
 
         this.lightSensor = new PhoneLightSensor(mainActivity, intensity -> {
             Log.d("Light", String.valueOf(intensity));
@@ -109,47 +114,22 @@ public class Cluster {
 
         this.mTripComputer = tripComputer;
         setupKnobAnimation(buttonTripKnob);
-        buttonTripKnob.setOnClickListener(v -> {
-            mode += 1;
-
-            if (mode >= 3) {
-                mode = 0;
-            }
-
-            onDataUpdated();
-        });
+        setKnobOnShortClick(buttonTripKnob, 0, 2);
+        setKnobOnLongClick(buttonTripKnob, mTripComputer.tripStats);
 
         setupKnobAnimation(buttonTotalsKnob);
-        buttonTotalsKnob.setOnClickListener(v -> {
-            mode += 1;
+        setKnobOnShortClick(buttonTotalsKnob, 3, 5);
+        setKnobOnLongClick(buttonTotalsKnob, mTripComputer.totalStats);
 
-            if (mode < 3 || mode >= 6) {
-                mode = 3;
-            }
-
-            onDataUpdated();
-        });
 
         setupKnobAnimation(buttonInstKnob);
-        buttonInstKnob.setOnClickListener(v -> {
-            mode += 1;
+        setKnobOnShortClick(buttonInstKnob, 6, 8);
 
-            if (mode < 6 || mode >= 9) {
-                mode = 6;
-            }
-
-            onDataUpdated();
-        });
-
+        layoutCluster.setOnClickListener(v -> toggleSystemUI());
 
         startNeedleAnimator();
-
         onDataUpdated();
-
         startSupervisor();
-
-        View clusterLayout = mainActivity.findViewById(R.id.layoutCluster);
-        clusterLayout.setOnClickListener(v -> toggleSystemUI());
     }
 
     private void toggleSystemUI() {
@@ -188,7 +168,13 @@ public class Cluster {
     }
 
     private void startSupervisor() {
-        supervisorHandler.postDelayed(mTripComputer::ensureObdAndAfrAreAlive, 1000);
+        supervisorHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                mTripComputer.ensureObdAndAfrAreAlive();
+                supervisorHandler.postDelayed(this, 1000); // Reschedule
+            }
+        }, 1000);
     }
 
     public void stopSupervisor() {
@@ -199,6 +185,48 @@ public class Cluster {
         mainActivity.findViewById(R.id.layoutCluster).setVisibility(visible ? View.VISIBLE : View.GONE);
     }
 
+    private void setKnobOnLongClick(ImageButton b, TotalStats stats) {
+        b.setOnLongClickListener(v -> {
+            stats.reset(mainActivity);
+            onDataUpdated();
+
+            if (vibrator != null) {
+                vibrator.vibrate(VibrationEffect.createOneShot(550, VibrationEffect.DEFAULT_AMPLITUDE)); // short click
+            }
+
+            v.setTag(R.id.was_long_clicked, true);
+            return false;
+        });
+    }
+
+    private void setKnobOnShortClick(ImageButton b, int fromModeIndex, int toModeIndex) {
+        b.setOnClickListener(v -> {
+            Boolean longClicked = (Boolean) v.getTag(R.id.was_long_clicked);
+            if (longClicked != null && longClicked) {
+                v.setTag(R.id.was_long_clicked, false); // Reset the flag
+
+                if (mode < fromModeIndex || mode > toModeIndex) {
+                    mode = fromModeIndex;
+                    lightUpActiveKnob();
+                    onDataUpdated();
+                }
+
+                return; // Don't handle short click
+            }
+
+            mode += 1;
+            if (mode < fromModeIndex || mode > toModeIndex) {
+                mode = fromModeIndex;
+            }
+
+            if (vibrator != null) {
+                vibrator.vibrate(VibrationEffect.createOneShot(40, VibrationEffect.DEFAULT_AMPLITUDE));
+            }
+
+            lightUpActiveKnob();
+            onDataUpdated();
+        });
+    }
     @SuppressLint("ClickableViewAccessibility")
     private void setupKnobAnimation(ImageButton button) {
         button.setOnTouchListener((v, event) -> {
@@ -212,17 +240,6 @@ public class Cluster {
                     break;
 
                 case MotionEvent.ACTION_UP:
-                    v.animate()
-                            .scaleX(1.0f)
-                            .scaleY(1.0f)
-                            .setDuration(150)
-                            .setInterpolator(new OvershootInterpolator())
-                            .start();
-
-                    // Properly trigger click behavior
-                    v.performClick();
-                    break;
-
                 case MotionEvent.ACTION_CANCEL:
                     v.animate()
                             .scaleX(1.0f)
@@ -232,7 +249,9 @@ public class Cluster {
                             .start();
                     break;
             }
-            return true; // we handled the touch
+
+            // Let the system handle long click detection
+            return false; // <--- Important: let event propagate
         });
     }
 
@@ -247,9 +266,9 @@ public class Cluster {
             imageNeedle.setImageResource(R.drawable.fuel_gauge_needle_night);
             imageGauge.setImageResource(R.drawable.fuel_gauge_night);
             imageLcd.setImageResource(R.drawable.fuel_gauge_lcd_night);
-            buttonTripKnob.setImageResource(R.drawable.trip_knob_night);
-            buttonTotalsKnob.setImageResource(R.drawable.trip_knob_night);
-            buttonInstKnob.setImageResource(R.drawable.trip_knob_night);
+            buttonTripKnob.setImageResource(R.drawable.trip_knob_night_off);
+            buttonTotalsKnob.setImageResource(R.drawable.trip_knob_night_off);
+            buttonInstKnob.setImageResource(R.drawable.trip_knob_night_off);
             layoutCluster.setBackgroundColor(Color.parseColor("#000000"));
 
             imageObd.setImageResource(R.drawable.obd_night);
@@ -270,6 +289,8 @@ public class Cluster {
             imageGps.setImageResource(R.drawable.gps);
             imageRichFuel.setImageResource(R.drawable.fuel_gauge_rich_fuel);
         }
+
+        lightUpActiveKnob();
     }
 
 
@@ -288,14 +309,34 @@ public class Cluster {
             new ModeDescriptor("INST", "AFR", tc -> String.format("%.2f", tc.afrHistory.getAvg()))                     // MODE_AFR
     };
 
+    private void lightUpActiveKnob() {
+        if (isNightMode) {
+            buttonTripKnob.setImageResource(R.drawable.trip_knob_night_off);
+            buttonTotalsKnob.setImageResource(R.drawable.trip_knob_night_off);
+            buttonInstKnob.setImageResource(R.drawable.trip_knob_night_off);
+
+            textKnobTotals.setTextColor(0xFF7E7752);
+            textKnobTrip.setTextColor(0xFF7E7752);
+            textKnobInst.setTextColor(0xFF7E7752);
+
+            if (mode < 3) {
+                buttonTripKnob.setImageResource(R.drawable.trip_knob_night_on);
+                textKnobTrip.setTextColor(0xFFC0B682);
+            } else if (mode < 6) {
+                buttonTotalsKnob.setImageResource(R.drawable.trip_knob_night_on);
+                textKnobTotals.setTextColor(0xFFC0B682);
+            } else {
+                buttonInstKnob.setImageResource(R.drawable.trip_knob_night_on);
+                textKnobInst.setTextColor(0xFFC0B682);
+            }
+        }
+    }
+
     public void onDataUpdated() {
         if (Looper.myLooper() != Looper.getMainLooper()) {
             new Handler(Looper.getMainLooper()).post(this::onDataUpdated);
             return;
         }
-
-        // night orange # FEC803
-        // day orange 0xFFC82B28
 
         if (mode >= 0 && mode < modeDescriptors.length) {
             ModeDescriptor descriptor = modeDescriptors[mode];
@@ -308,13 +349,14 @@ public class Cluster {
         float targetRotation = calculateNeedleRotation(mTripComputer.instStats.getLphAvg());
         this.targetNeedleRotation = targetRotation;
 
-        int richFuelIconColor = mTripComputer.afrIsRich() && mTripComputer.mSpartanStudio.isAlive() ? orange : gray;
+        int richFuelIconColor = mTripComputer.afrIsRich() && mTripComputer.mSpartanStudio.lastSensorAfr > 0 ? orange : gray;
         imageRichFuel.setColorFilter(richFuelIconColor);
         imageRichFuel.setTag(richFuelIconColor);
 
         int obdConnectionColor = mTripComputer.mObdStudio.isAlive() ? red : orange;
         obdConnectionColor = mTripComputer.mObdStudio.isReading() ? gray : obdConnectionColor;
         imageObd.setColorFilter(obdConnectionColor);
+        imageObd.setTag(obdConnectionColor);
         imageObd.setTag(obdConnectionColor);
 
         int afrConnectionColor = mTripComputer.mSpartanStudio.isAlive() ? red : orange;
@@ -336,21 +378,11 @@ public class Cluster {
                 imageGps.setColorFilter(gray);
             }
         } else {
-            imageGps.setColorFilter(orange);
-        }
-    }
+            if (gpsAnimator != null && gpsAnimator.isRunning()) {
+                gpsAnimator.cancel();
+            }
 
-    private void setGlowForButtons() {
-        if (isNightMode) {
-            imageObd.setImageResource(R.drawable.obd_night);
-            imageAfr.setImageResource(R.drawable.afr_night);
-            imageGps.setImageResource(R.drawable.gps_night);
-            imageRichFuel.setImageResource(R.drawable.fuel_gauge_rich_fuel_night);
-        } else {
-            imageObd.setImageResource(R.drawable.obd);
-            imageAfr.setImageResource(R.drawable.afr);
-            imageGps.setImageResource(R.drawable.gps);
-            imageRichFuel.setImageResource(R.drawable.fuel_gauge_rich_fuel);
+            imageGps.setColorFilter(orange);
         }
     }
 
@@ -435,5 +467,13 @@ public class Cluster {
         });
 
         needleAnimator.start();
+    }
+
+    public void onPause(Context context) {
+        stopSupervisor();
+    }
+
+    public void onResume(Context context) {
+        startSupervisor();
     }
 }

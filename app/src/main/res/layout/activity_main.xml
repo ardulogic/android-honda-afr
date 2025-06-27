@@ -44,11 +44,11 @@
 
         <TextView
             android:id="@+id/textClusterLcd"
-            android:layout_width="140dp"
+            android:layout_width="141dp"
             android:layout_height="wrap_content"
             android:fontFamily="@font/dsmonospace"
             android:gravity="right"
-            android:text="000.1"
+            android:text="100.00 L"
             android:textColor="#121212"
             android:textSize="40sp"
             app:layout_constraintBottom_toBottomOf="@+id/imageClusterLcd"

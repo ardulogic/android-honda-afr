@@ -32,8 +32,7 @@ public class PhoneGps {
     private LocationCallback locationCallback;
     private final LinkedList<Location> locationHistory = new LinkedList<>();
     private double speedKmh = 0.0;
-    private long lastDistanceUpdateTime = 0L;
-    private long lastLocationUpdateTime = 0L;
+    private long lastUpdateTime = 0L;
 
     private LocalTime sunriseTime;
     private LocalTime sunsetTime;
@@ -69,9 +68,12 @@ public class PhoneGps {
             return;
         }
 
-        LocationRequest request = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY)
+        LocationRequest locationRequest = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY)
+                .setMinUpdateIntervalMillis(UPDATE_INTERVAL_MS)
+                .setPriority(Priority.PRIORITY_HIGH_ACCURACY )
                 .setIntervalMillis(UPDATE_INTERVAL_MS)
                 .build();
+
 
         locationCallback = new LocationCallback() {
             @Override
@@ -84,30 +86,32 @@ public class PhoneGps {
                     }
 
                     speedKmh = location.getSpeed() * 3.6;
-                    listener.onGpsSpeedUpdated(speedKmh);
+                    lastUpdateTime = System.currentTimeMillis();
 
-                    lastLocationUpdateTime = System.currentTimeMillis();
+                    if (location.getAccuracy() < 50) {
+                        if (!locationHistory.isEmpty()) {
+                            Location last = locationHistory.getLast();
+                            float distance = last.distanceTo(location);
+                            Log.d("PhoneGps", "Received: " + distance + "m" + " lat: " + location.getLatitude() + " lon: " + location.getLongitude() + " acc:" + location.getAccuracy());
 
-                    if (!locationHistory.isEmpty()) {
-                        Location last = locationHistory.getLast();
-                        float distance = last.distanceTo(location);
-
-                        if (distance >= minDistanceDelta) {
-                            locationHistory.add(location);
-                            lastDistanceUpdateTime = System.currentTimeMillis();
-
-                            listener.onGpsDistanceIncrement(distance / 1000.0); // Convert to km
+                            if (distance >= minDistanceDelta) {
+                                locationHistory.add(location);
+                                listener.onUpdate(speedKmh, distance / 1000.0, location.getAccuracy()); // Convert to km
+                            } else {
+                                Log.d("PhoneGps", "Ignored small movement: " + distance + "m");
+                            }
                         } else {
-                            Log.d("PhoneGps", "Ignored small movement: " + distance + "m");
+                            locationHistory.add(location);
+                            listener.onUpdate(speedKmh, 0, location.getAccuracy());
                         }
                     } else {
-                        locationHistory.add(location);
+                        Log.d("PhoneGps", "Ignored accuracy: " + location.getAccuracy() + "m");
                     }
                 }
             }
         };
 
-        fusedLocationClient.requestLocationUpdates(request, locationCallback, Looper.getMainLooper());
+        fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
     }
 
     private void updateSunriseSunset(@NonNull Location location) {
@@ -124,12 +128,8 @@ public class PhoneGps {
         sunsetTime = LocalTime.of(sunset.get(Calendar.HOUR_OF_DAY), sunset.get(Calendar.MINUTE));
     }
 
-    public boolean isLoggingDistance() {
-        return System.currentTimeMillis() - lastDistanceUpdateTime < UPDATE_INTERVAL_MS * 2;
-    }
-
     public boolean isAlive() {
-        return System.currentTimeMillis() - lastLocationUpdateTime < UPDATE_INTERVAL_MS * 1.5;
+        return System.currentTimeMillis() - lastUpdateTime < UPDATE_INTERVAL_MS * 1.5;
     }
 
     public double getSpeed() {
