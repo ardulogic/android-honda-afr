@@ -42,6 +42,8 @@ public class Cluster {
     private final PhoneLightSensor lightSensor;
     private final ImageView imageGauge;
     private final ImageButton buttonTripKnob;
+    private final ImageButton buttonTotalsKnob;
+    private final ImageButton buttonInstKnob;
 
     public static int MODE_TRIP_KM = 0;
     public static int MODE_TRIP_L = 1;
@@ -66,6 +68,10 @@ public class Cluster {
     public int mode = MODE_TRIP_KM;
     private final Handler supervisorHandler = new Handler(Looper.getMainLooper());
 
+    int gray = 0xFF222222;
+    int red = 0xFFC82B28;
+    int orange = 0xFFFFA500;
+
     public Cluster(MainActivity mainActivity, TripComputer tripComputer) {
         this.mainActivity = mainActivity;
         this.imageNeedle = mainActivity.findViewById(R.id.imageClusterNeedle);
@@ -79,6 +85,8 @@ public class Cluster {
         this.imageAfr = mainActivity.findViewById(R.id.imageClusterAfr);
         this.imageGps = mainActivity.findViewById(R.id.imageClusterGps);
         this.buttonTripKnob = mainActivity.findViewById(R.id.buttonClusterTripKnob);
+        this.buttonTotalsKnob = mainActivity.findViewById(R.id.buttonClusterTotalsKnob);
+        this.buttonInstKnob = mainActivity.findViewById(R.id.buttonClusterInstKnob);
         this.layoutCluster = mainActivity.findViewById(R.id.layoutCluster);
 
         this.lightSensor = new PhoneLightSensor(mainActivity, intensity -> {
@@ -86,17 +94,53 @@ public class Cluster {
 
             boolean lowLight = intensity < 15;
             boolean afterSunset = false;
+            boolean beforeSunrise = false;
 
-            if (tripComputer.gps.getSunsetTime() != null) {
-                afterSunset = LocalTime.now().isAfter(tripComputer.gps.getSunsetTime());
+            LocalTime now = LocalTime.now();
+
+            if (tripComputer.gps.getSunsetTime() != null && tripComputer.gps.getSunriseTime() != null) {
+                afterSunset = now.isAfter(tripComputer.gps.getSunsetTime());
+                beforeSunrise = now.isBefore(tripComputer.gps.getSunriseTime());
             }
 
-            setNightMode(lowLight || afterSunset);
+            boolean isNight = lowLight || afterSunset || beforeSunrise;
+            setNightMode(isNight);
         });
 
-
         this.mTripComputer = tripComputer;
-        setupTripKnobAnimation(buttonTripKnob);
+        setupKnobAnimation(buttonTripKnob);
+        buttonTripKnob.setOnClickListener(v -> {
+            mode += 1;
+
+            if (mode >= 3) {
+                mode = 0;
+            }
+
+            onDataUpdated();
+        });
+
+        setupKnobAnimation(buttonTotalsKnob);
+        buttonTotalsKnob.setOnClickListener(v -> {
+            mode += 1;
+
+            if (mode < 3 || mode >= 6) {
+                mode = 3;
+            }
+
+            onDataUpdated();
+        });
+
+        setupKnobAnimation(buttonInstKnob);
+        buttonInstKnob.setOnClickListener(v -> {
+            mode += 1;
+
+            if (mode < 6 || mode >= 9) {
+                mode = 6;
+            }
+
+            onDataUpdated();
+        });
+
 
         startNeedleAnimator();
 
@@ -144,35 +188,19 @@ public class Cluster {
     }
 
     private void startSupervisor() {
-        supervisorHandler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                mTripComputer.ensureObdAndAfrAreAlive();
-            }
-        }, 1000);
+        supervisorHandler.postDelayed(mTripComputer::ensureObdAndAfrAreAlive, 1000);
     }
 
     public void stopSupervisor() {
         supervisorHandler.removeCallbacksAndMessages(null);
     }
 
-
     public void setVisibility(boolean visible) {
         mainActivity.findViewById(R.id.layoutCluster).setVisibility(visible ? View.VISIBLE : View.GONE);
     }
 
     @SuppressLint("ClickableViewAccessibility")
-    private void setupTripKnobAnimation(ImageButton button) {
-        button.setOnClickListener(v -> {
-            if (mode == modeDescriptors.length) {
-                mode = 0;
-            } else {
-                mode += 1;
-            }
-
-            onDataUpdated();
-        });
-
+    private void setupKnobAnimation(ImageButton button) {
         button.setOnTouchListener((v, event) -> {
             switch (event.getAction()) {
                 case MotionEvent.ACTION_DOWN:
@@ -209,36 +237,55 @@ public class Cluster {
     }
 
     private void setNightMode(boolean enabled) {
-        if (this.isNightMode == enabled) {
+        if (isNightMode == enabled) {
             return; // No change, skip updating images
         }
 
-        this.isNightMode = enabled;
+        isNightMode = enabled;
 
         if (enabled) {
-            this.imageNeedle.setImageResource(R.drawable.fuel_gauge_needle_night);
-            this.imageGauge.setImageResource(R.drawable.fuel_gauge_night);
-            this.imageLcd.setImageResource(R.drawable.fuel_gauge_lcd_night);
-            this.buttonTripKnob.setBackgroundResource(R.drawable.trip_knob_night);
-            this.layoutCluster.setBackgroundColor(Color.parseColor("#000000"));
+            imageNeedle.setImageResource(R.drawable.fuel_gauge_needle_night);
+            imageGauge.setImageResource(R.drawable.fuel_gauge_night);
+            imageLcd.setImageResource(R.drawable.fuel_gauge_lcd_night);
+            buttonTripKnob.setImageResource(R.drawable.trip_knob_night);
+            buttonTotalsKnob.setImageResource(R.drawable.trip_knob_night);
+            buttonInstKnob.setImageResource(R.drawable.trip_knob_night);
+            layoutCluster.setBackgroundColor(Color.parseColor("#000000"));
+
+            imageObd.setImageResource(R.drawable.obd_night);
+            imageAfr.setImageResource(R.drawable.afr_night);
+            imageGps.setImageResource(R.drawable.gps_night);
+            imageRichFuel.setImageResource(R.drawable.fuel_gauge_rich_fuel_night);
         } else {
-            this.imageNeedle.setImageResource(R.drawable.fuel_gauge_needle_day);
-            this.imageGauge.setImageResource(R.drawable.fuel_gauge_day);
-            this.imageLcd.setImageResource(R.drawable.fuel_gauge_lcd_day);
-            this.buttonTripKnob.setBackgroundResource(R.drawable.trip_knob_day);
-            this.layoutCluster.setBackgroundColor(Color.parseColor("#0E0E0E"));
+            imageNeedle.setImageResource(R.drawable.fuel_gauge_needle_day);
+            imageGauge.setImageResource(R.drawable.fuel_gauge_day);
+            imageLcd.setImageResource(R.drawable.fuel_gauge_lcd_day);
+            buttonTripKnob.setImageResource(R.drawable.trip_knob_day);
+            buttonTotalsKnob.setImageResource(R.drawable.trip_knob_day);
+            buttonInstKnob.setImageResource(R.drawable.trip_knob_day);
+            layoutCluster.setBackgroundColor(Color.parseColor("#0E0E0E"));
+
+            imageObd.setImageResource(R.drawable.obd);
+            imageAfr.setImageResource(R.drawable.afr);
+            imageGps.setImageResource(R.drawable.gps);
+            imageRichFuel.setImageResource(R.drawable.fuel_gauge_rich_fuel);
         }
     }
 
+
     @SuppressLint("DefaultLocale")
     private final ModeDescriptor[] modeDescriptors = new ModeDescriptor[]{
-            new ModeDescriptor("TRIP", "", tc -> String.format("%.1f", tc.getTripGpsDistance())),                  // MODE_TRIP_KM
-            new ModeDescriptor("TRIP", "", tc -> String.format("%.2f L", tc.getTripLitres())),                     // MODE_TRIP_L
-            new ModeDescriptor("TRIP", "/100", tc -> String.format("%.2f L", tc.getTripLitersPer100km())),         // MODE_TRIP_L100
-            new ModeDescriptor("TOTAL", "", tc -> String.format("%05.0f", tc.getTotalDistanceKm())),               // MODE_TOTAL_KM
-            new ModeDescriptor("TOTAL", "", tc -> String.format("%.2f L", tc.getTotalLiters())),                   // MODE_TOTAL_L
-            new ModeDescriptor("TOTAL", "/100", tc -> String.format("%.2f L", tc.getTotalLitersPer100km())),        // MODE_TOTAL_L100
-            new ModeDescriptor("AFR", "", tc -> String.format("%.2f", tc.afrHistory.getAvg()))                     // MODE_AFR
+            new ModeDescriptor("TRIP", "", tc -> String.format("%.1f", tc.tripStats.getDistanceKm())),                   // MODE_TRIP_KM
+            new ModeDescriptor("TRIP", "", tc -> String.format("%.2f L", tc.tripStats.getLiters())),                     // MODE_TRIP_L
+            new ModeDescriptor("TRIP", "/100", tc -> String.format("%.2f L", tc.tripStats.getLitersPer100km())),         // MODE_TRIP_L100
+
+            new ModeDescriptor("TOTAL", "", tc -> String.format("%05.0f", tc.totalStats.getDistanceKm())),               // MODE_TOTAL_KM
+            new ModeDescriptor("TOTAL", "", tc -> String.format("%.2f L", tc.totalStats.getLiters())),                   // MODE_TOTAL_L
+            new ModeDescriptor("TOTAL", "/100", tc -> String.format("%.2f L", tc.totalStats.getLitersPer100km())),        // MODE_TOTAL_L100
+
+            new ModeDescriptor("INST", "/h", tc -> String.format("%.2f L", tc.instStats.getLphAvg())),                // MODE_TRIP_L
+            new ModeDescriptor("INST", "/100", tc -> String.format("%.2f L", tc.instStats.getLp100kmAvg())),                // MODE_TRIP_L
+            new ModeDescriptor("INST", "AFR", tc -> String.format("%.2f", tc.afrHistory.getAvg()))                     // MODE_AFR
     };
 
     public void onDataUpdated() {
@@ -246,6 +293,9 @@ public class Cluster {
             new Handler(Looper.getMainLooper()).post(this::onDataUpdated);
             return;
         }
+
+        // night orange # FEC803
+        // day orange 0xFFC82B28
 
         if (mode >= 0 && mode < modeDescriptors.length) {
             ModeDescriptor descriptor = modeDescriptors[mode];
@@ -255,29 +305,53 @@ public class Cluster {
         }
 
         // Animate needle rotation
-        float targetRotation = calculateNeedleRotation(mTripComputer.getShortAvgLitersPerHour());
+        float targetRotation = calculateNeedleRotation(mTripComputer.instStats.getLphAvg());
         this.targetNeedleRotation = targetRotation;
 
-        int richFuelIconColor = mTripComputer.afrIsRich() && mTripComputer.mSpartanStudio.isAlive() ? 0xFFFFA500 : 0xFF222222;
+        int richFuelIconColor = mTripComputer.afrIsRich() && mTripComputer.mSpartanStudio.isAlive() ? orange : gray;
         imageRichFuel.setColorFilter(richFuelIconColor);
+        imageRichFuel.setTag(richFuelIconColor);
 
-        int obdConnectionColor = mTripComputer.mObdStudio.isAlive() ? 0xFFC82B28 : 0xFFFFA500;
-        obdConnectionColor = mTripComputer.mObdStudio.isReading() ? 0xFF222222 : obdConnectionColor;
+        int obdConnectionColor = mTripComputer.mObdStudio.isAlive() ? red : orange;
+        obdConnectionColor = mTripComputer.mObdStudio.isReading() ? gray : obdConnectionColor;
         imageObd.setColorFilter(obdConnectionColor);
+        imageObd.setTag(obdConnectionColor);
 
-        int afrConnectionColor = mTripComputer.mSpartanStudio.isAlive() ? 0xFFC82B28 : 0xFFFFA500;
-        afrConnectionColor = mTripComputer.mSpartanStudio.isReading() ? 0xFF222222 : afrConnectionColor;
+        int afrConnectionColor = mTripComputer.mSpartanStudio.isAlive() ? red : orange;
+        afrConnectionColor = mTripComputer.mSpartanStudio.isReading() ? gray : afrConnectionColor;
         imageAfr.setColorFilter(afrConnectionColor);
+        imageAfr.setTag(afrConnectionColor);
 
-        int gpsColor = mTripComputer.gps.isAlive() ? 0xFFC82B28 :  0xFFFFA500;
+        boolean gpsAlive = mTripComputer.gps.isAlive();
+        boolean isLogging = mTripComputer.isGpsLogging();
 
-        if (mTripComputer.gps.isAlive() && !mTripComputer.gps.isLoggingDistance()) {
-            animateGpsIcon();
-            // make image tint fade from 0xFFC82B28 ti 0xFFFFA500 while this is true, otherwise;
+        if (gpsAlive) {
+            if (!isLogging) {
+                animateGpsIcon();
+            } else {
+                if (gpsAnimator != null && gpsAnimator.isRunning()) {
+                    gpsAnimator.cancel();
+                }
+
+                imageGps.setColorFilter(gray);
+            }
         } else {
-            imageGps.setColorFilter(gpsColor);
+            imageGps.setColorFilter(orange);
         }
+    }
 
+    private void setGlowForButtons() {
+        if (isNightMode) {
+            imageObd.setImageResource(R.drawable.obd_night);
+            imageAfr.setImageResource(R.drawable.afr_night);
+            imageGps.setImageResource(R.drawable.gps_night);
+            imageRichFuel.setImageResource(R.drawable.fuel_gauge_rich_fuel_night);
+        } else {
+            imageObd.setImageResource(R.drawable.obd);
+            imageAfr.setImageResource(R.drawable.afr);
+            imageGps.setImageResource(R.drawable.gps);
+            imageRichFuel.setImageResource(R.drawable.fuel_gauge_rich_fuel);
+        }
     }
 
     private void animateGpsIcon() {

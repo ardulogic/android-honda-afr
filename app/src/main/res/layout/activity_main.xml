@@ -18,14 +18,16 @@
 
         <ImageView
             android:id="@+id/imageClusterGauge"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            app:layout_constraintDimensionRatio="1:1"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintVertical_bias="0.3"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/fuel_gauge_day" />
+            app:srcCompat="@drawable/fuel_gauge_day"/>
 
 
         <ImageView
@@ -33,11 +35,11 @@
             android:layout_width="160dp"
             android:layout_height="67dp"
             android:scaleType="fitXY"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.63"
+            app:layout_constraintBottom_toBottomOf="@id/imageClusterGauge"
+            app:layout_constraintEnd_toEndOf="@id/imageClusterGauge"
+            app:layout_constraintStart_toStartOf="@id/imageClusterGauge"
+            app:layout_constraintTop_toTopOf="@id/imageClusterGauge"
+            app:layout_constraintVertical_bias="0.8"
             app:srcCompat="@drawable/fuel_gauge_lcd_day" />
 
         <TextView
@@ -120,12 +122,23 @@
             android:id="@+id/imageClusterNeedle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toBottomOf="@id/imageClusterGauge"
+            app:layout_constraintEnd_toEndOf="@id/imageClusterGauge"
             app:layout_constraintHorizontal_bias="0.0"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="@id/imageClusterGauge"
+            app:layout_constraintTop_toTopOf="@id/imageClusterGauge"
             app:srcCompat="@drawable/fuel_gauge_needle_night" />
+
+        <TextView
+            android:id="@+id/textViewKnobTotals"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/grotesk"
+            android:text="Total"
+            android:textSize="20sp"
+            app:layout_constraintEnd_toEndOf="@+id/buttonClusterTotalsKnob"
+            app:layout_constraintStart_toStartOf="@+id/buttonClusterTotalsKnob"
+            app:layout_constraintTop_toBottomOf="@+id/buttonClusterTotalsKnob" />
 
         <ImageButton
             android:id="@+id/buttonClusterTripKnob"
@@ -133,13 +146,55 @@
             android:layout_height="80dp"
             android:background="@android:color/transparent"
             android:scaleType="fitCenter"
-            app:layout_constraintBottom_toBottomOf="@+id/imageClusterGauge"
+            app:layout_constraintTop_toBottomOf="@+id/imageClusterGauge"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.904"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/imageClusterGauge"
-            app:layout_constraintVertical_bias="0.903"
+            app:layout_constraintVertical_bias="0.2"
+            app:layout_constraintHorizontal_bias="0.9"
             app:srcCompat="@drawable/trip_knob_day" />
+
+        <TextView
+            android:id="@+id/textViewKnobInst"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/grotesk"
+            android:text="Inst"
+            android:textSize="20sp"
+            app:layout_constraintEnd_toEndOf="@+id/buttonClusterInstKnob"
+            app:layout_constraintStart_toStartOf="@+id/buttonClusterInstKnob"
+            app:layout_constraintTop_toBottomOf="@+id/buttonClusterInstKnob" />
+
+        <ImageButton
+            android:id="@+id/buttonClusterInstKnob"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:background="@android:color/transparent"
+            android:scaleType="fitCenter"
+
+            app:layout_constraintTop_toBottomOf="@+id/imageClusterGauge"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintVertical_bias="0.2"
+            app:layout_constraintHorizontal_bias="0.505"
+            app:srcCompat="@drawable/trip_knob_day" />
+
+
+        <ImageButton
+            android:id="@+id/buttonClusterTotalsKnob"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:background="@android:color/transparent"
+            android:scaleType="fitCenter"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.1"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/imageClusterGauge"
+            app:layout_constraintVertical_bias="0.2"
+            app:srcCompat="@drawable/trip_knob_day" />
+
 
         <TextView
             android:id="@+id/textClusterLcdMode1"
@@ -172,6 +227,17 @@
             android:textSize="10sp"
             app:layout_constraintEnd_toEndOf="@+id/imageClusterLcd"
             app:layout_constraintTop_toTopOf="@+id/imageClusterLcd" />
+
+        <TextView
+            android:id="@+id/textViewKnobTrip"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/grotesk"
+            android:text="Trip"
+            android:textSize="20sp"
+            app:layout_constraintEnd_toEndOf="@+id/buttonClusterTripKnob"
+            app:layout_constraintStart_toStartOf="@+id/buttonClusterTripKnob"
+            app:layout_constraintTop_toBottomOf="@+id/buttonClusterTripKnob" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

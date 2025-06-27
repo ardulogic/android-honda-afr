@@ -2,5 +2,7 @@ package com.hondaafr.Libs.Devices.Phone;
 
 public interface PhoneGpsListener {
 
-    void onGpsSpeedUpdated(Double speedKmh);
+    void onGpsSpeedUpdated(double speedKmh);
+    void onGpsDistanceIncrement(double deltaKm);
+
 }

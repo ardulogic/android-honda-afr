@@ -1,8 +1,7 @@
 package com.hondaafr.Libs.Helpers.TripComputer;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
-import android.content.SharedPreferences;
-import android.widget.Toast;
 
 import com.hondaafr.Libs.Devices.Obd.ObdStudio;
 import com.hondaafr.Libs.Devices.Obd.Readings.ObdReading;
@@ -11,7 +10,6 @@ import com.hondaafr.Libs.Devices.Phone.PhoneGps;
 import com.hondaafr.Libs.Devices.Phone.PhoneGpsListener;
 import com.hondaafr.Libs.Devices.Spartan.SpartanStudio;
 import com.hondaafr.Libs.Helpers.AverageList;
-import com.hondaafr.Libs.Helpers.FuelConsumption;
 import com.hondaafr.Libs.Helpers.TotalLitersConsumed;
 import com.hondaafr.Libs.Helpers.ReadingHistory;
 
@@ -24,53 +22,58 @@ public class TripComputer {
     public final SpartanStudio mSpartanStudio;
     public final PhoneGps gps;
     public final ReadingHistory afrHistory = new ReadingHistory();
-
-    private float totalDistanceKm = 0;
-    private float totalConsumedLiters = 0;
-    private final TotalLitersConsumed tripTotalLiters = new TotalLitersConsumed();
-    private double instLitersPerHour = 0;
-    private final AverageList currLitersPerHourShortHistory = new AverageList(15);
-    private final AverageList currLitersPer100ShortHistory = new AverageList(15);
+    public final TotalStats totalStats = new TotalStats("TotalStatsPrefs");
+    public final TripStats tripStats = new TripStats("TripStatsPrefs");
+    public final InstantStats instStats;
     private final TripComputerListener listener;
-    private final PhoneBarometer barometer;
-
-    private static final String PREFS_NAME = "TripComputerPrefs";
-    private static final String KEY_TOTAL_LITRES = "totalLitres";
-    private static final String KEY_TOTAL_DISTANCE = "totalDistance";
     private final Context context;
-
-
+    private long timeDistanceLogged = 0L;
 
     public TripComputer(Context context, ObdStudio mObdStudio, SpartanStudio mSpartanStudio, TripComputerListener listener) {
         this.context = context;
+        this.instStats = new InstantStats(context);
         this.mObdStudio = mObdStudio;
         this.mSpartanStudio = mSpartanStudio;
         this.listener = listener;
 
-        this.barometer = new PhoneBarometer(context);
+        // Modify GPS listener
         this.gps = new PhoneGps(context, new PhoneGpsListener() {
             @Override
-            public void onGpsSpeedUpdated(Double speedKmh) {
-                listener.onGpsUpdated(gps.getSpeed(), gps.getTotalDistanceKm());
+            public void onGpsSpeedUpdated(double speedKmh) {
+                listener.onGpsUpdated(speedKmh, tripStats.getDistanceKm());
+            }
+
+            @Override
+            public void onGpsDistanceIncrement(double deltaKm) {
+                if (mObdStudio.isAlive() && mSpartanStudio.isAlive()) {
+                    tripStats.addDistance(deltaKm);
+                    totalStats.addDistance(deltaKm);
+
+                    timeDistanceLogged = System.currentTimeMillis();
+                }
             }
         });
+
+        this.gps.setMinDistanceDeltaInMeters(25);
     }
 
     public void init() {
-        loadTripData(context);
+        totalStats.load(context);
+        tripStats.load(context);
 
         listener.onTripComputerReadingsUpdated();
     }
 
     public void tick() {
-
-        gps.setDistanceLoggingEnabled(true);
-
         afrHistory.add(mSpartanStudio.lastSensorAfr);
 
-        calculateFuelConsumption(mSpartanStudio.lastSensorAfr);
+        calculateStats(mSpartanStudio.lastSensorAfr);
 
         listener.onTripComputerReadingsUpdated();
+    }
+
+    public boolean isGpsLogging() {
+        return System.currentTimeMillis() - timeDistanceLogged < 2000;
     }
 
     public boolean isGpsSpeedUsed() {
@@ -99,116 +102,44 @@ public class TripComputer {
         }
     }
 
-    private void calculateFuelConsumption(Double afr) {
+    private void calculateStats(Double afr) {
         if (mObdStudio.readingsForFuelAreActive()) {
             Integer iatObd = (Integer) mObdStudio.getAvailableReading("iat").getValue();
             Integer rpmObd = (Integer) mObdStudio.getAvailableReading("rpm").getValue();
             Integer mapObd = (Integer) mObdStudio.getAvailableReading("map").getValue();
 
-            double iat = iatObd > 0 ? iatObd : 35;
+            instStats.onReadingsReceived(afr, iatObd, rpmObd, mapObd, 1.590, getSpeed());
 
-            double litersPerHour = FuelConsumption.calculateFuelConsumptionLperHour(
-                    afr,
-                    rpmObd,
-                    mapObd,
-                    iat,
-                    barometer.getPressureKPa(),
-                    1.590);
+            double litersIncrement = instStats.getLitersIncrement();
 
-            instLitersPerHour = litersPerHour;
-
-            currLitersPerHourShortHistory.add(litersPerHour);
-            currLitersPer100ShortHistory.add(FuelConsumption.calculateLiters100km(litersPerHour, getSpeed()));
-
-            tripTotalLiters.add(litersPerHour, getSpeed());
+            tripStats.addLiters(litersIncrement);
+            totalStats.addLiters(litersIncrement);
         }
     }
 
-    public Double getTripLitres() {
-        return tripTotalLiters.getTotal();
+    public void onPause(Context context) {
+        totalStats.save(context);
+        tripStats.save(context);
     }
 
-    public Double getTripLitersPer100km() {
-        double totalLitres = tripTotalLiters.getTotal();
-        double totalKm = gps.getTotalDistanceKm();
-
-        if (totalKm > 0) {
-            return Math.min(totalLitres / totalKm * 100, 30);
-        } else {
-            return 0D;
-        }
+    public void onDestroy(Context context) {
+        totalStats.save(context);
+        tripStats.save(context);
     }
 
-    public Double getTotalGpsDistance() {
-        return totalDistanceKm + gps.getTotalDistanceKm();
-    }
-
-    public Double getTripGpsDistance() {
-        return gps.getTotalDistanceKm();
-    }
-
-    public void saveTripData(Context context) {
-        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = prefs.edit();
-
-        editor.putFloat(KEY_TOTAL_LITRES, (float) getTotalLiters());
-        editor.putFloat(KEY_TOTAL_DISTANCE, (float) getTotalDistanceKm());
-        editor.apply();  // Asynchronous save
-    }
-
-    public void loadTripData(Context context) {
-        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        totalConsumedLiters = prefs.getFloat(KEY_TOTAL_LITRES, 0f);
-        totalDistanceKm = prefs.getFloat(KEY_TOTAL_DISTANCE, 0f);
-    }
-
-    public double getTotalDistanceKm() {
-        return totalDistanceKm + gps.getTotalDistanceKm();
-    }
-
-    public double getTotalLiters() {
-        return totalConsumedLiters + tripTotalLiters.getTotal();
-    }
-
-    public Double getTotalLitersPer100km() {
-        double totalLitres = getTotalLiters();
-        double totalKm = getTotalDistanceKm();
-
-        if (totalKm > 0) {
-            return Math.min(totalLitres / totalKm * 100, 30);
-        } else {
-            return 0D;
-        }
-    }
-
-    public double getInstLitersPerHour() {
-        return instLitersPerHour;
-    }
-
-    public Double getShortAvgLitersPerHour() {
-        return currLitersPerHourShortHistory.getAvg();
-    }
-
-    public Double getShortAvgLitersPer100() {
-        return currLitersPer100ShortHistory.getAvg();
+    public void onResume(Context context) {
+        totalStats.load(context);
+        tripStats.load(context);
     }
 
     public void resetTotals() {
-        Toast.makeText(context, "Totals have been reset.", Toast.LENGTH_SHORT);
-
-        totalDistanceKm = 0;
-        totalConsumedLiters = 0;
-
+        totalStats.reset();
         listener.onTripComputerReadingsUpdated();
     }
 
     public void resetTrip() {
-        gps.resetDistance();
-        tripTotalLiters.clear();
-    }
-
-    public void pauseUntilTick() {
-        gps.setDistanceLoggingEnabled(false);
+        tripStats.reset();
+        listener.onTripComputerReadingsUpdated();
     }
 
     public void setObdForFuelConsumption(boolean enabled) {
@@ -234,19 +165,22 @@ public class TripComputer {
         }
     }
 
+    @SuppressLint("DefaultLocale")
     public Map<String, String> getReadingsAsString() {
         LinkedHashMap<String, String> readings = new LinkedHashMap<>();
 
-        readings.put("Total km", String.format("%.1f", getTotalDistanceKm()));
-        readings.put("Total l", String.format("%.1f", getTotalLiters()));
+        readings.put("Total km", String.format("%.1f", totalStats.getDistanceKm()));
+        readings.put("Total l", String.format("%.1f", totalStats.getLiters()));
+        readings.put("Total l / hour", String.format("%.1f", totalStats.getLitersPer100km()));
 
-        readings.put("Trip km", String.format("%.1f", getTripGpsDistance()));
-        readings.put("Trip l", String.format("%.1f", getTripLitres()));
-        readings.put("Trip l / hour", String.format("%.1f", getTripLitersPer100km()));
+        readings.put("Trip km", String.format("%.1f", tripStats.getDistanceKm()));
+        readings.put("Trip l", String.format("%.1f", tripStats.getLiters()));
+        readings.put("Trip l / hour", String.format("%.1f", tripStats.getLitersPer100km()));
 
-        readings.put("Inst l / hour", String.format("%.1f", getInstLitersPerHour()));
-        readings.put("ShrtAvg l / hour", String.format("%.1f", getShortAvgLitersPerHour()));
-        readings.put("ShrtAvg l / 100", String.format("%.1f", getShortAvgLitersPer100()));
+        readings.put("Inst l / hour", String.format("%.1f", instStats.getLph()));
+        readings.put("Inst (avg) l / hour", String.format("%.1f", instStats.getLphAvg()));
+        readings.put("Inst l / 100", String.format("%.1f", instStats.getLp100km()));
+        readings.put("Inst (avg) l / 100", String.format("%.1f", instStats.getLp100kmAvg()));
 
         return readings;
     }

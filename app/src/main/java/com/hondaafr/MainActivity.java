@@ -665,8 +665,6 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
         if (device_id != null) {
             Log.d("MainActivity bluetoothStateChanged:", device_id);
 
-            mTripComputer.pauseUntilTick();
-
             if (device_id.equals("obd")) {
                 mTextStatusObd.setText(BluetoothStates.labelOfState(state));
             } else if (device_id.equals("spartan")) {
@@ -769,18 +767,18 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
 
         if (viewModel.showFuelConsumption.getValue()) {
             boolean showTotals = viewModel.showTotalFuelConsumption.getValue();
-            double totalDistance = showTotals ? mTripComputer.getTotalGpsDistance() : mTripComputer.getTripGpsDistance();
-            double totalLiters = showTotals ? mTripComputer.getTotalLiters() : mTripComputer.getTripLitres();
-            double totalLitersPer100km = showTotals ? mTripComputer.getTotalLitersPer100km() : mTripComputer.getTripLitersPer100km();
+
+            double distance = showTotals ? mTripComputer.totalStats.getDistanceKm() : mTripComputer.tripStats.getDistanceKm();
+            double liters = showTotals ? mTripComputer.totalStats.getLiters() : mTripComputer.tripStats.getLiters();
+            double litersPer100km = showTotals ? mTripComputer.totalStats.getLitersPer100km() : mTripComputer.tripStats.getLitersPer100km();
 
             textTotalInfo.setText(showTotals ? "All Time" : "Trip");
-            textTotalDistance.setText(String.format("%06.1f", totalDistance));
+            textTotalDistance.setText(String.format("%06.1f", distance));
+            textTotalConsLiters.setText(String.format("%.2f l", liters));
+            textTotalConsPer100km.setText(String.format("%.1f l", litersPer100km));
 
-            textTotalConsLiters.setText(String.format("%.2f l", totalLiters));
-            textTotalConsPer100km.setText(String.format("%.1f l", totalLitersPer100km));
-
-            textMeasurementBig.setText(String.format("%.2f l/h", mTripComputer.getShortAvgLitersPerHour()));
-            textMeasurementSmall.setText(String.format("%.2f", mTripComputer.getShortAvgLitersPer100()));
+            textMeasurementBig.setText(String.format("%.2f l/h", mTripComputer.instStats.getLphAvg()));
+            textMeasurementSmall.setText(String.format("%.2f", mTripComputer.instStats.getLp100kmAvg()));
 
             mCluster.onDataUpdated();
         } else {
@@ -861,13 +859,14 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
 
         mEngineSound.onResume(this);
         mSpartanStudio.onResume(this);
+        mTripComputer.onResume(this);
 
         super.onResume();
     }
 
     @Override
     public void onPause() {
-        mTripComputer.pauseUntilTick();
+        mTripComputer.onPause(this);
         mEngineSound.onPause(this);
 
         super.onPause();
@@ -878,7 +877,7 @@ public class MainActivity extends AppCompatActivity implements SpartanStudioList
         BT_disconnect();  // moved here
 
         mObdStudio.saveActivePids();
-        mTripComputer.saveTripData(this);
+        mTripComputer.onDestroy(this);
         mEngineSound.onDestroy();
 
         super.onDestroy();

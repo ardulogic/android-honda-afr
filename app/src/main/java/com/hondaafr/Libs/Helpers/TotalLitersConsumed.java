@@ -39,4 +39,7 @@ public class TotalLitersConsumed {
         return totalConsumedLitres;
     }
 
+    public void setTotal(float tripLiters) {
+        totalConsumedLitres = tripLiters;
+    }
 }
