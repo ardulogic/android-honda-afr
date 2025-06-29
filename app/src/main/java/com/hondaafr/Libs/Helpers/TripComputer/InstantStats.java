@@ -79,4 +79,8 @@ public class InstantStats {
         return incrementL;
     }
 
+    public String getName() {
+        return "Instant";
+    }
+
 }

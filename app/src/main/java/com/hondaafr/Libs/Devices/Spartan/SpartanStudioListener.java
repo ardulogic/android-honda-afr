@@ -7,7 +7,5 @@ public interface SpartanStudioListener {
 
     void onSensorTempReceived(Double temp);
 
-    void onAfrConnectionActive();
-
-    void onAfrConnectionLost();
+    void onAfrConnectionPulse(boolean isActive);
 }

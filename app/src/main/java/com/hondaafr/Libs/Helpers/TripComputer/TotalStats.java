@@ -88,4 +88,8 @@ public class TotalStats {
 
         save(context);
     }
+
+    public String getName() {
+        return "Fuel Total";
+    }
 }

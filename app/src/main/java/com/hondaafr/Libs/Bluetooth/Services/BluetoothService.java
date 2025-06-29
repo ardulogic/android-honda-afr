@@ -124,12 +124,14 @@ public class BluetoothService extends Service {
             BluetoothConnection existingConnection = mBtConnections.get(device_id);
 
             // Ensure the connection is actually connected
-            if (existingConnection.isConnected()) {
-                notifyUIOfBtStateChange(BluetoothStates.STATE_BT_CONNECTED, device_id);
-                return;
-            } else {
-                existingConnection.connect();
-                return;
+            if (existingConnection != null) {
+                if (existingConnection.isConnected()) {
+                    notifyUIOfBtStateChange(BluetoothStates.STATE_BT_CONNECTED, device_id);
+                    return;
+                } else {
+                    existingConnection.connect();
+                    return;
+                }
             }
         }
 

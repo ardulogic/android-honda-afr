@@ -3,7 +3,7 @@ package com.hondaafr.Libs.Devices.Spartan;
 import android.content.Context;
 
 import com.hondaafr.Libs.Bluetooth.Services.BluetoothService;
-import com.hondaafr.Libs.Helpers.Debuggable;
+import com.hondaafr.Libs.Helpers.Studio;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -12,7 +12,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-public class SpartanStudio extends Debuggable {
+public class SpartanStudio extends Studio {
 
     private static final long LINK_TIMEOUT_MS = 500L;     // Sensor considered dead after this
     private static final long READING_PERIOD_MS = 50L;    // Read every 50ms
@@ -78,10 +78,10 @@ public class SpartanStudio extends Debuggable {
         supervisorTask = scheduler.scheduleAtFixedRate(() -> {
             boolean alive = isAlive();
             if (alive && !linkPreviouslyAlive) {
-                listener.onAfrConnectionActive();
+                listener.onAfrConnectionPulse(true);
                 linkPreviouslyAlive = true;
             } else if (!alive && linkPreviouslyAlive) {
-                listener.onAfrConnectionLost();
+                listener.onAfrConnectionPulse(false);
                 linkPreviouslyAlive = false;
             }
         }, 0, SUPERVISOR_PERIOD_MS, TimeUnit.MILLISECONDS);

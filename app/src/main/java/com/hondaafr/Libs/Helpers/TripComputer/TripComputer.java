@@ -2,19 +2,24 @@ package com.hondaafr.Libs.Helpers.TripComputer;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.util.Log;
+import android.os.Handler;
+import android.os.Looper;
 
 import com.hondaafr.Libs.Devices.Obd.ObdStudio;
+import com.hondaafr.Libs.Devices.Obd.ObdStudioListener;
 import com.hondaafr.Libs.Devices.Obd.Readings.ObdReading;
 import com.hondaafr.Libs.Devices.Phone.PhoneGps;
 import com.hondaafr.Libs.Devices.Spartan.SpartanStudio;
+import com.hondaafr.Libs.Devices.Spartan.SpartanStudioListener;
+import com.hondaafr.Libs.Helpers.DataLog;
+import com.hondaafr.Libs.Helpers.DataLogEntry;
 import com.hondaafr.Libs.Helpers.ReadingHistory;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class TripComputer {
+public class TripComputer implements ObdStudioListener, SpartanStudioListener {
     public final ObdStudio mObdStudio;
     public final SpartanStudio mSpartanStudio;
     public final PhoneGps gps;
@@ -22,16 +27,20 @@ public class TripComputer {
     public final TotalStats totalStats = new TotalStats("TotalStatsPrefs");
     public final TripStats tripStats = new TripStats("TripStatsPrefs");
     public final InstantStats instStats;
-    private final TripComputerListener listener;
     private final Context context;
     private long timeDistanceLogged = 0L;
 
-    public TripComputer(Context context, ObdStudio mObdStudio, SpartanStudio mSpartanStudio, TripComputerListener listener) {
+    private final Handler supervisorHandler = new Handler(Looper.getMainLooper());
+    private final Map<String, TripComputerListener> listeners = new LinkedHashMap<>();
+
+    public boolean isRecording = false;
+    private DataLog mDataLog;
+    public TripComputer(Context context) {
         this.context = context;
         this.instStats = new InstantStats(context);
-        this.mObdStudio = mObdStudio;
-        this.mSpartanStudio = mSpartanStudio;
-        this.listener = listener;
+        this.mObdStudio = new ObdStudio(context, this);
+        this.mSpartanStudio = new SpartanStudio(context, this);
+        this.mDataLog = new DataLog(context);
 
         // Modify GPS listener
         this.gps = new PhoneGps(context, (speedKmh, deltaKm, accuracy) -> {
@@ -44,14 +53,24 @@ public class TripComputer {
                 }
             }
 
-            listener.onGpsUpdated(speedKmh, deltaKm);
-            listener.onTripComputerReadingsUpdated();
+            for (TripComputerListener l : listeners.values()) {
+                l.onGpsUpdate(speedKmh, deltaKm);
+                onDataUpdated();
+            }
         });
 
         this.gps.setMinDistanceDeltaInMeters(25);
     }
 
-    public void tick() {
+    public void addListener(String key, TripComputerListener listener) {
+        listeners.put(key, listener);
+    }
+
+    public void removeListener(String key) {
+        listeners.remove(key);
+    }
+
+    public void onDataUpdated() {
         afrHistory.add(mSpartanStudio.lastSensorAfr);
 
         if (mObdStudio.readingsForFuelAreActive()) {
@@ -68,8 +87,46 @@ public class TripComputer {
             totalStats.addLiters(litersIncrement);
         }
 
-        listener.onTripComputerReadingsUpdated();
+        for (TripComputerListener l : listeners.values()) {
+            l.onCalculationsUpdated();
+        }
+
+        if (isRecording) {
+            logReadings();
+        }
     }
+
+    private void startSupervisor() {
+        supervisorHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                ensureObdAndAfrAreAlive();
+
+                for (TripComputerListener l : listeners.values()) {
+                    l.onGpsPulse(gps);
+                    l.onAfrPulse(mSpartanStudio.isAlive());
+                    l.onObdPulse(mObdStudio.isAlive());
+                }
+
+                supervisorHandler.postDelayed(this, 1000); // Reschedule
+            }
+        }, 1000);
+    }
+
+    public void startRecording() {
+        mDataLog.clearAllEntries();
+        isRecording = true;
+    }
+
+    public void stopRecording() {
+        mDataLog.saveAsCsv();
+        isRecording = false;
+    }
+
+    public void stopSupervisor() {
+        supervisorHandler.removeCallbacksAndMessages(null);
+    }
+
 
     public boolean isGpsLogging() {
         return System.currentTimeMillis() - timeDistanceLogged < 2000;
@@ -101,15 +158,6 @@ public class TripComputer {
         }
     }
 
-    public void onPause(Context context) {
-        totalStats.save(context);
-        tripStats.save(context);
-    }
-
-    public void onDestroy(Context context) {
-        totalStats.save(context);
-        tripStats.save(context);
-    }
 
     /**
      * This also acts as the init() function since OnResume is called
@@ -121,7 +169,18 @@ public class TripComputer {
         totalStats.load(context);
         tripStats.load(context);
 
-        listener.onTripComputerReadingsUpdated();
+        mSpartanStudio.onResume(context);
+        startSupervisor();
+    }
+
+    public void onPause(Context context) {
+        stopSupervisor();
+    }
+
+    public void onDestroy(Context context) {
+        totalStats.save(context);
+        tripStats.save(context);
+        mObdStudio.saveActivePids();
     }
 
     public void setObdForFuelConsumption(boolean enabled) {
@@ -165,5 +224,73 @@ public class TripComputer {
         readings.put("Inst (avg) l / 100", String.format("%.1f", instStats.getLp100kmAvg()));
 
         return readings;
+    }
+
+    private void logReadings() {
+        LinkedHashMap<String, String> values = new LinkedHashMap<>();
+        values.putAll(mSpartanStudio.getReadingsAsString());
+        values.putAll(mObdStudio.getReadingsAsString());
+        values.putAll(gps.getReadingsAsString());
+        values.putAll(getReadingsAsString());
+
+        mDataLog.addEntry(new DataLogEntry(values));
+    }
+
+    @Override
+    public void onObdConnectionPulse(boolean isActive) {
+        for (TripComputerListener l : listeners.values()) {
+            l.onObdPulse(isActive);
+        }
+    }
+
+    @Override
+    public void onObdReadingUpdate(ObdReading reading) {
+        for (TripComputerListener l : listeners.values()) {
+            l.onObdValue(reading);
+        }
+
+        onDataUpdated();
+    }
+
+    @Override
+    public void onObdActivePidsChanged() {
+        for (TripComputerListener l : listeners.values()) {
+            l.onObdActivePidsChanged();
+        }
+    }
+
+    @Override
+    public void onObdConnectionError(String s) {
+        for (TripComputerListener l : listeners.values()) {
+            l.onObdPulse(false);
+        }
+    }
+
+    @Override
+    public void onTargetAfrUpdated(double targetAfr) {
+        for (TripComputerListener l : listeners.values()) {
+            l.onAfrTargetValue(targetAfr);
+        }
+    }
+
+    @Override
+    public void onSensorAfrReceived(Double afr) {
+        onDataUpdated();
+
+        for (TripComputerListener l : listeners.values()) {
+            l.onAfrValue(afr);
+        }
+    }
+
+    @Override
+    public void onSensorTempReceived(Double temp) {
+
+    }
+
+    @Override
+    public void onAfrConnectionPulse(boolean isActive) {
+        for (TripComputerListener l : listeners.values()) {
+            l.onAfrPulse(isActive);
+        }
     }
 }

@@ -21,4 +21,9 @@ public class TripStats extends TotalStats {
         return System.currentTimeMillis() - timeUpdated > 15 * 60 * 1000;
     }
 
+    @Override
+    public String getName() {
+        return "Fuel Trip";
+    }
+
 }

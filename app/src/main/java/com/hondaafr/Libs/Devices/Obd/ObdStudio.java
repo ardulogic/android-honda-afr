@@ -7,8 +7,7 @@ import android.content.SharedPreferences;
 
 import com.hondaafr.Libs.Bluetooth.Services.BluetoothService;
 import com.hondaafr.Libs.Devices.Obd.Readings.ObdReading;
-import com.hondaafr.Libs.Helpers.Debuggable;
-import com.hondaafr.MainActivity;
+import com.hondaafr.Libs.Helpers.Studio;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -33,7 +32,7 @@ import java.util.concurrent.TimeUnit;
  * ▸ Persists user‑selected PIDs and restores them at start‑up.<br>
  * ▸ Surfaces connection state transitions through {@link ObdStudioListener}.
  */
-public class ObdStudio extends Debuggable {
+public class ObdStudio extends Studio {
 
     // ────────────────────────────────────────────────────────────────────────────────
     // Configuration constants
@@ -80,7 +79,7 @@ public class ObdStudio extends Debuggable {
         this.readings = new ObdReadings(context, pidNames);
     }
 
-    public ObdStudio(MainActivity ctx, ObdStudioListener listener) {
+    public ObdStudio(Context ctx, ObdStudioListener listener) {
         this(ctx, new ArrayList<>(), listener);
         loadAndSetActivePids();
     }
@@ -141,7 +140,7 @@ public class ObdStudio extends Debuggable {
         phase = Phase.RUNNING;
         linkPreviouslyAlive = false; // force a «connectionActive» on next supervisor tick
         readings.requestNextReading();
-        listener.onObdConnectionActive();
+        listener.onObdConnectionPulse(true);
         d("ELM327 initialisation finished — entering RUNNING phase", 1);
     }
 
@@ -234,10 +233,10 @@ public class ObdStudio extends Debuggable {
             // RUNNING supervision
             boolean alive = isAlive();
             if (alive && !linkPreviouslyAlive) {
-                listener.onObdConnectionActive();
+                listener.onObdConnectionPulse(true);
                 linkPreviouslyAlive = true;
             } else if (!alive && linkPreviouslyAlive) {
-                listener.onObdConnectionLost();
+                listener.onObdConnectionPulse(false);
                 linkPreviouslyAlive = false;
             }
 
@@ -296,7 +295,7 @@ public class ObdStudio extends Debuggable {
 
     public void setActivePids(ArrayList<String> pidNames) {
         readings.setAsActiveOnly(pidNames);
-        listener.onActivePidsChanged();
+        listener.onObdActivePidsChanged();
     }
 
     public void saveActivePids() {
@@ -312,6 +311,6 @@ public class ObdStudio extends Debuggable {
 
     public void loadAndSetActivePids() {
         readings = new ObdReadings(context, loadActivePids());
-        listener.onActivePidsChanged();
+        listener.onObdActivePidsChanged();
     }
 }

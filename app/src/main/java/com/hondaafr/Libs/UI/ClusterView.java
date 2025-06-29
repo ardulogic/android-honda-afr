@@ -1,4 +1,4 @@
-package com.hondaafr.Libs.Helpers;
+package com.hondaafr.Libs.UI;
 
 import android.animation.ArgbEvaluator;
 import android.animation.ObjectAnimator;
@@ -6,6 +6,7 @@ import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Color;
+import android.media.MediaPlayer;
 import android.os.Looper;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
@@ -19,9 +20,12 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.hondaafr.Libs.Devices.Obd.Readings.ObdReading;
+import com.hondaafr.Libs.Devices.Phone.PhoneGps;
 import com.hondaafr.Libs.Devices.Phone.PhoneLightSensor;
 import com.hondaafr.Libs.Helpers.TripComputer.TotalStats;
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputer;
+import com.hondaafr.Libs.Helpers.TripComputer.TripComputerListener;
 import com.hondaafr.MainActivity;
 import com.hondaafr.R;
 
@@ -31,7 +35,7 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 
 import java.time.LocalTime;
 
-public class Cluster {
+public class ClusterView implements TripComputerListener {
 
     private final MainActivity mainActivity;
     private final ImageView imageNeedle;
@@ -55,6 +59,7 @@ public class Cluster {
     private final TripComputer mTripComputer;
     private final ImageView imageLcd;
     private final ConstraintLayout layoutCluster;
+    private final View panel;
     private boolean isNightMode = false;
     private float currentNeedleRotation = 0f;
     private float targetNeedleRotation = 0f;
@@ -65,16 +70,20 @@ public class Cluster {
     private float lastNeedleRotation = Float.NaN;
 
     public int mode = 0;
-    private final Handler supervisorHandler = new Handler(Looper.getMainLooper());
+    private MediaPlayer beepPlayer;
 
     Vibrator vibrator;
 
     int gray = 0xFF222222;
     int red = 0xFFC82B28;
     int orange = 0xFFFFA500;
+    private final View[] hiddenViewsInPip;
+    private boolean isInPip = false;
 
-    public Cluster(MainActivity mainActivity, TripComputer tripComputer) {
+
+    public ClusterView(MainActivity mainActivity, TripComputer tripComputer) {
         this.mainActivity = mainActivity;
+        this.panel = mainActivity.findViewById(R.id.layoutCluster);
         this.imageNeedle = mainActivity.findViewById(R.id.imageClusterNeedle);
         this.imageGauge = mainActivity.findViewById(R.id.imageClusterGauge);
         this.imageLcd = mainActivity.findViewById(R.id.imageClusterLcd);
@@ -94,6 +103,24 @@ public class Cluster {
         this.layoutCluster = mainActivity.findViewById(R.id.layoutCluster);
         this.vibrator = (Vibrator) mainActivity.getSystemService(Context.VIBRATOR_SERVICE);
 
+        hiddenViewsInPip = new View[]{
+                buttonTripKnob,
+                buttonTotalsKnob,
+                buttonInstKnob,
+                imageObd,
+                imageAfr,
+                imageRichFuel,
+                imageLcd,
+                textClusterLcdMode1,
+                textClusterLcdMode2,
+                textClusterLcd
+        };
+
+        panel.setOnLongClickListener(v -> {
+            mainActivity.showScientific();
+            return true;
+        });
+
         this.lightSensor = new PhoneLightSensor(mainActivity, intensity -> {
             Log.d("Light", String.valueOf(intensity));
 
@@ -112,7 +139,13 @@ public class Cluster {
             setNightMode(isNight);
         });
 
+        beepPlayer = MediaPlayer.create(mainActivity, R.raw.beep);
+        beepPlayer.setOnCompletionListener(mp -> mp.seekTo(0)); // so it's ready for next play
+
+
         this.mTripComputer = tripComputer;
+        this.mTripComputer.addListener("cluster", this);
+
         setupKnobAnimation(buttonTripKnob);
         setKnobOnShortClick(buttonTripKnob, 0, 2);
         setKnobOnLongClick(buttonTripKnob, mTripComputer.tripStats);
@@ -121,7 +154,6 @@ public class Cluster {
         setKnobOnShortClick(buttonTotalsKnob, 3, 5);
         setKnobOnLongClick(buttonTotalsKnob, mTripComputer.totalStats);
 
-
         setupKnobAnimation(buttonInstKnob);
         setKnobOnShortClick(buttonInstKnob, 6, 8);
 
@@ -129,7 +161,7 @@ public class Cluster {
 
         startNeedleAnimator();
         onDataUpdated();
-        startSupervisor();
+        lightUpActiveKnob();
     }
 
     private void toggleSystemUI() {
@@ -167,20 +199,6 @@ public class Cluster {
         }
     }
 
-    private void startSupervisor() {
-        supervisorHandler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                mTripComputer.ensureObdAndAfrAreAlive();
-                supervisorHandler.postDelayed(this, 1000); // Reschedule
-            }
-        }, 1000);
-    }
-
-    public void stopSupervisor() {
-        supervisorHandler.removeCallbacksAndMessages(null);
-    }
-
     public void setVisibility(boolean visible) {
         mainActivity.findViewById(R.id.layoutCluster).setVisibility(visible ? View.VISIBLE : View.GONE);
     }
@@ -198,7 +216,6 @@ public class Cluster {
             return false;
         });
     }
-
     private void setKnobOnShortClick(ImageButton b, int fromModeIndex, int toModeIndex) {
         b.setOnClickListener(v -> {
             Boolean longClicked = (Boolean) v.getTag(R.id.was_long_clicked);
@@ -227,6 +244,7 @@ public class Cluster {
             onDataUpdated();
         });
     }
+
     @SuppressLint("ClickableViewAccessibility")
     private void setupKnobAnimation(ImageButton button) {
         button.setOnTouchListener((v, event) -> {
@@ -293,7 +311,6 @@ public class Cluster {
         lightUpActiveKnob();
     }
 
-
     @SuppressLint("DefaultLocale")
     private final ModeDescriptor[] modeDescriptors = new ModeDescriptor[]{
             new ModeDescriptor("TRIP", "", tc -> String.format("%.1f", tc.tripStats.getDistanceKm())),                   // MODE_TRIP_KM
@@ -309,6 +326,7 @@ public class Cluster {
             new ModeDescriptor("INST", "AFR", tc -> String.format("%.2f", tc.afrHistory.getAvg()))                     // MODE_AFR
     };
 
+
     private void lightUpActiveKnob() {
         if (isNightMode) {
             buttonTripKnob.setImageResource(R.drawable.trip_knob_night_off);
@@ -318,17 +336,26 @@ public class Cluster {
             textKnobTotals.setTextColor(0xFF7E7752);
             textKnobTrip.setTextColor(0xFF7E7752);
             textKnobInst.setTextColor(0xFF7E7752);
+        } else {
+            buttonTripKnob.setImageResource(R.drawable.trip_knob_day);
+            buttonTotalsKnob.setImageResource(R.drawable.trip_knob_day);
+            buttonInstKnob.setImageResource(R.drawable.trip_knob_day);
 
-            if (mode < 3) {
-                buttonTripKnob.setImageResource(R.drawable.trip_knob_night_on);
-                textKnobTrip.setTextColor(0xFFC0B682);
-            } else if (mode < 6) {
-                buttonTotalsKnob.setImageResource(R.drawable.trip_knob_night_on);
-                textKnobTotals.setTextColor(0xFFC0B682);
-            } else {
-                buttonInstKnob.setImageResource(R.drawable.trip_knob_night_on);
-                textKnobInst.setTextColor(0xFFC0B682);
-            }
+            textKnobTotals.setTextColor(0xFF666666);
+            textKnobTrip.setTextColor(0xFF666666);
+            textKnobInst.setTextColor(0xFF666666);
+        }
+
+
+        if (mode < 3) {
+            buttonTripKnob.setImageResource(R.drawable.trip_knob_night_on);
+            textKnobTrip.setTextColor(0xFFC0B682);
+        } else if (mode < 6) {
+            buttonTotalsKnob.setImageResource(R.drawable.trip_knob_night_on);
+            textKnobTotals.setTextColor(0xFFC0B682);
+        } else {
+            buttonInstKnob.setImageResource(R.drawable.trip_knob_night_on);
+            textKnobInst.setTextColor(0xFFC0B682);
         }
     }
 
@@ -346,10 +373,16 @@ public class Cluster {
         }
 
         // Animate needle rotation
-        float targetRotation = calculateNeedleRotation(mTripComputer.instStats.getLphAvg());
-        this.targetNeedleRotation = targetRotation;
+        this.targetNeedleRotation = calculateNeedleRotation(mTripComputer.instStats.getLphAvg());;
 
         int richFuelIconColor = mTripComputer.afrIsRich() && mTripComputer.mSpartanStudio.lastSensorAfr > 0 ? orange : gray;
+
+        if (mTripComputer.afrIsRich() && mTripComputer.mSpartanStudio.lastSensorAfr > 0) {
+            if (!beepPlayer.isPlaying()) {
+                beepPlayer.start();
+            }
+        }
+
         imageRichFuel.setColorFilter(richFuelIconColor);
         imageRichFuel.setTag(richFuelIconColor);
 
@@ -364,46 +397,31 @@ public class Cluster {
         imageAfr.setColorFilter(afrConnectionColor);
         imageAfr.setTag(afrConnectionColor);
 
-        boolean gpsAlive = mTripComputer.gps.isAlive();
-        boolean isLogging = mTripComputer.isGpsLogging();
+        setPipView(isInPip);
+    }
 
-        if (gpsAlive) {
-            if (!isLogging) {
-                animateGpsIcon();
-            } else {
-                if (gpsAnimator != null && gpsAnimator.isRunning()) {
-                    gpsAnimator.cancel();
-                }
+    private void setPipView(boolean isInPip) {
+        Log.d("SetPipView", "isInPip:" + isInPip);
 
-                imageGps.setColorFilter(gray);
+        for (View v : hiddenViewsInPip) {
+            int desiredVisibility = isInPip ? View.GONE : View.VISIBLE;
+            if (v.getVisibility() != desiredVisibility) {
+                v.setVisibility(desiredVisibility);
             }
-        } else {
-            if (gpsAnimator != null && gpsAnimator.isRunning()) {
-                gpsAnimator.cancel();
-            }
-
-            imageGps.setColorFilter(orange);
         }
     }
 
-    private void animateGpsIcon() {
-        if (gpsAnimator != null && gpsAnimator.isRunning()) {
-            return; // Avoid restarting if already animating
-        }
 
-        int startColor = 0xFF222222;
-        int endColor = 0xFF5F9529;   // green
-
-        gpsAnimator = ValueAnimator.ofObject(new ArgbEvaluator(), startColor, endColor);
-        gpsAnimator.setDuration(1000); // 1 second
-        gpsAnimator.setRepeatMode(ValueAnimator.REVERSE);
-        gpsAnimator.setRepeatCount(ValueAnimator.INFINITE);
-        gpsAnimator.addUpdateListener(animation -> {
-            int animatedColor = (int) animation.getAnimatedValue();
-            imageGps.setColorFilter(animatedColor);
-        });
-        gpsAnimator.start();
+    public void showPipView() {
+        isInPip = true;
+        onDataUpdated();
     }
+
+    public void restoreFullView() {
+        isInPip = false;
+        onDataUpdated();
+    }
+
 
     private static class ModeDescriptor {
         final String label1;
@@ -439,19 +457,6 @@ public class Cluster {
         return (float) angle;
     }
 
-    private void animateNeedle(float targetRotation) {
-        if (Float.isNaN(lastNeedleRotation) || Math.abs(targetRotation - lastNeedleRotation) > 0.1f) {
-            if (needleAnimator != null && needleAnimator.isRunning()) {
-                needleAnimator.cancel();
-            }
-
-            needleAnimator = ObjectAnimator.ofFloat(imageNeedle, "rotation", imageNeedle.getRotation(), targetRotation);
-            needleAnimator.setDuration(100);
-            needleAnimator.start();
-            lastNeedleRotation = targetRotation;
-        }
-    }
-
     private void startNeedleAnimator() {
         needleAnimator = ValueAnimator.ofFloat(0f, 1f);
         needleAnimator.setDuration(1000); // not important; we loop
@@ -469,11 +474,96 @@ public class Cluster {
         needleAnimator.start();
     }
 
-    public void onPause(Context context) {
-        stopSupervisor();
+    private void animateGpsIcon() {
+        if (gpsAnimator != null && gpsAnimator.isRunning()) {
+            return; // Avoid restarting if already animating
+        }
+
+        int startColor = 0xFF222222;
+        int endColor = 0xFF5F9529;   // green
+
+        gpsAnimator = ValueAnimator.ofObject(new ArgbEvaluator(), startColor, endColor);
+        gpsAnimator.setDuration(1000); // 1 second
+        gpsAnimator.setRepeatMode(ValueAnimator.REVERSE);
+        gpsAnimator.setRepeatCount(ValueAnimator.INFINITE);
+        gpsAnimator.addUpdateListener(animation -> {
+            int animatedColor = (int) animation.getAnimatedValue();
+            imageGps.setColorFilter(animatedColor);
+        });
+        gpsAnimator.start();
     }
 
-    public void onResume(Context context) {
-        startSupervisor();
+    @Override
+    public void onGpsUpdate(Double speed, double distanceIncrement) {
+
     }
+
+    @Override
+    public void onGpsPulse(PhoneGps gps) {
+        if (gps.isAlive()) {
+            if (!mTripComputer.isGpsLogging()) {
+                animateGpsIcon();
+            } else {
+                if (gpsAnimator != null && gpsAnimator.isRunning()) {
+                    gpsAnimator.cancel();
+                }
+
+                imageGps.setColorFilter(gray);
+            }
+        } else {
+            if (gpsAnimator != null && gpsAnimator.isRunning()) {
+                gpsAnimator.cancel();
+            }
+
+            imageGps.setColorFilter(orange);
+        }
+    }
+
+    @Override
+    public void onAfrPulse(boolean isActive) {
+        int afrConnectionColor = mTripComputer.mSpartanStudio.isAlive() ? red : orange;
+        afrConnectionColor = mTripComputer.mSpartanStudio.isReading() ? gray : afrConnectionColor;
+        imageAfr.setColorFilter(afrConnectionColor);
+        imageAfr.setTag(afrConnectionColor);
+
+        if (!isActive) {
+            targetNeedleRotation = calculateNeedleRotation(0);
+        }
+
+    }
+
+    @Override
+    public void onAfrTargetValue(double targetAfr) {
+
+    }
+
+    @Override
+    public void onAfrValue(Double afr) {
+
+    }
+
+    @Override
+    public void onObdPulse(boolean isActive) {
+        int obdConnectionColor = mTripComputer.mObdStudio.isAlive() ? red : orange;
+        obdConnectionColor = mTripComputer.mObdStudio.isReading() ? gray : obdConnectionColor;
+        imageObd.setColorFilter(obdConnectionColor);
+        imageObd.setTag(obdConnectionColor);
+        imageObd.setTag(obdConnectionColor);
+    }
+
+    @Override
+    public void onObdActivePidsChanged() {
+
+    }
+
+    @Override
+    public void onObdValue(ObdReading reading) {
+
+    }
+
+    @Override
+    public void onCalculationsUpdated() {
+
+    }
+
 }
