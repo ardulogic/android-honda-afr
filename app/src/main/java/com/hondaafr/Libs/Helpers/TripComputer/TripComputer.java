@@ -71,7 +71,9 @@ public class TripComputer implements ObdStudioListener, SpartanStudioListener {
     }
 
     public void onDataUpdated() {
-        afrHistory.add(mSpartanStudio.lastSensorAfr);
+        if (mSpartanStudio.lastSensorAfr > 0) {
+            afrHistory.add(mSpartanStudio.lastSensorAfr);
+        }
 
         if (mObdStudio.readingsForFuelAreActive()) {
             Double afr = mSpartanStudio.lastSensorAfr;
