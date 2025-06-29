@@ -15,7 +15,7 @@ import com.hondaafr.Libs.UI.ScientificView;
 import com.hondaafr.MainActivity;
 import com.hondaafr.R;
 
-public class SoundPanel {
+public class SoundPanel  extends Panel {
     public final LinearLayout panel;
     private final TripComputer mTripComputer;
     private final MainActivity mainActivity;
@@ -168,5 +168,10 @@ public class SoundPanel {
 
     public boolean isEnabled() {
         return isEnabled;
+    }
+
+    @Override
+    public View getContainerView() {
+        return panel;
     }
 }

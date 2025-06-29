@@ -1,7 +1,9 @@
 package com.hondaafr.Libs.UI.Scientific;
 
 import android.annotation.SuppressLint;
+import android.view.View;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.hondaafr.Libs.Devices.Obd.Readings.ObdReading;
@@ -12,14 +14,18 @@ import com.hondaafr.Libs.Helpers.TripComputer.TripComputerListener;
 import com.hondaafr.MainActivity;
 import com.hondaafr.R;
 
-public class AfrPreciseControlsPanel {
+public class AfrPreciseControlsPanel  extends Panel {
 
     private final Button buttonIncreaseAfr, buttonDecreaseAfr;
     private final TextView textTargetAfr;
     private final SpartanStudio mSpartanStudio;
 
+    private LinearLayout panel;
+
     public AfrPreciseControlsPanel(MainActivity mainActivity, TripComputer tripComputer) {
         this.mSpartanStudio = tripComputer.mSpartanStudio;
+
+        panel = mainActivity.findViewById(R.id.layoutAfrControls);
 
         buttonIncreaseAfr = mainActivity.findViewById(R.id.buttonIncreaseAFR);
         buttonDecreaseAfr = mainActivity.findViewById(R.id.buttonDecreaseAFR);
@@ -77,4 +83,8 @@ public class AfrPreciseControlsPanel {
         });
     }
 
+    @Override
+    public View getContainerView() {
+        return panel;
+    }
 }

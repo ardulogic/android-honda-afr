@@ -3,6 +3,7 @@ package com.hondaafr.Libs.UI.Scientific;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.view.View;
+import android.widget.LinearLayout;
 
 import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.hondaafr.Libs.Devices.Spartan.SpartanStudio;
@@ -13,14 +14,16 @@ import com.hondaafr.R;
 import java.util.HashMap;
 import java.util.Map;
 
-public class AfrPresetsPanel {
+public class AfrPresetsPanel  extends Panel {
 
-    private final MaterialButtonToggleGroup toggleAfrGroup;
     private final Map<String, Double> presets = new HashMap<>();
     private final SharedPreferences prefs;
     private final SpartanStudio mSpartanStudio;
+    private MaterialButtonToggleGroup panel;
 
     public AfrPresetsPanel(MainActivity mainActivity, TripComputer tripComputer) {
+        panel = mainActivity.findViewById(R.id.toggleAfrPresets);
+
         prefs = mainActivity.getSharedPreferences("afr_presets", Context.MODE_PRIVATE);
 
         presets.put("sportPlusAfr", (double) prefs.getFloat("sportPlusAfr", 12.7f));
@@ -28,7 +31,6 @@ public class AfrPresetsPanel {
         presets.put("ecoAfr", (double) prefs.getFloat("ecoAfr", 15.4f));
         presets.put("ecoPlusAfr", (double) prefs.getFloat("ecoPlusAfr", 16.4f));
 
-        toggleAfrGroup = mainActivity.findViewById(R.id.toggleAfrGroup);
         this.mSpartanStudio = tripComputer.mSpartanStudio;
 
         Map<Integer, String> buttonPresetMap = new HashMap<>();
@@ -37,7 +39,7 @@ public class AfrPresetsPanel {
         buttonPresetMap.put(R.id.buttonAfrEco, "ecoAfr");
         buttonPresetMap.put(R.id.buttonAfrEcoPlus, "ecoPlusAfr");
 
-        toggleAfrGroup.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
+        panel.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
             if (isChecked && buttonPresetMap.containsKey(checkedId)) {
                 apply(buttonPresetMap.get(checkedId));
             }
@@ -64,11 +66,8 @@ public class AfrPresetsPanel {
         mSpartanStudio.setAFR(get(key));
     }
 
-    public void hide() {
-        toggleAfrGroup.setVisibility(View.GONE);
-    }
-
-    public void show() {
-        toggleAfrGroup.setVisibility(View.VISIBLE);
+    @Override
+    public View getContainerView() {
+        return panel;
     }
 }

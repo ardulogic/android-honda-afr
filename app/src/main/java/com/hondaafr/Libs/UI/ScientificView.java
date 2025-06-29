@@ -16,9 +16,10 @@ import com.hondaafr.Libs.UI.Scientific.AfrPreciseControlsPanel;
 import com.hondaafr.Libs.UI.Scientific.AfrPresetsPanel;
 import com.hondaafr.Libs.UI.Scientific.ChartPanel;
 import com.hondaafr.Libs.UI.Scientific.ConnectPanel;
+import com.hondaafr.Libs.UI.Scientific.CornerStatsPanel;
 import com.hondaafr.Libs.UI.Scientific.FuelStatsPanel;
-import com.hondaafr.Libs.UI.Scientific.GenericStatusPanel;
 import com.hondaafr.Libs.UI.Scientific.ObdPanel;
+import com.hondaafr.Libs.UI.Scientific.Panel;
 import com.hondaafr.Libs.UI.Scientific.SoundPanel;
 import com.hondaafr.Libs.UI.Scientific.TopButtonsPanel;
 import com.hondaafr.MainActivity;
@@ -30,23 +31,21 @@ public class ScientificView {
     private final AfrBoundStatsPanel afrBoundStatsPanel;
     private final MainActivity mainActivity;
     private final TripComputer mTripComputer;
-    private final TextView textCornerBig, textCornerSmall;
     public final FuelStatsPanel fuelStatsPanel;
-    private final View[] hiddenViewsInPip;
+    private final Panel[] panels;
     private final AfrPreciseControlsPanel afrPreciseControlsPanel;
     public final ObdPanel obdPanel;
     private final TopButtonsPanel topButtonsPanel;
-    private final LinearLayout mainControlsPanel;
     private final ConnectPanel connectPanel;
     public final ChartPanel chartPanel;
     public final SoundPanel soundPanel;
+    private final CornerStatsPanel cornerStatsPanel;
     private boolean isInPip = false;
 
     public ScientificView(MainActivity mainActivity, TripComputer tripComputer) {
         this.mainActivity = mainActivity;
         this.mTripComputer = tripComputer;
 
-        mainControlsPanel = mainActivity.findViewById(R.id.layoutMainControls);
         afrPresetsPanel = new AfrPresetsPanel(mainActivity, mTripComputer);
         afrPreciseControlsPanel = new AfrPreciseControlsPanel(mainActivity, mTripComputer);
         afrBoundStatsPanel = new AfrBoundStatsPanel(mainActivity, mTripComputer);
@@ -56,69 +55,19 @@ public class ScientificView {
         topButtonsPanel = new TopButtonsPanel(mainActivity, this, mTripComputer);
         chartPanel = new ChartPanel(mainActivity, mTripComputer);
         soundPanel = new SoundPanel(mainActivity, mTripComputer);
+        cornerStatsPanel = new CornerStatsPanel(mainActivity, this, tripComputer);
 
-        textCornerBig = mainActivity.findViewById(R.id.textCornerStatsBig);
-        textCornerSmall = mainActivity.findViewById(R.id.textCornerStatsSmall);
-
-        hiddenViewsInPip = new View[]{
-                mainControlsPanel,
-                topButtonsPanel.panel,
-                fuelStatsPanel.panel
+        panels = new Panel[]{
+                afrPresetsPanel,
+                afrPreciseControlsPanel,
+                afrBoundStatsPanel,
+                fuelStatsPanel,
+                obdPanel,
+                connectPanel,
+                topButtonsPanel,
+                chartPanel,
+                soundPanel
         };
-
-        mTripComputer.addListener("scientific", new TripComputerListener() {
-            @Override
-            public void onGpsUpdate(Double speed, double distanceIncrement) {
-                connectPanel.onGpsUpdate(speed, distanceIncrement);
-            }
-
-            @Override
-            public void onGpsPulse(PhoneGps gps) {
-
-            }
-
-            @Override
-            public void onAfrPulse(boolean isActive) {
-
-            }
-
-            @Override
-            public void onAfrTargetValue(double targetAfr) {
-
-            }
-
-            @Override
-            public void onAfrValue(Double afr) {
-                if (fuelStatsPanel.isVisible()) {
-                    textCornerBig.setText(String.format("%.2f", mTripComputer.mSpartanStudio.lastSensorAfr));
-                    textCornerSmall.setText(String.format("%.2f", mTripComputer.afrHistory.getAvgDeviation(
-                            mTripComputer.mSpartanStudio.targetAfr)));
-                } else {
-                    textCornerBig.setText(String.format("%.2f l/h", mTripComputer.instStats.getLphAvg()));
-                    textCornerSmall.setText(String.format("%.2f l", mTripComputer.tripStats.getLiters()));
-                }
-            }
-
-            @Override
-            public void onObdPulse(boolean isActive) {
-
-            }
-
-            @Override
-            public void onObdActivePidsChanged() {
-
-            }
-
-            @Override
-            public void onObdValue(ObdReading reading) {
-
-            }
-
-            @Override
-            public void onCalculationsUpdated() {
-
-            }
-        });
     }
 
     public void setVisibility(boolean visible) {
@@ -127,15 +76,15 @@ public class ScientificView {
 
     public void showPipView() {
         isInPip = true;
-        for (View v : hiddenViewsInPip) {
-            v.setVisibility(View.GONE);
+        for (Panel p : panels) {
+            p.enterPip();
         }
     }
 
     public void restoreFullView() {
         isInPip = false;
-        for (View v : hiddenViewsInPip) {
-            v.setVisibility(View.VISIBLE);
+        for (Panel p : panels) {
+            p.exitPip();
         }
     }
 

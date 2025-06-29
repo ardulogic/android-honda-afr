@@ -17,7 +17,7 @@ import com.hondaafr.R;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ObdPanel {
+public class ObdPanel  extends Panel {
 
     private final LinearLayout panel;
     private final TripComputer mTripComputer;
@@ -78,14 +78,6 @@ public class ObdPanel {
 
     private void updateToggleAppearance(TextView textView, boolean isActive) {
         textView.setTypeface(null, isActive ? Typeface.BOLD : Typeface.NORMAL);
-    }
-
-    public void show() {
-        panel.setVisibility(View.VISIBLE);
-    }
-
-    public void hide() {
-        panel.setVisibility(View.GONE);
     }
 
     @SuppressLint("DefaultLocale")
@@ -183,4 +175,8 @@ public class ObdPanel {
     };
 
 
+    @Override
+    public View getContainerView() {
+        return panel;
+    }
 }

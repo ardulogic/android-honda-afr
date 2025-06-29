@@ -8,6 +8,7 @@ import android.content.IntentFilter;
 import android.os.Build;
 import android.os.Handler;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
 
@@ -16,24 +17,26 @@ import androidx.annotation.RequiresApi;
 import com.hondaafr.Libs.Bluetooth.BluetoothStates;
 import com.hondaafr.Libs.Bluetooth.BluetoothUtils;
 import com.hondaafr.Libs.Bluetooth.Services.BluetoothService;
+import com.hondaafr.Libs.Devices.Obd.Readings.ObdReading;
+import com.hondaafr.Libs.Devices.Phone.PhoneGps;
 import com.hondaafr.Libs.Helpers.Permissions;
 import com.hondaafr.Libs.Helpers.Studio;
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputer;
+import com.hondaafr.Libs.Helpers.TripComputer.TripComputerListener;
 import com.hondaafr.MainActivity;
 import com.hondaafr.R;
 
 import java.util.Objects;
 
-public class ConnectPanel {
+public class ConnectPanel  extends Panel {
 
     private final LinearLayout panel;
     private final TripComputer mTripComputer;
     private final MainActivity mainActivity;
     private final Context context;
     private final GenericStatusPanel genericStatusPanel;
-
-    private Button buttonConnectSpartan;
-    private Button buttonConnectObd;
+    private final Button buttonConnectSpartan;
+    private final Button buttonConnectObd;
 
     IntentFilter btUiUpdateIntentFilter = new IntentFilter(BluetoothService.ACTION_UI_UPDATE);
 
@@ -51,6 +54,7 @@ public class ConnectPanel {
         buttonConnectObd = mainActivity.findViewById(R.id.buttonConnectObd);
         buttonConnectObd.setOnClickListener(view -> connectObd());
 
+        mTripComputer.addListener("connect_panel", tcListener);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
@@ -229,9 +233,56 @@ public class ConnectPanel {
         }
     }
 
-
-    public void onGpsUpdate(Double speed, double distanceIncrement) {
-        @SuppressLint("DefaultLocale") String message = String.format("Speed: %.1f km/h, Dist: %.1f m", speed, distanceIncrement);
-        genericStatusPanel.onGenericUpdate(message);
+    @Override
+    public View getContainerView() {
+        return panel;
     }
+
+    protected TripComputerListener tcListener = new TripComputerListener() {
+        @Override
+        public void onGpsUpdate(Double speed, double distanceIncrement) {
+            @SuppressLint("DefaultLocale") String message = String.format("Speed: %.1f km/h, Dist: %.1f m", speed, distanceIncrement);
+            genericStatusPanel.onGenericUpdate(message);
+        }
+
+        @Override
+        public void onGpsPulse(PhoneGps gps) {
+
+        }
+
+        @Override
+        public void onAfrPulse(boolean isActive) {
+
+        }
+
+        @Override
+        public void onAfrTargetValue(double targetAfr) {
+
+        }
+
+        @Override
+        public void onAfrValue(Double afr) {
+
+        }
+
+        @Override
+        public void onObdPulse(boolean isActive) {
+
+        }
+
+        @Override
+        public void onObdActivePidsChanged() {
+
+        }
+
+        @Override
+        public void onObdValue(ObdReading reading) {
+
+        }
+
+        @Override
+        public void onCalculationsUpdated() {
+
+        }
+    };
 }

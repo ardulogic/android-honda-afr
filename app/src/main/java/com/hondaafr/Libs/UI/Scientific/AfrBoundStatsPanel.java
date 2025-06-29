@@ -12,7 +12,7 @@ import com.hondaafr.Libs.Helpers.TripComputer.TripComputerListener;
 import com.hondaafr.MainActivity;
 import com.hondaafr.R;
 
-public class AfrBoundStatsPanel {
+public class AfrBoundStatsPanel extends Panel {
 
     private final MaterialButtonToggleGroup panel;
     private final Button mToggleClearAfrMin;
@@ -85,12 +85,8 @@ public class AfrBoundStatsPanel {
         });
     }
 
-    public void show() {
-        panel.setVisibility(View.VISIBLE);
+    @Override
+    public View getContainerView() {
+        return panel;
     }
-
-    public void hide() {
-        panel.setVisibility(View.GONE);
-    }
-
 }

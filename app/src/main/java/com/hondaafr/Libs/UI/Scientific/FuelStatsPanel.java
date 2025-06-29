@@ -13,7 +13,7 @@ import com.hondaafr.Libs.Helpers.TripComputer.TripComputerListener;
 import com.hondaafr.R;
 import com.hondaafr.MainActivity;
 
-public class FuelStatsPanel {
+public class FuelStatsPanel  extends Panel {
 
     public final LinearLayout panel;
     private final TextView textStatsInfo, textStatsBig, textStatsMedium, textStatsSmall;
@@ -22,6 +22,15 @@ public class FuelStatsPanel {
 
     public boolean isVisible() {
         return mode != FuelDisplayMode.FuelOff;
+    }
+
+    @Override
+    public View getContainerView() {
+        return panel;
+    }
+
+    public boolean modeIs(FuelDisplayMode fuelDisplayMode) {
+        return mode == fuelDisplayMode;
     }
 
     public enum FuelDisplayMode {

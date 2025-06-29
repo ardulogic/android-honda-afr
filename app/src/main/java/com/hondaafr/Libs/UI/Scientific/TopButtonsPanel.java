@@ -12,7 +12,7 @@ import com.hondaafr.Libs.UI.ScientificView;
 import com.hondaafr.MainActivity;
 import com.hondaafr.R;
 
-public class TopButtonsPanel {
+public class TopButtonsPanel  extends Panel {
     public final LinearLayout panel;
     private final TripComputer mTripComputer;
     private final MainActivity mainActivity;
@@ -71,5 +71,10 @@ public class TopButtonsPanel {
             });
 
         buttonShowCluster.setOnClickListener(v -> mainActivity.showCluster());
+    }
+
+    @Override
+    public View getContainerView() {
+        return panel;
     }
 }

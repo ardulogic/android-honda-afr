@@ -480,25 +480,35 @@
 
         </LinearLayout>
 
-        <TextView
-            android:id="@+id/textCornerStatsBig"
+        <LinearLayout
+            android:id="@+id/layoutCornerStats"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            android:layout_marginBottom="8dp"
-            android:text="00.0"
-            android:textSize="48sp"
+            android:layout_marginBottom="16dp"
+            android:orientation="vertical"
             app:layout_constraintBottom_toBottomOf="@+id/graph"
-            app:layout_constraintStart_toStartOf="@+id/graph" />
+            app:layout_constraintStart_toStartOf="parent">
 
-        <TextView
-            android:id="@+id/textCornerStatsSmall"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="00.0"
-            android:textSize="34sp"
-            app:layout_constraintBottom_toTopOf="@+id/textCornerStatsBig"
-            app:layout_constraintStart_toStartOf="@+id/textCornerStatsBig" />
+            <TextView
+                android:id="@+id/textCornerStatsSmall"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="00.0"
+                android:textSize="34sp" />
+
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <TextView
+                android:id="@+id/textCornerStatsBig"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="00.0"
+                android:textSize="48sp" />
+
+        </LinearLayout>
 
         <LinearLayout
             android:id="@+id/layoutMainControls"
@@ -747,7 +757,7 @@
             </LinearLayout>
 
             <com.google.android.material.button.MaterialButtonToggleGroup
-                android:id="@+id/toggleAfrGroup"
+                android:id="@+id/toggleAfrPresets"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="64dp"

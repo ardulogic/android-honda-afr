@@ -1,6 +1,7 @@
 package com.hondaafr.Libs.UI.Scientific;
 
 import android.content.Context;
+import android.view.View;
 import android.widget.LinearLayout;
 
 import com.github.mikephil.charting.charts.LineChart;
@@ -12,7 +13,7 @@ import com.hondaafr.Libs.Helpers.TripComputer.TripComputerListener;
 import com.hondaafr.MainActivity;
 import com.hondaafr.R;
 
-public class ChartPanel {
+public class ChartPanel extends Panel {
 
     private final LineChart panel;
     private final TripComputer mTripComputer;
@@ -101,4 +102,13 @@ public class ChartPanel {
         mChart.invalidate();
     }
 
+    @Override
+    public View getContainerView() {
+        return panel;
+    }
+
+    @Override
+    public boolean visibleInPip() {
+        return true;
+    }
 }
