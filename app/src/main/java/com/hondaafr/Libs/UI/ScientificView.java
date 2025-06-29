@@ -39,7 +39,7 @@ public class ScientificView {
     private final ConnectPanel connectPanel;
     public final ChartPanel chartPanel;
     public final SoundPanel soundPanel;
-    private final CornerStatsPanel cornerStatsPanel;
+    public final CornerStatsPanel cornerStatsPanel;
     private boolean isInPip = false;
 
     public ScientificView(MainActivity mainActivity, TripComputer tripComputer) {
@@ -49,7 +49,7 @@ public class ScientificView {
         afrPresetsPanel = new AfrPresetsPanel(mainActivity, mTripComputer);
         afrPreciseControlsPanel = new AfrPreciseControlsPanel(mainActivity, mTripComputer);
         afrBoundStatsPanel = new AfrBoundStatsPanel(mainActivity, mTripComputer);
-        fuelStatsPanel = new FuelStatsPanel(mainActivity, mTripComputer);
+        fuelStatsPanel = new FuelStatsPanel(mainActivity, this, mTripComputer);
         obdPanel = new ObdPanel(mainActivity, mTripComputer);
         connectPanel = new ConnectPanel(mainActivity, mTripComputer);
         topButtonsPanel = new TopButtonsPanel(mainActivity, this, mTripComputer);
@@ -66,7 +66,8 @@ public class ScientificView {
                 connectPanel,
                 topButtonsPanel,
                 chartPanel,
-                soundPanel
+                soundPanel,
+                cornerStatsPanel
         };
     }
 

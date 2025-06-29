@@ -94,4 +94,8 @@ public class AverageList {
         numbers.clear();
         sum = 0D;
     }
+
+    public boolean isEmpty() {
+        return numbers.isEmpty();
+    }
 }

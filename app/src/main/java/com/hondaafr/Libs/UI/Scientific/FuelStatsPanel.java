@@ -10,6 +10,7 @@ import com.hondaafr.Libs.Helpers.TripComputer.InstantStats;
 import com.hondaafr.Libs.Helpers.TripComputer.TotalStats;
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputer;
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputerListener;
+import com.hondaafr.Libs.UI.ScientificView;
 import com.hondaafr.R;
 import com.hondaafr.MainActivity;
 
@@ -19,6 +20,7 @@ public class FuelStatsPanel  extends Panel {
     private final TextView textStatsInfo, textStatsBig, textStatsMedium, textStatsSmall;
     private final TextView textStatsMediumLabel, textStatsSmallLabel;
     private final TripComputer mTripComputer;
+    private final ScientificView sc;
 
     public boolean isVisible() {
         return mode != FuelDisplayMode.FuelOff;
@@ -39,8 +41,9 @@ public class FuelStatsPanel  extends Panel {
 
     private FuelDisplayMode mode = FuelDisplayMode.FuelOff;
 
-    public FuelStatsPanel(MainActivity mainActivity, TripComputer mTripComputer) {
+    public FuelStatsPanel(MainActivity mainActivity, ScientificView sc, TripComputer mTripComputer) {
         this.mTripComputer = mTripComputer;
+        this.sc = sc;
 
         panel = mainActivity.findViewById(R.id.layoutStats);
         textStatsInfo = mainActivity.findViewById(R.id.textStatsTitle);
@@ -122,6 +125,8 @@ public class FuelStatsPanel  extends Panel {
         int nextOrdinal = (mode.ordinal() + 1) % values.length;
         mode = values[nextOrdinal];
         updateDisplayedValues();
+
+        sc.cornerStatsPanel.displayValues();
     }
 
     public void updateDisplayedValues() {

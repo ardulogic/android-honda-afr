@@ -30,7 +30,11 @@ public class ReadingHistory {
     }
 
     public double getAvgDeviation(double target) {
-        return shortAfrAvgHistory.getAverageDistanceFromTarget(target);
+        if (!shortAfrAvgHistory.isEmpty()) {
+            return shortAfrAvgHistory.getAverageDistanceFromTarget(target);
+        } else {
+            return 0;
+        }
     }
 
     public double getMinValue() {
