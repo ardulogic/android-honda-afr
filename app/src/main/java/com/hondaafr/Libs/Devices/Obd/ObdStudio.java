@@ -18,6 +18,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -61,12 +62,8 @@ public class ObdStudio extends Studio {
     private long lastReadingTimestamp   = 0L;
     private long lastResponseTimestamp  = 0L;
     private long initCmdSentTimestamp   = 0L;
-
-    private volatile boolean linkPreviouslyAlive = false;
-
-    // Queue of remaining init‑commands. Pop once each “OK” is seen.
-    private Deque<String> initQueue;
-
+    private Deque<String> initQueue = new ConcurrentLinkedDeque<>();
+    private final Object stateLock = new Object();
     public static final List<String> FUEL_CONS_OBD_READINGS = Arrays.asList("rpm", "map");
 
     // ────────────────────────────────────────────────────────────────────────────────
@@ -137,11 +134,10 @@ public class ObdStudio extends Studio {
 
     /** Transition from INIT → RUNNING. */
     private void onInitialisationComplete() {
-        phase = Phase.RUNNING;
-        linkPreviouslyAlive = false; // force a «connectionActive» on next supervisor tick
-        readings.requestNextReading();
-        listener.onObdConnectionPulse(true);
         d("ELM327 initialisation finished — entering RUNNING phase", 1);
+        phase = Phase.RUNNING;
+        requestNextReading();
+        listener.onObdConnectionPulse(true);
     }
 
     // ────────────────────────────────────────────────────────────────────────────────
@@ -150,6 +146,8 @@ public class ObdStudio extends Studio {
 
     public void onDataReceived(String raw) {
         if (raw == null || raw.trim().isEmpty()) return;
+
+        listener.onObdConnectionPulse(true);
 
         lastResponseTimestamp = System.currentTimeMillis();
         d(raw, 2);
@@ -175,18 +173,20 @@ public class ObdStudio extends Studio {
     // ────────────────────────────────────────────────────────────────────────────────
 
     private void handleInitResponse(String raw) {
-        // Ignore echoed command lines (they equal the head of the queue)
-        String head = initQueue.peek();
-        if (head != null && raw.trim().equalsIgnoreCase(head)) return;
+        synchronized (stateLock) {
+            // Ignore echoed command lines (they equal the head of the queue)
+            String head = initQueue.peek();
+            if (head != null && raw.trim().equalsIgnoreCase(head)) return;
 
-        if (raw.contains("OK")) {
-            initQueue.pop();
-            sendNextInitCommand();
-            return;
+            if (raw.toUpperCase().contains("OK")) {
+                initQueue.pop();
+                sendNextInitCommand();
+                return;
+            }
+
+            listener.onObdConnectionError(raw  + " during initialisation (unexpected)");
+            recoverDuringInit();
         }
-
-        listener.onObdConnectionError(raw  + " during initialisation (unexpected)");
-        recoverDuringInit();
     }
 
     // ────────────────────────────────────────────────────────────────────────────────
@@ -199,27 +199,27 @@ public class ObdStudio extends Studio {
                 reading.onData(raw);
                 lastReadingTimestamp = System.currentTimeMillis();
                 listener.onObdReadingUpdate(reading);
-
-                if (readings.active.size() >= 2) {
-                    scheduler.schedule(() -> readings.requestNextReading(), READING_DELAY, TimeUnit.MILLISECONDS);
-                } else {
-                    readings.requestNextReading();
-                }
+                requestNextReading();
 
                 break;
             }
         }
     }
 
-    // ────────────────────────────────────────────────────────────────────────────────
-    // Watchdog / supervisor
-    // ────────────────────────────────────────────────────────────────────────────────
+    private void requestNextReading() {
+        if (readings.active.size() >= 2) {
+            scheduler.schedule(() -> readings.requestNextReading(), READING_DELAY, TimeUnit.MILLISECONDS);
+        } else {
+            readings.requestNextReading();
+        }
+    }
 
     private void startSupervisor() {
         if (supervisorTask != null && !supervisorTask.isCancelled()) return;
 
         supervisorTask = scheduler.scheduleAtFixedRate(() -> {
             long now = System.currentTimeMillis();
+            listener.onObdConnectionPulse(isAlive());
 
             if (phase == Phase.INITIALISING) {
                 // Retry the current command if no OK within timeout
@@ -227,39 +227,24 @@ public class ObdStudio extends Studio {
                     listener.onObdConnectionError("Timeout waiting for OK during init — resending");
                     sendNextInitCommand();
                 }
-                return;
-            }
-
-            // RUNNING supervision
-            boolean alive = isAlive();
-            if (alive && !linkPreviouslyAlive) {
-                listener.onObdConnectionPulse(true);
-                linkPreviouslyAlive = true;
-            } else if (!alive && linkPreviouslyAlive) {
-                listener.onObdConnectionPulse(false);
-                linkPreviouslyAlive = false;
-            }
-
-            if (!alive && timeSinceLastResponse() > 2 * LINK_TIMEOUT_MS) {
-                recoverAfterError();
+            } else if (phase == Phase.RUNNING) {
+                if (!isAlive() && !readings.active.isEmpty() &&
+                        timeSinceLastResponse() > 2 * LINK_TIMEOUT_MS) {
+                    recoverAfterError();
+                }
             }
         }, 0, SUPERVISOR_PERIOD_MS, TimeUnit.MILLISECONDS);
     }
 
-    // ────────────────────────────────────────────────────────────────────────────────
-    // Error‑recovery helpers
-    // ────────────────────────────────────────────────────────────────────────────────
-
     private void recoverDuringInit() {
-        d("Recovering during INIT: sending recovery commands", 1);
-        initQueue = new ArrayDeque<>(RECOVERY_CMDS);
+        phase = Phase.INITIALISING;
+        initQueue = new ConcurrentLinkedDeque<>(BASE_INIT_CMDS);
         sendNextInitCommand();
     }
 
     private void recoverAfterError() {
-        d("Recovering during RUNNING: sending recovery commands", 1);
         phase = Phase.INITIALISING;
-        initQueue = new ArrayDeque<>(RECOVERY_CMDS);
+        initQueue = new ConcurrentLinkedDeque<>(RECOVERY_CMDS);
         sendNextInitCommand();
     }
 
@@ -290,13 +275,7 @@ public class ObdStudio extends Studio {
         return true;
     }
 
-    public Map<String, ObdReading> getActiveReadings() { return readings.active; }
     public ObdReading getAvailableReading(String name) { return readings.getAvailable(name); }
-
-    public void setActivePids(ArrayList<String> pidNames) {
-        readings.setAsActiveOnly(pidNames);
-        listener.onObdActivePidsChanged();
-    }
 
     public void saveActivePids() {
         SharedPreferences prefs = context.getSharedPreferences("ObdPrefs", MODE_PRIVATE);
@@ -306,11 +285,24 @@ public class ObdStudio extends Studio {
     public ArrayList<String> loadActivePids() {
         SharedPreferences prefs = context.getSharedPreferences("ObdPrefs", MODE_PRIVATE);
         Set<String> set = prefs.getStringSet("obdPids", new HashSet<>());
+
         return new ArrayList<>(set);
     }
 
+    public void setActivePids(ArrayList<String> pidNames) {
+        readings.setAsActiveOnly(pidNames);
+        onActivePidsChanged();
+    }
+
     public void loadAndSetActivePids() {
-        readings = new ObdReadings(context, loadActivePids());
+        setActivePids(loadActivePids());
+    }
+
+    protected void onActivePidsChanged() {
+        if (phase == Phase.RUNNING) {
+            requestNextReading();
+        }
+
         listener.onObdActivePidsChanged();
     }
 }

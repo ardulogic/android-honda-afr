@@ -51,7 +51,6 @@ public class SpartanStudio extends Studio {
     public void start() {
         if (phase == Phase.RUNNING) return;
 
-        requestCurrentAFR(context);
         startReadingTask();
         startSupervisor();
         phase = Phase.RUNNING;
@@ -92,16 +91,25 @@ public class SpartanStudio extends Studio {
     // ────────────────────────────────────────────────────────────────────────────────
 
     private void requestSensorReadings() {
-        BluetoothService.send(context, SpartanCommands.requestSensorReadings(), "spartan");
+        if (targetAfr == 0) {
+            requestTargetAfr(context);
+        } else {
+            requestCurrentAfr(context);
+        }
     }
 
-    public static void requestCurrentAFR(Context context) {
-        BluetoothService.send(context, SpartanCommands.getAFR(), "spartan");
+    public static void requestTargetAfr(Context context) {
+        BluetoothService.send(context, SpartanCommands.getTargetAFR(), "spartan");
+    }
+
+    public static void requestCurrentAfr(Context context) {
+        BluetoothService.send(context, SpartanCommands.requestCurrentAfr(), "spartan");
     }
 
     public void setAFR(double target) {
         targetAfr = target;
         BluetoothService.send(context, SpartanCommands.setAFR(targetAfr), "spartan");
+
         listener.onTargetAfrUpdated(targetAfr);
     }
 
@@ -139,7 +147,7 @@ public class SpartanStudio extends Studio {
     // ────────────────────────────────────────────────────────────────────────────────
 
     public boolean isAlive() {
-        return (System.currentTimeMillis() - lastSensorReadingsTimestamp) < LINK_TIMEOUT_MS;
+        return timeSinceLastSensorReadings() < LINK_TIMEOUT_MS;
     }
 
     public boolean isRunning() {

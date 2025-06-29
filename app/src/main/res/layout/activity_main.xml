@@ -822,17 +822,16 @@
                 <LinearLayout
                     android:id="@+id/layoutConnStatus"
                     android:layout_width="match_parent"
-                    android:layout_height="20dp"
+                    android:layout_height="40dp"
                     android:gravity="center"
                     android:orientation="horizontal">
 
                     <TextView
                         android:id="@+id/textStatusObd"
-                        android:layout_width="wrap_content"
+                        android:layout_width="120dp"
                         android:layout_height="match_parent"
                         android:layout_marginStart="16dp"
-                        android:layout_marginBottom="6dp"
-                        android:gravity="center"
+                        android:gravity="left|center_vertical"
                         android:text="Status (OBD): -"
                         android:textColor="#A1A1A1"
                         android:textSize="8sp" />
@@ -844,9 +843,8 @@
 
                     <TextView
                         android:id="@+id/textStatusGeneric"
-                        android:layout_width="wrap_content"
+                        android:layout_width="120dp"
                         android:layout_height="match_parent"
-                        android:layout_marginBottom="6dp"
                         android:gravity="center"
                         android:text="Status: -"
                         android:textSize="8sp" />
@@ -858,11 +856,10 @@
 
                     <TextView
                         android:id="@+id/textStatusSpartan"
-                        android:layout_width="wrap_content"
+                        android:layout_width="120dp"
                         android:layout_height="match_parent"
                         android:layout_marginEnd="16dp"
-                        android:layout_marginBottom="6dp"
-                        android:gravity="center"
+                        android:gravity="right|center_vertical"
                         android:text="Status (Spartan): -"
                         android:textSize="8sp" />
 

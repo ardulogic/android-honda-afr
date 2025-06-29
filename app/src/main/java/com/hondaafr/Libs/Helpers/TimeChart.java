@@ -129,6 +129,7 @@ public class TimeChart {
         xAxis.setDrawGridLines(true);
         xAxis.setCenterAxisLabels(true);
         xAxis.setGranularity(1f); // one hour
+        xAxis.setDrawLabels(false);
 
         xAxis.setValueFormatter(new ValueFormatter() {
             @Override

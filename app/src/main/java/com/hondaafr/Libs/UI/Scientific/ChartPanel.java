@@ -1,66 +1,104 @@
 package com.hondaafr.Libs.UI.Scientific;
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.os.Build;
-import android.os.Handler;
-import android.util.Log;
-import android.widget.Button;
 import android.widget.LinearLayout;
 
-import androidx.annotation.RequiresApi;
-
-import com.hondaafr.Libs.Bluetooth.BluetoothStates;
-import com.hondaafr.Libs.Bluetooth.BluetoothUtils;
-import com.hondaafr.Libs.Bluetooth.Services.BluetoothService;
-import com.hondaafr.Libs.Helpers.Permissions;
-import com.hondaafr.Libs.Helpers.Studio;
+import com.github.mikephil.charting.charts.LineChart;
+import com.hondaafr.Libs.Devices.Obd.Readings.ObdReading;
+import com.hondaafr.Libs.Devices.Phone.PhoneGps;
 import com.hondaafr.Libs.Helpers.TimeChart;
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputer;
+import com.hondaafr.Libs.Helpers.TripComputer.TripComputerListener;
 import com.hondaafr.MainActivity;
 import com.hondaafr.R;
 
-import java.util.Objects;
-
 public class ChartPanel {
 
-    private final LinearLayout panel;
+    private final LineChart panel;
     private final TripComputer mTripComputer;
     private final MainActivity mainActivity;
     private final Context context;
     private TimeChart mChart;
 
-    private long startTimestamp = 0L;
+    private long startTimestamp;
 
     public ChartPanel(MainActivity mainActivity, TripComputer mTripComputer) {
         this.mTripComputer = mTripComputer;
         this.mainActivity = mainActivity;
         this.context = mainActivity;
 
-        panel = mainActivity.findViewById(R.id.layoutConnection);
+        panel = mainActivity.findViewById(R.id.graph);
+        startTimestamp = System.currentTimeMillis();
 
-        mChart = new TimeChart(mainActivity, mainActivity.findViewById(R.id.graph));
+        mChart = new TimeChart(mainActivity, panel);
         mChart.init();
         mChart.invalidate();
+        mTripComputer.addListener("chart", new TripComputerListener() {
+            @Override
+            public void onGpsUpdate(Double speed, double distanceIncrement) {
+
+            }
+
+            @Override
+            public void onGpsPulse(PhoneGps gps) {
+
+            }
+
+            @Override
+            public void onAfrPulse(boolean isActive) {
+
+            }
+
+            @Override
+            public void onAfrTargetValue(double targetAfr) {
+                onTargetAfrUpdated(targetAfr);
+            }
+
+            @Override
+            public void onAfrValue(Double afr) {
+                onAfrUpdated(afr);
+            }
+
+            @Override
+            public void onObdPulse(boolean isActive) {
+
+            }
+
+            @Override
+            public void onObdActivePidsChanged() {
+
+            }
+
+            @Override
+            public void onObdValue(ObdReading reading) {
+
+            }
+
+            @Override
+            public void onCalculationsUpdated() {
+
+            }
+        });
 
     }
 
     public void onTargetAfrUpdated(double targetAfr) {
         mChart.setLimitLines(null, null, (float) targetAfr);
+        mChart.invalidate();
     }
 
     public void onAfrUpdated(Double afr) {
         mainActivity.runOnUiThread(() -> {
             float time = System.currentTimeMillis() - startTimestamp; // Cant use full timestamp, too big
             mChart.addToData(time, afr.floatValue(), true);
+            mChart.invalidate();
         });
     }
 
     public void clear() {
         mChart.clearData();
         startTimestamp = System.currentTimeMillis();
+        mChart.invalidate();
     }
 
 }

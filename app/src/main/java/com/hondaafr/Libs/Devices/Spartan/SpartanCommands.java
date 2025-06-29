@@ -43,7 +43,7 @@ public class SpartanCommands {
         return lambdaToAfr(Double.parseDouble(data));
     }
 
-    public static String requestSensorReadings() {
+    public static String requestCurrentAfr() {
         return "G\r\n";
     }
 
@@ -52,8 +52,8 @@ public class SpartanCommands {
         return String.format("SETNBSWLAM%.3f\r\n", afrToLambda(afr));
     }
 
-    public static String getAFR() {
-        return "GETNBSWLAM\r\n";
+    public static String getTargetAFR() {
+        return "GETNBSWLAMB\r\n";
     }
 
 

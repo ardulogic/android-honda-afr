@@ -40,4 +40,5 @@ public class ReadingHistory {
     public double getMaxValue() {
         return shortAfrMaxHistory.getMaxValue();
     }
+
 }

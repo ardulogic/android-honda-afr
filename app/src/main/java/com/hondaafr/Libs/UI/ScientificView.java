@@ -37,7 +37,6 @@ public class ScientificView {
     public final ObdPanel obdPanel;
     private final TopButtonsPanel topButtonsPanel;
     private final LinearLayout mainControlsPanel;
-    private final GenericStatusPanel genericStatusPanel;
     private final ConnectPanel connectPanel;
     public final ChartPanel chartPanel;
     public final SoundPanel soundPanel;
@@ -53,7 +52,6 @@ public class ScientificView {
         afrBoundStatsPanel = new AfrBoundStatsPanel(mainActivity, mTripComputer);
         fuelStatsPanel = new FuelStatsPanel(mainActivity, mTripComputer);
         obdPanel = new ObdPanel(mainActivity, mTripComputer);
-        genericStatusPanel = new GenericStatusPanel(mainActivity);
         connectPanel = new ConnectPanel(mainActivity, mTripComputer);
         topButtonsPanel = new TopButtonsPanel(mainActivity, this, mTripComputer);
         chartPanel = new ChartPanel(mainActivity, mTripComputer);
@@ -86,12 +84,19 @@ public class ScientificView {
 
             @Override
             public void onAfrTargetValue(double targetAfr) {
-                chartPanel.onTargetAfrUpdated(targetAfr);
+
             }
 
             @Override
             public void onAfrValue(Double afr) {
-                chartPanel.onAfrUpdated(afr);
+                if (fuelStatsPanel.isVisible()) {
+                    textCornerBig.setText(String.format("%.2f", mTripComputer.mSpartanStudio.lastSensorAfr));
+                    textCornerSmall.setText(String.format("%.2f", mTripComputer.afrHistory.getAvgDeviation(
+                            mTripComputer.mSpartanStudio.targetAfr)));
+                } else {
+                    textCornerBig.setText(String.format("%.2f l/h", mTripComputer.instStats.getLphAvg()));
+                    textCornerSmall.setText(String.format("%.2f l", mTripComputer.tripStats.getLiters()));
+                }
             }
 
             @Override
@@ -114,16 +119,6 @@ public class ScientificView {
 
             }
         });
-    }
-
-    public void onDataUpdated() {
-        displayAfrValues();
-    }
-
-    public void displayAfrValues() {
-        textCornerBig.setText(String.format("%.2f", mTripComputer.afrHistory.getAvg()));
-        textCornerSmall.setText(String.format("%.2f", mTripComputer.afrHistory.getAvgDeviation(
-                mTripComputer.mSpartanStudio.targetAfr)));
     }
 
     public void setVisibility(boolean visible) {

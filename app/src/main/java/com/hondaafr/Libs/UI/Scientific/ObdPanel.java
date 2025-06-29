@@ -7,7 +7,9 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.hondaafr.Libs.Devices.Obd.Readings.ObdReading;
+import com.hondaafr.Libs.Devices.Phone.PhoneGps;
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputer;
+import com.hondaafr.Libs.Helpers.TripComputer.TripComputerListener;
 import com.hondaafr.Libs.UI.ImageButtonRounded;
 import com.hondaafr.MainActivity;
 import com.hondaafr.R;
@@ -33,6 +35,8 @@ public class ObdPanel {
         mTextSpeedSource = mainActivity.findViewById(R.id.textSpeedSource);
 
         setObdOnClickListeners();
+
+        mTripComputer.addListener("obd_panel", tcListener);
     }
 
     private void setObdOnClickListeners() {
@@ -85,7 +89,7 @@ public class ObdPanel {
     }
 
     @SuppressLint("DefaultLocale")
-    public void onDataUpdated(ObdReading reading) {
+    public void updateObdReadingDisplay(ObdReading reading) {
         switch (reading.getMachineName()) {
             case "ect":
                 setObdReadingText(R.id.textEct, reading);
@@ -120,25 +124,63 @@ public class ObdPanel {
         }
     }
 
-    @SuppressLint("DefaultLocale")
-    public void onGpsSpeedUpdated(double speed) {
-        if (mTripComputer.isGpsSpeedUsed()) {
-            mTextSpeedSource.setText("GPS");
+    private TripComputerListener tcListener = new TripComputerListener() {
+        @Override
+        public void onGpsUpdate(Double speed, double distanceIncrement) {
+            if (mTripComputer.isGpsSpeedUsed()) {
+                mTextSpeedSource.setText("GPS");
 
-            TextView textView = mainActivity.findViewById(R.id.textSpeed);
-            textView.setText(String.format("%.1f km/h", speed));
+                TextView textView = mainActivity.findViewById(R.id.textSpeed);
+                textView.setText(String.format("%.1f km/h", speed));
+            }
         }
-    }
 
-    public void onActivePidsChanged() {
-        updateObdButtonsAppearance();
+        @Override
+        public void onGpsPulse(PhoneGps gps) {
 
-        boolean canMeasureFuel = mTripComputer.mObdStudio.readingsForFuelAreActive();
+        }
 
-        if (mTripComputer.mObdStudio.readingsForFuelAreActive()) {
-            mToggleFuelCons.setIconState(canMeasureFuel);
-        };
-    }
+        @Override
+        public void onAfrPulse(boolean isActive) {
+
+        }
+
+        @Override
+        public void onAfrTargetValue(double targetAfr) {
+
+        }
+
+        @Override
+        public void onAfrValue(Double afr) {
+
+        }
+
+        @Override
+        public void onObdPulse(boolean isActive) {
+
+        }
+
+        @Override
+        public void onObdActivePidsChanged() {
+            updateObdButtonsAppearance();
+
+            boolean canMeasureFuel = mTripComputer.mObdStudio.readingsForFuelAreActive();
+
+            if (mTripComputer.mObdStudio.readingsForFuelAreActive()) {
+                mToggleFuelCons.setIconState(canMeasureFuel);
+            }
+        }
+
+        @Override
+        public void onObdValue(ObdReading reading) {
+            updateObdReadingDisplay(reading);
+        }
+
+        @Override
+        public void onCalculationsUpdated() {
+
+        }
+    };
 
 
 }

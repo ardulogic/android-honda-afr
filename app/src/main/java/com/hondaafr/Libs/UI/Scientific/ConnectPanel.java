@@ -67,12 +67,10 @@ public class ConnectPanel {
         }
 
         startBtService();
-        connectSpartan();
-        connectObd();
     }
 
     public void onStop() {
-        disconnect();
+
     }
     public void onDestroy() {
         disconnect();
@@ -110,8 +108,8 @@ public class ConnectPanel {
             case BluetoothStates.STATE_SERVICE_STARTED:
                 onConnectionMessage("generic", "Bluetooth service started.");
 
-                connectSpartan();
-                connectObd();
+                connectSpartanSoon();
+                connectObdSoon();
                 break;
 
             case BluetoothStates.STATE_SERVICE_STOPPED:
@@ -184,7 +182,7 @@ public class ConnectPanel {
 
     private void updateConnectButton(Button button, String text, boolean isEnabled) {
         button.setText(text);
-        buttonConnectSpartan.setEnabled(isEnabled);
+        button.setEnabled(isEnabled);
     }
 
     public void connectSpartan() {

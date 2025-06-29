@@ -1,7 +1,6 @@
 package com.hondaafr.Libs.UI;
 
 import android.animation.ArgbEvaluator;
-import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -160,43 +159,8 @@ public class ClusterView implements TripComputerListener {
         layoutCluster.setOnClickListener(v -> toggleSystemUI());
 
         startNeedleAnimator();
-        onDataUpdated();
+        updateDisplay();
         lightUpActiveKnob();
-    }
-
-    private void toggleSystemUI() {
-        View decorView = mainActivity.getWindow().getDecorView();
-
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
-            WindowInsetsController insetsController = mainActivity.getWindow().getInsetsController();
-            if (insetsController != null) {
-                boolean isVisible = mainActivity.getWindow()
-                        .getDecorView()
-                        .getRootWindowInsets()
-                        .isVisible(WindowInsets.Type.navigationBars());
-
-                if (isVisible) {
-                    insetsController.hide(WindowInsets.Type.navigationBars());
-                    insetsController.setSystemBarsBehavior(
-                            WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
-                } else {
-                    insetsController.show(WindowInsets.Type.navigationBars());
-                }
-            }
-        } else {
-            // For Android 10 and below
-            int uiOptions = decorView.getSystemUiVisibility();
-            boolean isVisible = (uiOptions & View.SYSTEM_UI_FLAG_HIDE_NAVIGATION) == 0;
-
-            if (isVisible) {
-                decorView.setSystemUiVisibility(
-                        View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                                | View.SYSTEM_UI_FLAG_FULLSCREEN
-                                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
-            } else {
-                decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
-            }
-        }
     }
 
     public void setVisibility(boolean visible) {
@@ -206,7 +170,7 @@ public class ClusterView implements TripComputerListener {
     private void setKnobOnLongClick(ImageButton b, TotalStats stats) {
         b.setOnLongClickListener(v -> {
             stats.reset(mainActivity);
-            onDataUpdated();
+            updateDisplay();
 
             if (vibrator != null) {
                 vibrator.vibrate(VibrationEffect.createOneShot(550, VibrationEffect.DEFAULT_AMPLITUDE)); // short click
@@ -225,7 +189,7 @@ public class ClusterView implements TripComputerListener {
                 if (mode < fromModeIndex || mode > toModeIndex) {
                     mode = fromModeIndex;
                     lightUpActiveKnob();
-                    onDataUpdated();
+                    updateDisplay();
                 }
 
                 return; // Don't handle short click
@@ -241,7 +205,7 @@ public class ClusterView implements TripComputerListener {
             }
 
             lightUpActiveKnob();
-            onDataUpdated();
+            updateDisplay();
         });
     }
 
@@ -359,9 +323,9 @@ public class ClusterView implements TripComputerListener {
         }
     }
 
-    public void onDataUpdated() {
+    public void updateDisplay() {
         if (Looper.myLooper() != Looper.getMainLooper()) {
-            new Handler(Looper.getMainLooper()).post(this::onDataUpdated);
+            new Handler(Looper.getMainLooper()).post(this::updateDisplay);
             return;
         }
 
@@ -411,15 +375,49 @@ public class ClusterView implements TripComputerListener {
         }
     }
 
-
     public void showPipView() {
         isInPip = true;
-        onDataUpdated();
+        updateDisplay();
     }
 
     public void restoreFullView() {
         isInPip = false;
-        onDataUpdated();
+        updateDisplay();
+    }
+
+    private void toggleSystemUI() {
+        View decorView = mainActivity.getWindow().getDecorView();
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+            WindowInsetsController insetsController = mainActivity.getWindow().getInsetsController();
+            if (insetsController != null) {
+                boolean isVisible = mainActivity.getWindow()
+                        .getDecorView()
+                        .getRootWindowInsets()
+                        .isVisible(WindowInsets.Type.navigationBars());
+
+                if (isVisible) {
+                    insetsController.hide(WindowInsets.Type.navigationBars());
+                    insetsController.setSystemBarsBehavior(
+                            WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+                } else {
+                    insetsController.show(WindowInsets.Type.navigationBars());
+                }
+            }
+        } else {
+            // For Android 10 and below
+            int uiOptions = decorView.getSystemUiVisibility();
+            boolean isVisible = (uiOptions & View.SYSTEM_UI_FLAG_HIDE_NAVIGATION) == 0;
+
+            if (isVisible) {
+                decorView.setSystemUiVisibility(
+                        View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                                | View.SYSTEM_UI_FLAG_FULLSCREEN
+                                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
+            } else {
+                decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
+            }
+        }
     }
 
 
@@ -539,7 +537,7 @@ public class ClusterView implements TripComputerListener {
 
     @Override
     public void onAfrValue(Double afr) {
-
+        updateDisplay();
     }
 
     @Override
@@ -558,7 +556,7 @@ public class ClusterView implements TripComputerListener {
 
     @Override
     public void onObdValue(ObdReading reading) {
-
+        updateDisplay();
     }
 
     @Override
