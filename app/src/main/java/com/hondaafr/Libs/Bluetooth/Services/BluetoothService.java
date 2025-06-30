@@ -44,22 +44,20 @@ public class BluetoothService extends Service {
     public static final String PARAM_DATA = "data";
     public static final String PARAM_SSID = "ssid";
     public static final String PARAM_LINES = "lines";
-
     public static final String PARAM_UUID = "uuid";
-
 
     private static final boolean AUTO_NEWLINE = false;
 
     private Map<String, ArrayList<String>> queuedLines = new HashMap<>();
     private Timer mTimer;
     private BluetoothHelper mBtHelper;
-    private BluetoothConnection mBtConnection;
-
-    private Map<String, BluetoothConnection> mBtConnections = new HashMap<>();
-
+    private static Map<String, BluetoothConnection> mBtConnections = new HashMap<>();
     private BluetoothConnectionListener mBtListener;
 
-
+    public static boolean isConnected(String deviceId) {
+        BluetoothConnection connection = mBtConnections.get(deviceId);
+        return connection != null && connection.isConnected();
+    }
 
     private class TerminateServiceTask extends TimerTask {
         @Override
@@ -141,7 +139,6 @@ public class BluetoothService extends Service {
         } else {
             device = mBtHelper.getPairedDeviceBySSID(ssid_or_mac);
         }
-
 
         if (device != null) {
             BluetoothDeviceData deviceData = new BluetoothDeviceData(device, "BT Device");

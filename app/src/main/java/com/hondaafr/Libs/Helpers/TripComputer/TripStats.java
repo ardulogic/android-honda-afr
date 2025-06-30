@@ -17,7 +17,7 @@ public class TripStats extends TotalStats {
         }
     }
 
-    private boolean dataIsOld() {
+    protected boolean dataIsOld() {
         return System.currentTimeMillis() - timeUpdated > 15 * 60 * 1000;
     }
 

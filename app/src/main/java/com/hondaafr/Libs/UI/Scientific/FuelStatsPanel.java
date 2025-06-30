@@ -14,7 +14,7 @@ import com.hondaafr.Libs.UI.ScientificView;
 import com.hondaafr.R;
 import com.hondaafr.MainActivity;
 
-public class FuelStatsPanel  extends Panel {
+public class FuelStatsPanel extends Panel {
 
     public final LinearLayout panel;
     private final TextView textStatsInfo, textStatsBig, textStatsMedium, textStatsSmall;
@@ -130,32 +130,35 @@ public class FuelStatsPanel  extends Panel {
     }
 
     public void updateDisplayedValues() {
-        switch (mode) {
-            case FuelTrip: {
-                displayFuelConsumption(mTripComputer.tripStats);
-                break;
-            }
-            case FuelTotal: {
-                displayFuelConsumption(mTripComputer.totalStats);
-                break;
-            }
+        if (!isInPip()) {
+            switch (mode) {
+                case FuelTrip: {
+                    show();
+                    displayFuelConsumption(mTripComputer.tripStats);
+                    break;
+                }
+                case FuelTotal: {
+                    show();
+                    displayFuelConsumption(mTripComputer.totalStats);
+                    break;
+                }
 
-            case FuelInst: {
-                displayFuelConsumption(mTripComputer.instStats);
-                break;
-            }
+                case FuelInst: {
+                    show();
+                    displayFuelConsumption(mTripComputer.instStats);
+                    break;
+                }
 
-            case FuelOff:
-            default:
-                hide();
-                break;
+                case FuelOff:
+                default:
+                    hide();
+                    break;
+            }
         }
     }
 
 
     public void displayFuelConsumption(TotalStats stats) {
-        show();
-
         textStatsInfo.setText(stats.getName());
         textStatsBig.setText(String.format("%06.1f", stats.getDistanceKm()));
 
@@ -167,8 +170,6 @@ public class FuelStatsPanel  extends Panel {
     }
 
     public void displayFuelConsumption(InstantStats stats) {
-        show();
-
         textStatsInfo.setText(stats.getName());
         textStatsBig.setText(String.format("%.2f l/h", stats.getLphAvg()));
 

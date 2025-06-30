@@ -121,8 +121,6 @@ public class ClusterView implements TripComputerListener {
         });
 
         this.lightSensor = new PhoneLightSensor(mainActivity, intensity -> {
-            Log.d("Light", String.valueOf(intensity));
-
             boolean lowLight = intensity < 15;
             boolean afterSunset = false;
             boolean beforeSunrise = false;
@@ -180,6 +178,7 @@ public class ClusterView implements TripComputerListener {
             return false;
         });
     }
+
     private void setKnobOnShortClick(ImageButton b, int fromModeIndex, int toModeIndex) {
         b.setOnClickListener(v -> {
             Boolean longClicked = (Boolean) v.getTag(R.id.was_long_clicked);
@@ -337,7 +336,9 @@ public class ClusterView implements TripComputerListener {
         }
 
         // Animate needle rotation
-        this.targetNeedleRotation = calculateNeedleRotation(mTripComputer.instStats.getLphAvg());;
+        if (mTripComputer.mObdStudio.isReading()) {
+            this.targetNeedleRotation = calculateNeedleRotation(mTripComputer.instStats.getLphAvg());
+        }
 
         int richFuelIconColor = mTripComputer.afrIsRich() && mTripComputer.mSpartanStudio.lastSensorAfr > 0 ? orange : gray;
 

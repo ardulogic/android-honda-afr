@@ -32,9 +32,11 @@ public class SpartanStudio extends Studio {
     private enum Phase { RUNNING, STOPPED }
     private Phase phase = Phase.STOPPED;
 
-    public double targetAfr = 14.7;
+    public Double targetAfr = 14.7;
     public double lastSensorAfr = 0.0;
     public double lastSensorTemp = 0.0;
+
+    private boolean targetAfrReceived = false;
 
     private long lastSensorReadingsTimestamp = 0L;
     private boolean linkPreviouslyAlive = false;
@@ -91,10 +93,12 @@ public class SpartanStudio extends Studio {
     // ────────────────────────────────────────────────────────────────────────────────
 
     private void requestSensorReadings() {
-        if (targetAfr == 0) {
-            requestTargetAfr(context);
-        } else {
-            requestCurrentAfr(context);
+        if (BluetoothService.isConnected("spartan")) {
+            if (!targetAfrReceived) {
+                requestTargetAfr(context);
+            } else {
+                requestCurrentAfr(context);
+            }
         }
     }
 
@@ -126,6 +130,7 @@ public class SpartanStudio extends Studio {
 
         if (SpartanCommands.dataIsTargetLambda(data)) {
             targetAfr = SpartanCommands.parseTargetLambdaAndConvertToAfr(data);
+            targetAfrReceived = true;
             listener.onTargetAfrUpdated(targetAfr);
         } else if (SpartanCommands.dataIsSensorAfr(data)) {
             lastSensorAfr = SpartanCommands.parseSensorAfr(data);

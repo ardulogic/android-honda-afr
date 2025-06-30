@@ -1,7 +1,7 @@
 package com.hondaafr;
 
-import android.annotation.SuppressLint;
 import android.app.PictureInPictureParams;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.os.Build;
@@ -9,11 +9,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.util.Rational;
-import android.view.View;
 import android.view.WindowManager;
-import android.widget.Button;
-import android.widget.ImageButton;
-import android.widget.SeekBar;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.RequiresApi;
@@ -21,18 +17,11 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
-import androidx.lifecycle.ViewModelProvider;
 
-import com.hondaafr.Libs.Devices.Obd.Readings.ObdReading;
-import com.hondaafr.Libs.Devices.Obd.ObdStudioListener;
-import com.hondaafr.Libs.Devices.Spartan.SpartanStudioListener;
-import com.hondaafr.Libs.EngineSound.EngineSound;
+import com.hondaafr.Libs.Bluetooth.Services.BluetoothForegroundService;
 import com.hondaafr.Libs.UI.ClusterView;
 import com.hondaafr.Libs.Helpers.Permissions;
-import com.hondaafr.Libs.Helpers.TimeChart;
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputer;
-import com.hondaafr.Libs.Helpers.TripComputer.TripComputerListener;
-import com.hondaafr.Libs.UI.ImageButtonRounded;
 import com.hondaafr.Libs.UI.ScientificView;
 
 public class MainActivity extends AppCompatActivity {
@@ -65,6 +54,17 @@ public class MainActivity extends AppCompatActivity {
         mTripComputer = new TripComputer(this);
         mScientific = new ScientificView(this, mTripComputer);
         mCluster = new ClusterView(this, mTripComputer);
+
+//        keepInBackground();
+    }
+
+    public void keepInBackground() {
+        Intent svc = new Intent(this, BluetoothForegroundService.class);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(svc);
+        } else {
+            startService(svc);
+        }
     }
 
     public void showCluster() {

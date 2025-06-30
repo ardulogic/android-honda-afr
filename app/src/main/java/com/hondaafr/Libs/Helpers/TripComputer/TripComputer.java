@@ -176,12 +176,13 @@ public class TripComputer implements ObdStudioListener, SpartanStudioListener {
     }
 
     public void onPause(Context context) {
+        totalStats.save(context);
+        tripStats.save(context);
+
         stopSupervisor();
     }
 
     public void onDestroy(Context context) {
-        totalStats.save(context);
-        tripStats.save(context);
         mObdStudio.saveActivePids();
     }
 

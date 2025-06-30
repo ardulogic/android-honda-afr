@@ -21,7 +21,7 @@ import java.util.UUID;
 
 public class BluetoothUtils {
     private static final String TAG = "BluetoothUtils";
-    private static final boolean D = true;
+    private static final boolean D = false;
 
     private static final Map<String, String> uuidsDescriptions = new HashMap<String, String>();
 
@@ -129,8 +129,10 @@ public class BluetoothUtils {
             if (phoneUuids != null) {
                 if (D) Log.d(TAG, "Found UUIDs for " + device.getName());
                 for (ParcelUuid uuid : phoneUuids) {
-                    if (D) Log.d(TAG, device.getName() + ": " + uuid.toString());
-                    result.add(uuid);
+                    if (!uuid.equals(ParcelUuid.fromString("00000000-0000-0000-0000-000000000000"))) {
+                        if (D) Log.d(TAG, "UUID:" + device.getName() + ": " + uuid.toString());
+                        result.add(uuid);
+                    }
                 }
             }
         } catch (NoSuchMethodException e) {

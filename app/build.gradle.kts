@@ -95,6 +95,7 @@ dependencies {
     implementation("com.opencsv:opencsv:5.5.2")
     implementation("com.luckycatlabs:SunriseSunsetCalculator:1.2")
     implementation(files("libs/fmod.jar"))
+    implementation("androidx.core:core:1.12.0")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
