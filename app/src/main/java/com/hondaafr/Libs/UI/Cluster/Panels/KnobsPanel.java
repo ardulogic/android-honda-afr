@@ -37,7 +37,7 @@ public class KnobsPanel extends Panel {
         this.textKnobTotals = mainActivity.findViewById(R.id.textViewKnobTotals);
         this.textKnobInst = mainActivity.findViewById(R.id.textViewKnobInst);
         this.textKnobTrip = mainActivity.findViewById(R.id.textViewKnobTrip);
-        this.vibrator = (Vibrator) mainActivity.getSystemService(Context.VIBRATOR_SERVICE);
+        this.vibrator = (Vibrator) mainActivity.getApplicationContext().getSystemService(Context.VIBRATOR_SERVICE);
     }
 
     @Override

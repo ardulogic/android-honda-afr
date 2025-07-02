@@ -25,10 +25,6 @@ public class SpartanStudio extends Studio {
     private ScheduledFuture<?> supervisorTask;
     private ScheduledFuture<?> readingTask;
 
-    public boolean isReading() {
-        return isAlive() && lastSensorAfr > 0;
-    }
-
     private enum Phase { RUNNING, STOPPED }
     private Phase phase = Phase.STOPPED;
 
@@ -38,7 +34,8 @@ public class SpartanStudio extends Studio {
 
     private boolean targetAfrReceived = false;
 
-    private long lastSensorReadingsTimestamp = 0L;
+    private long timeLastReadingReceived = 0L;
+    private long timeLastDataReceived = 0L;
     private boolean linkPreviouslyAlive = false;
 
     public SpartanStudio(Context context, SpartanStudioListener listener) {
@@ -127,6 +124,7 @@ public class SpartanStudio extends Studio {
 
     public void onDataReceived(String data) {
         d(data, 1);
+        updateDataReceivedTimestamp();
 
         if (SpartanCommands.dataIsTargetLambda(data)) {
             targetAfr = SpartanCommands.parseTargetLambdaAndConvertToAfr(data);
@@ -135,33 +133,46 @@ public class SpartanStudio extends Studio {
         } else if (SpartanCommands.dataIsSensorAfr(data)) {
             lastSensorAfr = SpartanCommands.parseSensorAfr(data);
             listener.onSensorAfrReceived(lastSensorAfr);
-            updateLastTrackingDataTimestamp();
+            updateReadingsReceivedTimestamp();
         } else if (SpartanCommands.dataIsSensorTemp(data)) {
             lastSensorTemp = SpartanCommands.parseSensorTemp(data);
             listener.onSensorTempReceived(lastSensorTemp);
-            updateLastTrackingDataTimestamp();
+            updateReadingsReceivedTimestamp();
         }
     }
 
-    private void updateLastTrackingDataTimestamp() {
-        lastSensorReadingsTimestamp = System.currentTimeMillis();
+    private void updateReadingsReceivedTimestamp() {
+        timeLastReadingReceived = System.currentTimeMillis();
     }
 
+    public long timeSinceLastSensorReadingReceived() {
+        return System.currentTimeMillis() - timeLastReadingReceived;
+    }
+
+    private void updateDataReceivedTimestamp() {
+        timeLastDataReceived = System.currentTimeMillis();
+    }
+
+    public long timeSinceDataReceived() {
+        return System.currentTimeMillis() - timeLastDataReceived;
+    }
     // ────────────────────────────────────────────────────────────────────────────────
     // State and metrics
     // ────────────────────────────────────────────────────────────────────────────────
 
     public boolean isAlive() {
-        return timeSinceLastSensorReadings() < LINK_TIMEOUT_MS;
+        return timeSinceDataReceived() < LINK_TIMEOUT_MS;
+    }
+
+    public boolean isReading() {
+        return timeSinceLastSensorReadingReceived() < LINK_TIMEOUT_MS
+                && lastSensorAfr > 0;
     }
 
     public boolean isRunning() {
         return phase == Phase.RUNNING && !scheduler.isShutdown();
     }
 
-    public long timeSinceLastSensorReadings() {
-        return System.currentTimeMillis() - lastSensorReadingsTimestamp;
-    }
 
     public Map<String, String> getReadingsAsString() {
         LinkedHashMap<String, String> map = new LinkedHashMap<>();

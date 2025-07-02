@@ -13,7 +13,6 @@ import android.widget.TextView;
 import com.hondaafr.Libs.Devices.Obd.Readings.ObdReading;
 import com.hondaafr.Libs.Devices.Phone.PhoneGps;
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputer;
-import com.hondaafr.Libs.UI.ClusterView;
 import com.hondaafr.Libs.UI.Scientific.Panels.Panel;
 import com.hondaafr.Libs.UI.UiView;
 import com.hondaafr.MainActivity;
@@ -69,6 +68,9 @@ public class GaugePanel extends Panel  {
     @Override
     public void onParentReady() {
         startNeedleAnimator();
+
+        updateAfrCel();
+        updateObdCel();
         updateDisplay();
     }
 
@@ -146,17 +148,6 @@ public class GaugePanel extends Panel  {
 
         imageRichFuel.setColorFilter(richFuelIconColor);
         imageRichFuel.setTag(richFuelIconColor);
-
-        int obdConnectionColor = tripComputer.mObdStudio.isAlive() ? red : orange;
-        obdConnectionColor = tripComputer.mObdStudio.isReading() ? gray : obdConnectionColor;
-        imageObd.setColorFilter(obdConnectionColor);
-        imageObd.setTag(obdConnectionColor);
-        imageObd.setTag(obdConnectionColor);
-
-        int afrConnectionColor = tripComputer.mSpartanStudio.isAlive() ? red : orange;
-        afrConnectionColor = tripComputer.mSpartanStudio.isReading() ? gray : afrConnectionColor;
-        imageAfr.setColorFilter(afrConnectionColor);
-        imageAfr.setTag(afrConnectionColor);
 
         Log.d("GaugePanel", "Updated display.");
     }
@@ -265,27 +256,33 @@ public class GaugePanel extends Panel  {
 
     @Override
     public void onObdPulse(boolean isActive) {
-        int obdConnectionColor = tripComputer.mObdStudio.isAlive() ? red : orange;
+        updateObdCel();
+        updateDisplay();
+    }
+
+    public void updateObdCel() {
+        int obdConnectionColor = tripComputer.mObdStudio.isAlive() ? orange : red;
         obdConnectionColor = tripComputer.mObdStudio.isReading() ? gray : obdConnectionColor;
         imageObd.setColorFilter(obdConnectionColor);
         imageObd.setTag(obdConnectionColor);
-        imageObd.setTag(obdConnectionColor);
-
-        updateDisplay();
     }
 
     @Override
     public void onAfrPulse(boolean isActive) {
-        int afrConnectionColor = tripComputer.mSpartanStudio.isAlive() ? red : orange;
-        afrConnectionColor = tripComputer.mSpartanStudio.isReading() ? gray : afrConnectionColor;
-        imageAfr.setColorFilter(afrConnectionColor);
-        imageAfr.setTag(afrConnectionColor);
+        updateAfrCel();
 
         if (!isActive) {
             targetNeedleRotation = calculateNeedleRotation(0);
         }
 
         updateDisplay();
+    }
+
+    public void updateAfrCel() {
+        int afrConnectionColor = tripComputer.mSpartanStudio.isAlive() ? orange : red;
+        afrConnectionColor = tripComputer.mSpartanStudio.isReading() ? gray : afrConnectionColor;
+        imageAfr.setColorFilter(afrConnectionColor);
+        imageAfr.setTag(afrConnectionColor);
     }
 
     @Override
@@ -296,17 +293,14 @@ public class GaugePanel extends Panel  {
     public void onAfrValue(Double afr) {
         updateDisplay();
     }
-
     @Override
     public boolean visibleInPip() {
         return true;
     }
-
     @Override
     public void enterPip() {
         super.enterPip();
     }
-
     @Override
     public void exitPip() {
         super.exitPip();
