@@ -1,37 +1,33 @@
-package com.hondaafr.Libs.UI.Scientific;
+package com.hondaafr.Libs.UI.Scientific.Panels;
 
-import android.content.Context;
-import android.util.Log;
-import android.view.View;
 import android.widget.Button;
-import android.widget.LinearLayout;
 
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputer;
-import com.hondaafr.Libs.UI.ImageButtonRounded;
-import com.hondaafr.Libs.UI.ScientificView;
+import com.hondaafr.Libs.UI.Scientific.ImageButtonRounded;
+import com.hondaafr.Libs.UI.UiView;
 import com.hondaafr.MainActivity;
 import com.hondaafr.R;
 
-public class TopButtonsPanel  extends Panel {
-    public final LinearLayout panel;
-    private final TripComputer mTripComputer;
-    private final MainActivity mainActivity;
-    private final Context context;
+public class TopButtonsPanel extends Panel {
     private final ImageButtonRounded buttonShowCluster;
-    private final ScientificView scView;
     private final Button buttonClear;
     private final ImageButtonRounded buttonToggleEngineSounds;
-
     private ImageButtonRounded buttonToggleFuel;
     private Button buttonRecord;
 
-    public TopButtonsPanel(MainActivity mainActivity, ScientificView scView, TripComputer mTripComputer) {
-        this.context = mainActivity;
-        this.mainActivity = mainActivity;
-        this.mTripComputer = mTripComputer;
-        this.scView = scView;
+    @Override
+    public int getContainerId() {
+        return R.id.panelTopButtons;
+    }
 
-        this.panel = mainActivity.findViewById(R.id.panelTopButtons);
+    @Override
+    public String getListenerId() {
+        return "top_buttons_panel";
+    }
+
+    public TopButtonsPanel(MainActivity mainActivity, TripComputer tripComputer, UiView parentView) {
+        super(mainActivity, tripComputer, parentView);
+
         this.buttonRecord = mainActivity.findViewById(R.id.buttonRecord);
         this.buttonToggleFuel = mainActivity.findViewById(R.id.buttonShowFuelPanel);
         this.buttonShowCluster = mainActivity.findViewById(R.id.buttonShowCluster);
@@ -39,24 +35,25 @@ public class TopButtonsPanel  extends Panel {
 
         buttonClear = mainActivity.findViewById(R.id.buttonClear);
         buttonClear.setOnClickListener(view -> {
-            scView.chartPanel.clear();
+            parent.getPanel(ChartPanel.class).clear();
         });
 
         buttonRecord.setOnClickListener(view -> {
-            if (mTripComputer.isRecording) {
-                mTripComputer.stopRecording();
+            if (tripComputer.isRecording) {
+                tripComputer.stopRecording();
                 buttonRecord.setText("Record");
             } else {
-                mTripComputer.startRecording();
+                tripComputer.startRecording();
                 buttonRecord.setText("Stop");
             }
         });
 
         buttonToggleFuel.setIconState(false);
         buttonToggleFuel.setOnClickListener(view -> {
-            scView.fuelStatsPanel.toggleMode();
+            FuelStatsPanel fuelStatsPanel = parent.getPanel(FuelStatsPanel.class);
+            fuelStatsPanel.toggleMode();
 
-            if (scView.fuelStatsPanel.isVisible()) {
+            if (fuelStatsPanel.isVisible()) {
                 buttonToggleFuel.setIconState(true);
             } else {
                 buttonToggleFuel.setIconState(false);
@@ -65,16 +62,12 @@ public class TopButtonsPanel  extends Panel {
 
         buttonToggleEngineSounds.setIconState(false);
         buttonToggleEngineSounds.setOnClickListener(v -> {
-                scView.soundPanel.toggle();
-                buttonToggleEngineSounds.setIconState(scView.soundPanel.isEnabled());
-                Log.d("TopButtonsPanel", "Sound enabled:" + scView.soundPanel.isEnabled());
-            });
+            SoundPanel soundPanel = parent.getPanel(SoundPanel.class);
+            soundPanel.toggle();
+            buttonToggleEngineSounds.setIconState(soundPanel.isEnabled());
+        });
 
         buttonShowCluster.setOnClickListener(v -> mainActivity.showCluster());
     }
 
-    @Override
-    public View getContainerView() {
-        return panel;
-    }
 }

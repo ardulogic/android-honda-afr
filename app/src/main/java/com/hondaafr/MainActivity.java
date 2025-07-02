@@ -84,7 +84,8 @@ public class MainActivity extends AppCompatActivity {
         super.onStop();
         Log.d("MainActivity", "onStop");
 
-        mScientific.onStop();
+        mCluster.onStop(this);
+        mScientific.onStop(this);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
@@ -93,7 +94,8 @@ public class MainActivity extends AppCompatActivity {
         super.onStart();
         Log.d("MainActivity", "onStart");
 
-        mScientific.onStart();
+        mCluster.onStart(this);
+        mScientific.onStart(this);
     }
 
     @Override
@@ -136,7 +138,8 @@ public class MainActivity extends AppCompatActivity {
         Log.d("MainActivity", "onResume");
         super.onResume();
 
-        mScientific.onResume();
+        mScientific.onResume(this);
+        mCluster.onResume(this);
         mTripComputer.onResume(this);
     }
 
@@ -146,14 +149,16 @@ public class MainActivity extends AppCompatActivity {
         super.onPause();
 
         mTripComputer.onPause(this);
-        mScientific.onPause();
+        mScientific.onPause(this);
+        mCluster.onPause(this);
     }
 
     @Override
     protected void onDestroy() {
         Log.d("Lifecycle", "onDestroy");
 
-        mScientific.onDestroy();
+        mScientific.onDestroy(this);
+        mCluster.onDestroy(this);
         mTripComputer.onDestroy(this);
 
         super.onDestroy();

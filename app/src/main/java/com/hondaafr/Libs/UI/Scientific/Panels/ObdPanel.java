@@ -1,42 +1,42 @@
-package com.hondaafr.Libs.UI.Scientific;
+package com.hondaafr.Libs.UI.Scientific.Panels;
 
 import android.annotation.SuppressLint;
 import android.graphics.Typeface;
-import android.view.View;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.hondaafr.Libs.Devices.Obd.Readings.ObdReading;
-import com.hondaafr.Libs.Devices.Phone.PhoneGps;
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputer;
-import com.hondaafr.Libs.Helpers.TripComputer.TripComputerListener;
-import com.hondaafr.Libs.UI.ImageButtonRounded;
+import com.hondaafr.Libs.UI.Scientific.ImageButtonRounded;
+import com.hondaafr.Libs.UI.UiView;
 import com.hondaafr.MainActivity;
 import com.hondaafr.R;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class ObdPanel  extends Panel {
+public class ObdPanel extends Panel {
 
-    private final LinearLayout panel;
-    private final TripComputer mTripComputer;
-    private final MainActivity mainActivity;
     private final Map<String, TextView> obdButtons = new HashMap<>();
     private TextView mTextSpeedSource;
     private ImageButtonRounded mToggleFuelCons;
 
-    public ObdPanel(MainActivity mainActivity, TripComputer mTripComputer) {
-        this.mTripComputer = mTripComputer;
-        this.mainActivity = mainActivity;
+    @Override
+    public int getContainerId() {
+        return R.id.layoutObd;
+    }
 
-        panel = mainActivity.findViewById(R.id.layoutObd);
+    @Override
+    public String getListenerId() {
+        return "obd_panel";
+    }
+
+    public ObdPanel(MainActivity mainActivity, TripComputer tripComputer, UiView parentView) {
+        super(mainActivity, tripComputer, parentView);
+
         mToggleFuelCons = mainActivity.findViewById(R.id.buttonShowFuelPanel);
         mTextSpeedSource = mainActivity.findViewById(R.id.textSpeedSource);
 
         setObdOnClickListeners();
-
-        mTripComputer.addListener("obd_panel", tcListener);
     }
 
     private void setObdOnClickListeners() {
@@ -54,10 +54,10 @@ public class ObdPanel  extends Panel {
     private void initObdButton(int textViewId, String reading_name) {
         TextView textView = mainActivity.findViewById(textViewId);
         obdButtons.put(reading_name, textView);
-        updateToggleAppearance(textView, mTripComputer.mObdStudio.readings.isActive(reading_name));
+        updateToggleAppearance(textView, tripComputer.mObdStudio.readings.isActive(reading_name));
 
         textView.setOnClickListener(v -> {
-            boolean isActive =  mTripComputer.mObdStudio.readings.toggleActive(reading_name);
+            boolean isActive = tripComputer.mObdStudio.readings.toggleActive(reading_name);
             updateToggleAppearance(textView, isActive);
         });
     }
@@ -71,7 +71,7 @@ public class ObdPanel  extends Panel {
 
     private void updateObdButtonsAppearance() {
         for (Map.Entry<String, TextView> entry : obdButtons.entrySet()) {
-            boolean buttonIsActive =  mTripComputer.mObdStudio.readings.active.containsKey(entry.getKey());
+            boolean buttonIsActive = tripComputer.mObdStudio.readings.active.containsKey(entry.getKey());
             updateToggleAppearance(entry.getValue(), buttonIsActive);
         }
     }
@@ -99,7 +99,7 @@ public class ObdPanel  extends Panel {
                 setObdReadingText(R.id.textStft, reading);
                 break;
             case "speed":
-                if (!mTripComputer.isGpsSpeedUsed()) {
+                if (!tripComputer.isGpsSpeedUsed()) {
                     mTextSpeedSource.setText("OBD");
                     setObdReadingText(R.id.textSpeed, reading);
                 }
@@ -116,67 +116,29 @@ public class ObdPanel  extends Panel {
         }
     }
 
-    private TripComputerListener tcListener = new TripComputerListener() {
-        @Override
-        public void onGpsUpdate(Double speed, double distanceIncrement) {
-            if (mTripComputer.isGpsSpeedUsed()) {
-                mTextSpeedSource.setText("GPS");
+    @Override
+    public void onGpsUpdate(Double speed, double distanceIncrement) {
+        if (tripComputer.isGpsSpeedUsed()) {
+            mTextSpeedSource.setText("GPS");
 
-                TextView textView = mainActivity.findViewById(R.id.textSpeed);
-                textView.setText(String.format("%.1f km/h", speed));
-            }
+            TextView textView = mainActivity.findViewById(R.id.textSpeed);
+            textView.setText(String.format("%.1f km/h", speed));
         }
-
-        @Override
-        public void onGpsPulse(PhoneGps gps) {
-
-        }
-
-        @Override
-        public void onAfrPulse(boolean isActive) {
-
-        }
-
-        @Override
-        public void onAfrTargetValue(double targetAfr) {
-
-        }
-
-        @Override
-        public void onAfrValue(Double afr) {
-
-        }
-
-        @Override
-        public void onObdPulse(boolean isActive) {
-
-        }
-
-        @Override
-        public void onObdActivePidsChanged() {
-            updateObdButtonsAppearance();
-
-            boolean canMeasureFuel = mTripComputer.mObdStudio.readingsForFuelAreActive();
-
-            if (mTripComputer.mObdStudio.readingsForFuelAreActive()) {
-                mToggleFuelCons.setIconState(canMeasureFuel);
-            }
-        }
-
-        @Override
-        public void onObdValue(ObdReading reading) {
-            updateObdReadingDisplay(reading);
-        }
-
-        @Override
-        public void onCalculationsUpdated() {
-
-        }
-    };
-
+    }
 
     @Override
-    public View getContainerView() {
-        return panel;
+    public void onObdActivePidsChanged() {
+        updateObdButtonsAppearance();
+
+        boolean canMeasureFuel = tripComputer.mObdStudio.readingsForFuelAreActive();
+
+        if (tripComputer.mObdStudio.readingsForFuelAreActive()) {
+            mToggleFuelCons.setIconState(canMeasureFuel);
+        }
+    }
+
+    @Override
+    public void onObdValue(ObdReading reading) {
+        updateObdReadingDisplay(reading);
     }
 }

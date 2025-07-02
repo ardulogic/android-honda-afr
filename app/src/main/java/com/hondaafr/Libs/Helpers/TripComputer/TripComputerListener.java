@@ -21,4 +21,5 @@ public interface TripComputerListener {
 
     void onCalculationsUpdated();
 
+    void onNightModeUpdated(boolean isNight);
 }

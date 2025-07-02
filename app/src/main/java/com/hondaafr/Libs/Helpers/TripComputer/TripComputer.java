@@ -9,32 +9,34 @@ import com.hondaafr.Libs.Devices.Obd.ObdStudio;
 import com.hondaafr.Libs.Devices.Obd.ObdStudioListener;
 import com.hondaafr.Libs.Devices.Obd.Readings.ObdReading;
 import com.hondaafr.Libs.Devices.Phone.PhoneGps;
+import com.hondaafr.Libs.Devices.Phone.PhoneLightSensor;
 import com.hondaafr.Libs.Devices.Spartan.SpartanStudio;
 import com.hondaafr.Libs.Devices.Spartan.SpartanStudioListener;
 import com.hondaafr.Libs.Helpers.DataLog;
 import com.hondaafr.Libs.Helpers.DataLogEntry;
 import com.hondaafr.Libs.Helpers.ReadingHistory;
 
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class TripComputer implements ObdStudioListener, SpartanStudioListener {
+    private final Context context;
     public final ObdStudio mObdStudio;
     public final SpartanStudio mSpartanStudio;
-    public final PhoneGps gps;
     public final ReadingHistory afrHistory = new ReadingHistory();
     public final TotalStats totalStats = new TotalStats("TotalStatsPrefs");
     public final TripStats tripStats = new TripStats("TripStatsPrefs");
     public final InstantStats instStats;
-    private final Context context;
-    private long timeDistanceLogged = 0L;
-
+    public final PhoneGps gps;
     private final Handler supervisorHandler = new Handler(Looper.getMainLooper());
     private final Map<String, TripComputerListener> listeners = new LinkedHashMap<>();
-
-    public boolean isRecording = false;
     private DataLog mDataLog;
+    public boolean isRecording = false;
+    private long timeStatsSaved = 0;
+    private long timeDistanceLogged = 0L;
+
     public TripComputer(Context context) {
         this.context = context;
         this.instStats = new InstantStats(context);
@@ -60,6 +62,24 @@ public class TripComputer implements ObdStudioListener, SpartanStudioListener {
         });
 
         this.gps.setMinDistanceDeltaInMeters(25);
+
+        new PhoneLightSensor(context, intensity -> {
+            boolean lowLight = intensity < 15;
+            boolean afterSunset = false;
+            boolean beforeSunrise = false;
+
+            LocalTime now = LocalTime.now();
+
+            if (gps.getSunsetTime() != null && gps.getSunriseTime() != null) {
+                afterSunset = now.isAfter(gps.getSunsetTime());
+                beforeSunrise = now.isBefore(gps.getSunriseTime());
+            }
+
+            boolean isNightModeUpdated = lowLight || afterSunset || beforeSunrise;
+            for (TripComputerListener l : listeners.values()) {
+                l.onNightModeUpdated(isNightModeUpdated);
+            }
+        });
     }
 
     public void addListener(String key, TripComputerListener listener) {
@@ -87,6 +107,8 @@ public class TripComputer implements ObdStudioListener, SpartanStudioListener {
 
             tripStats.addLiters(litersIncrement);
             totalStats.addLiters(litersIncrement);
+
+            lazySaveStats();
         }
 
         for (TripComputerListener l : listeners.values()) {
@@ -95,6 +117,19 @@ public class TripComputer implements ObdStudioListener, SpartanStudioListener {
 
         if (isRecording) {
             logReadings();
+        }
+    }
+
+    private void saveStats() {
+        tripStats.save(context);
+        totalStats.save(context);
+
+        timeStatsSaved = System.currentTimeMillis();
+    }
+
+    private void lazySaveStats() {
+        if (System.currentTimeMillis() - timeStatsSaved > 5000) {
+            saveStats();
         }
     }
 
@@ -176,9 +211,7 @@ public class TripComputer implements ObdStudioListener, SpartanStudioListener {
     }
 
     public void onPause(Context context) {
-        totalStats.save(context);
-        tripStats.save(context);
-
+        saveStats();
         stopSupervisor();
     }
 

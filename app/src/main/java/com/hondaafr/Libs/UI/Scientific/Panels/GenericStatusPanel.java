@@ -1,9 +1,12 @@
-package com.hondaafr.Libs.UI.Scientific;
+package com.hondaafr.Libs.UI.Scientific.Panels;
 
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.hondaafr.Libs.Helpers.TripComputer.TripComputer;
+import com.hondaafr.Libs.UI.ScientificView;
+import com.hondaafr.Libs.UI.UiView;
 import com.hondaafr.MainActivity;
 import com.hondaafr.R;
 
@@ -19,10 +22,19 @@ public class GenericStatusPanel  extends Panel {
     private String lastObdMessage = "";
     private String secondLastObdMessage = "";
 
-    private LinearLayout panel;
+    @Override
+    public int getContainerId() {
+        return R.id.layoutConnStatus;
+    }
 
-    public GenericStatusPanel(MainActivity mainActivity) {
-        panel = mainActivity.findViewById(R.id.layoutConnStatus);
+    @Override
+    public String getListenerId() {
+        return "generic_status_panel";
+    }
+
+    public GenericStatusPanel(MainActivity mainActivity, TripComputer tripComputer, UiView view) {
+        super(mainActivity, tripComputer, view);
+
         textStatusGeneric = mainActivity.findViewById(R.id.textStatusGeneric);
         textStatusObd = mainActivity.findViewById(R.id.textStatusObd);
         textStatusSpartan = mainActivity.findViewById(R.id.textStatusSpartan);
@@ -51,8 +63,4 @@ public class GenericStatusPanel  extends Panel {
         textStatusGeneric.setText(message);
     }
 
-    @Override
-    public View getContainerView() {
-        return panel;
-    }
 }
