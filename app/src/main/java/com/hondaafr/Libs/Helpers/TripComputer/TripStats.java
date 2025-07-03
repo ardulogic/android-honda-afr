@@ -19,7 +19,7 @@ public class TripStats extends TotalStats {
 
         super.load(context);
 
-        if (dataIsOld()) {
+        if (dataIsOld() && distanceKm > 0.1 && litersConsumed > 0.1) {
             isTripDialogOpen = true;
             new AlertDialog.Builder(context)
                     .setTitle("Continue Trip?")
@@ -38,7 +38,7 @@ public class TripStats extends TotalStats {
     }
 
     protected boolean dataIsOld() {
-        return System.currentTimeMillis() - timeUpdated > 6 * 3600 * 1000;
+        return System.currentTimeMillis() - timeUpdated > 24 * 3600 * 1000;
     }
 
     @Override
