@@ -12,7 +12,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="#0E0E0E"
-        android:visibility="visible"
+        android:visibility="gone"
         tools:layout_editor_absoluteX="-185dp"
         tools:layout_editor_absoluteY="-42dp">
 
@@ -280,7 +280,7 @@
         android:id="@+id/layoutScientific"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:visibility="gone">
+        android:visibility="visible">
 
 
         <com.github.mikephil.charting.charts.LineChart
@@ -466,7 +466,7 @@
                 android:padding="13dp"
                 android:scaleType="centerInside"
                 android:src="@drawable/gas"
-                app:tint="#000" />
+                app:tint="#FFFFFF" />
 
             <Space
                 android:layout_width="16dp"

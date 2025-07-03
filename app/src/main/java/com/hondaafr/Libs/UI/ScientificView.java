@@ -25,6 +25,11 @@ public class ScientificView extends UiView {
     }
 
     @Override
+    String getListenerId() {
+        return "scientific_view";
+    }
+
+    @Override
     public int getContainerId() {
         return R.id.layoutScientific;
     }
@@ -44,10 +49,6 @@ public class ScientificView extends UiView {
                 new SoundPanel(mainActivity, tripComputer, this),
                 new TopButtonsPanel(mainActivity, tripComputer, this),
         };
-    }
-
-    public void setVisibility(boolean visible) {
-        mainActivity.findViewById(R.id.layoutScientific).setVisibility(visible ? View.VISIBLE : View.GONE);
     }
 
 }

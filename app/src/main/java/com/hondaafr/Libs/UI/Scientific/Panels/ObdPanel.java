@@ -17,9 +17,7 @@ import java.util.Map;
 public class ObdPanel extends Panel {
 
     private final Map<String, TextView> obdButtons = new HashMap<>();
-    private TextView mTextSpeedSource;
-    private ImageButtonRounded mToggleFuelCons;
-
+    private final TextView mTextSpeedSource;
     @Override
     public int getContainerId() {
         return R.id.layoutObd;
@@ -33,7 +31,6 @@ public class ObdPanel extends Panel {
     public ObdPanel(MainActivity mainActivity, TripComputer tripComputer, UiView parentView) {
         super(mainActivity, tripComputer, parentView);
 
-        mToggleFuelCons = mainActivity.findViewById(R.id.buttonShowFuelPanel);
         mTextSpeedSource = mainActivity.findViewById(R.id.textSpeedSource);
 
         setObdOnClickListeners();
@@ -129,12 +126,6 @@ public class ObdPanel extends Panel {
     @Override
     public void onObdActivePidsChanged() {
         updateObdButtonsAppearance();
-
-        boolean canMeasureFuel = tripComputer.mObdStudio.readingsForFuelAreActive();
-
-        if (tripComputer.mObdStudio.readingsForFuelAreActive()) {
-            mToggleFuelCons.setIconState(canMeasureFuel);
-        }
     }
 
     @Override

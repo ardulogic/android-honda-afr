@@ -4,8 +4,10 @@ import android.util.Log;
 
 public class Debuggable {
 
-    protected int D = 0;
-
+    protected int D = VERBOSE;
+    public static int VERBOSE = 1;
+    public static int INFO = 2;
+    public static int IMPORTANT = 3;
     private static long start_ts;
     private static long end_ts;
 
@@ -15,7 +17,7 @@ public class Debuggable {
 
 
     public void d(String msg, int level) {
-        if (D >= level) {
+        if (level >= D) {
             Log.d(getTag(), msg);
         }
     }

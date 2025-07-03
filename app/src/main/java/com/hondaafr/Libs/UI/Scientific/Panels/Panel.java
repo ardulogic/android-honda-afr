@@ -1,17 +1,17 @@
 package com.hondaafr.Libs.UI.Scientific.Panels;
 
 import android.content.Context;
-import android.util.Log;
 import android.view.View;
 
 import com.hondaafr.Libs.Devices.Obd.Readings.ObdReading;
 import com.hondaafr.Libs.Devices.Phone.PhoneGps;
+import com.hondaafr.Libs.Helpers.Debuggable;
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputer;
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputerListener;
 import com.hondaafr.Libs.UI.UiView;
 import com.hondaafr.MainActivity;
 
-abstract public class Panel implements TripComputerListener {
+abstract public class Panel extends Debuggable implements TripComputerListener {
 
     protected final MainActivity mainActivity;
     protected final TripComputer tripComputer;
@@ -38,10 +38,12 @@ abstract public class Panel implements TripComputerListener {
     }
 
     public void attachTripComputerListener() {
+        d("Attaching trip computer listener", VERBOSE);
         tripComputer.addListener(getListenerId(), this);
     }
 
     public void detachTripComputerListener() {
+        d("Detaching trip computer listener", VERBOSE);
         tripComputer.removeListener(getListenerId());
     }
 

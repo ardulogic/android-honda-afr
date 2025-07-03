@@ -6,7 +6,6 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.Context;
 import android.text.TextUtils;
-import android.util.Log;
 
 import com.hondaafr.Libs.Helpers.Debuggable;
 
@@ -14,19 +13,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.Objects;
 
 /**
  * Bluetooth connector is used as a helper for the bluetooth service
  * It handles the actual sending and receiving commands
  */
 public class BluetoothConnection extends Debuggable {
-    private static final String TAG = "BluetoothConnection";
     private final String serviceUuid;
-    protected int D = 1;
-
     public static final String ACTION = "com.hondaafr.Libs.Bluetooth.Services.action.bt.connector";
-
     private int mState;
 
     private final BluetoothAdapter btAdapter;
@@ -37,7 +31,6 @@ public class BluetoothConnection extends Debuggable {
     private BluetoothConnectionListener listener;
     private final String deviceName;
     public boolean isSending = false;
-
 
 
     public String id; // Id for simultaneous connections
@@ -62,7 +55,7 @@ public class BluetoothConnection extends Debuggable {
     }
 
     public synchronized void connect() {
-        d("Connecting to: " + connectedDevice, 1);
+        d("Connecting to: " + connectedDevice, 2);
 
         stopConnectionThreads();
 
@@ -72,7 +65,7 @@ public class BluetoothConnection extends Debuggable {
     }
 
     public synchronized void stop() {
-        d("Stopping", 1);
+        d("Stopping", 2);
 
         stopConnectionThreads();
 
@@ -86,10 +79,8 @@ public class BluetoothConnection extends Debuggable {
      * @param state
      */
     private synchronized void setState(int state) {
-        if (Objects.equals(this.id, "spartan") && BluetoothStates.labelOfState(mState).equals("Idle.") && BluetoothStates.labelOfState(state).equals("Connecting...")) {
-            Log.d("setState", "Connection stared.");
-        }
-        d("setState(" + this.id + ") " + BluetoothStates.labelOfState(mState) + " -> " + BluetoothStates.labelOfState(state), 1);
+        d("setState(" + this.id + ") " + BluetoothStates.labelOfState(mState) + " -> " + BluetoothStates.labelOfState(state), 3);
+
         mState = state;
         listener.onStateChanged(state, this.id);
     }
@@ -100,13 +91,13 @@ public class BluetoothConnection extends Debuggable {
 
     private void stopConnectionThreads() {
         if (mConnectedThread != null) {
-            d("Stopping previous 'connected' thread", 2);
+            d("Stopping previous 'connected' thread", 3);
             mConnectedThread.cancel();
             mConnectedThread = null;
         }
 
         if (mConnectThread != null) {
-            d("Stopping previous 'connecting' thread", 2);
+            d("Stopping previous 'connecting' thread", 3);
             mConnectThread.cancel();
             mConnectThread = null;
         }
@@ -118,7 +109,7 @@ public class BluetoothConnection extends Debuggable {
      * @param socket
      */
     public synchronized void connected(BluetoothSocket socket) {
-        d("Bluetooth Socked Created", 1);
+        d("Bluetooth Socked Created", 3);
 
         stopConnectionThreads();
 
@@ -144,25 +135,25 @@ public class BluetoothConnection extends Debuggable {
 
     public void write(ArrayList<String> lines, boolean add_nl) {
         String s = TextUtils.join(add_nl ? "\n" : "", lines);
-        d("Sending: " + s, 3);
+        d("Sending: " + s, 2);
         write(s.getBytes());
     }
 
     public void write(String line, boolean add_nl) {
         String s = line + (add_nl ? "\n" : "");
-        d("Sending: " + s, 3);
+        d("Sending: " + s, 2);
         write(s.getBytes());
     }
 
     private void connectionFailed() {
-        d("Connecion Failed.", 1);
+        d("Connecion Failed.", 3);
 
         setState(BluetoothStates.STATE_BT_DISCONNECTED);
     }
 
 
     private void connectionLost() {
-        d("Connecion Lost.", 1);
+        d("Connecion Lost.", 3);
 
         setState(BluetoothStates.STATE_BT_DISCONNECTED);
     }
@@ -207,7 +198,7 @@ public class BluetoothConnection extends Debuggable {
             btAdapter.cancelDiscovery();
 
             if (mmSocket == null) {
-                d("Unable to connect to device, failed to create socket during connection.", 1);
+                d("Unable to connect to device, failed to create socket during connection.", 2);
                 connectionFailed();
                 return;
             }
@@ -225,7 +216,7 @@ public class BluetoothConnection extends Debuggable {
                 try {
                     mmSocket.close();
                 } catch (IOException e2) {
-                    d("Unable to close socket during connection.", 1);
+                    d("Unable to close socket during connection.", 2);
                 }
 
                 connectionFailed();
@@ -269,7 +260,7 @@ public class BluetoothConnection extends Debuggable {
         }
 
         public ConnectedThread(BluetoothSocket socket) {
-            d( "Creating 'ConnectedThread'", 2);
+            d("Creating 'ConnectedThread'", 1);
 
             mmSocket = socket;
             InputStream tmpIn = null;
@@ -291,7 +282,7 @@ public class BluetoothConnection extends Debuggable {
          * Read stream
          */
         public void run() {
-            d( "Running 'ConnectedThread'", 3);
+            d("Running 'ConnectedThread'", 1);
             byte[] buffer = new byte[512];
             int bytes;
 
@@ -319,10 +310,11 @@ public class BluetoothConnection extends Debuggable {
                         String receivedLine = messageBuffer.substring(0, newlineIndex + 1);
                         messageBuffer = messageBuffer.substring(newlineIndex + 1);
 
-                        listener.onDataReceived(receivedLine, id);;
+                        listener.onDataReceived(receivedLine, id);
+                        ;
                     }
                 } catch (IOException e) {
-                    d("Disconnected while trying to read stream.", 1);
+                    d("Disconnected while trying to read stream.", 3);
                     connectionLost();
                     break;
                 }
@@ -332,6 +324,7 @@ public class BluetoothConnection extends Debuggable {
 
         /**
          * Sends multiple bytes
+         *
          * @param chunk
          */
         public void writeData(byte[] chunk) {
@@ -342,12 +335,13 @@ public class BluetoothConnection extends Debuggable {
 
                 //if (D) Log.e(TAG, "Data chunk has been sent");
             } catch (IOException e) {
-                d("Exception during write()", 1);
+                d("Exception during write()", 3);
             }
         }
 
         /**
          * Sends one byte
+         *
          * @param command
          */
         public void write(byte command) {
@@ -359,15 +353,21 @@ public class BluetoothConnection extends Debuggable {
 
                 // Share the sent message back to the UI Activity
             } catch (IOException e) {
-                d("Exception during write()", 1);
+                d("Exception during write()", 3);
             }
         }
 
         public void cancel() {
             try {
                 mmSocket.close();
+                if (mmInStream != null) {
+                    mmInStream.close();
+                }
+                if (mmOutStream != null) {
+                    mmOutStream.close();
+                }
             } catch (IOException e) {
-               d("Could not close() the socket", 1);
+                d("Could not close() the socket", 3);
             }
         }
     }

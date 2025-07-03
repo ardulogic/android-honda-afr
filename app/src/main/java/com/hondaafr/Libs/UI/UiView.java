@@ -10,12 +10,13 @@ import androidx.annotation.RequiresApi;
 
 import com.hondaafr.Libs.Devices.Obd.Readings.ObdReading;
 import com.hondaafr.Libs.Devices.Phone.PhoneGps;
+import com.hondaafr.Libs.Helpers.Debuggable;
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputer;
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputerListener;
 import com.hondaafr.Libs.UI.Scientific.Panels.Panel;
 import com.hondaafr.MainActivity;
 
-abstract public class UiView implements TripComputerListener {
+abstract public class UiView extends Debuggable implements TripComputerListener {
 
     protected final MainActivity mainActivity;
     protected final TripComputer tripComputer;
@@ -25,13 +26,28 @@ abstract public class UiView implements TripComputerListener {
 
     protected boolean isNightMode = false;
 
+    abstract String getListenerId();
+
+    abstract public int getContainerId();
+
     public UiView(MainActivity mainActivity, TripComputer tripComputer) {
         this.mainActivity = mainActivity;
         this.tripComputer = tripComputer;
         this.container = mainActivity.findViewById(getContainerId());
-
         panels = initPanels();
+
+        attachListener();
         notifyPanelsLoaded();
+    }
+
+    private void attachListener() {
+        d("Attaching listener", 1);
+        tripComputer.addListener(getListenerId(), this);
+    }
+
+    private void detachListener() {
+        d("Detaching listener", 1);
+        tripComputer.removeListener(getListenerId());
     }
 
     private void notifyPanelsLoaded() {
@@ -44,8 +60,6 @@ abstract public class UiView implements TripComputerListener {
         }
     }
 
-    abstract public int getContainerId();
-
     public View getContainerView() {
         return this.container;
     }
@@ -55,12 +69,24 @@ abstract public class UiView implements TripComputerListener {
     public void setVisibility(boolean visible) {
         container.setVisibility(visible ? View.VISIBLE : View.GONE);
 
+        if (visible) {
+            attachPanelListeners();
+            attachListener();
+        } else {
+            detachPanelListeners();
+            detachListener();
+        }
+    }
+
+    private void attachPanelListeners() {
         for (Panel p : panels) {
-            if (visible) {
-                p.attachTripComputerListener();
-            } else {
-                p.detachTripComputerListener();
-            }
+            p.attachTripComputerListener();
+        }
+    }
+
+    private void detachPanelListeners() {
+        for (Panel p : panels) {
+            p.detachTripComputerListener();
         }
     }
 
@@ -148,6 +174,11 @@ abstract public class UiView implements TripComputerListener {
     public void onResume(Context context) {
         for (Panel p : panels) {
             p.onResume(context);
+
+            if (isVisible()) {
+                // Might not be neccessary but just in case
+                p.attachTripComputerListener();
+            }
         }
     }
 

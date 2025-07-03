@@ -12,6 +12,10 @@ import com.hondaafr.R;
 
 public class ClusterView extends UiView {
 
+    @Override
+    String getListenerId() {
+        return "cluster_view";
+    }
 
     public ClusterView(MainActivity mainActivity, TripComputer tripComputer) {
         super(mainActivity, tripComputer);

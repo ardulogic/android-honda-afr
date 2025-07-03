@@ -2,6 +2,7 @@ package com.hondaafr.Libs.Helpers.TripComputer;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 
@@ -14,6 +15,7 @@ import com.hondaafr.Libs.Devices.Spartan.SpartanStudio;
 import com.hondaafr.Libs.Devices.Spartan.SpartanStudioListener;
 import com.hondaafr.Libs.Helpers.DataLog;
 import com.hondaafr.Libs.Helpers.DataLogEntry;
+import com.hondaafr.Libs.Helpers.Debuggable;
 import com.hondaafr.Libs.Helpers.ReadingHistory;
 
 import java.time.LocalTime;
@@ -21,7 +23,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class TripComputer implements ObdStudioListener, SpartanStudioListener {
+public class TripComputer extends Debuggable implements ObdStudioListener, SpartanStudioListener {
     private final Context context;
     public final ObdStudio mObdStudio;
     public final SpartanStudio mSpartanStudio;
@@ -33,6 +35,7 @@ public class TripComputer implements ObdStudioListener, SpartanStudioListener {
     private final Handler supervisorHandler = new Handler(Looper.getMainLooper());
     private final Map<String, TripComputerListener> listeners = new LinkedHashMap<>();
     private DataLog mDataLog;
+    private boolean supervisorRunning = false;
     public boolean isRecording = false;
     private long timeStatsSaved = 0;
     private long timeDistanceLogged = 0L;
@@ -134,21 +137,39 @@ public class TripComputer implements ObdStudioListener, SpartanStudioListener {
     }
 
     private void startSupervisor() {
-        supervisorHandler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                ensureObdAndAfrAreAlive();
-
-                for (TripComputerListener l : listeners.values()) {
-                    l.onGpsPulse(gps);
-                    l.onAfrPulse(mSpartanStudio.isAlive());
-                    l.onObdPulse(mObdStudio.isAlive());
-                }
-
-                supervisorHandler.postDelayed(this, 1000); // Reschedule
-            }
-        }, 1000);
+        if (!supervisorRunning) {
+            supervisorRunning = true;
+            supervisorHandler.postDelayed(supervisorRunnable, 1000);
+        }
     }
+
+    public void stopSupervisor() {
+        supervisorRunning = false;
+        supervisorHandler.removeCallbacks(supervisorRunnable);
+    }
+
+    public boolean isSupervisorRunning() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            return supervisorHandler.hasCallbacks(supervisorRunnable);
+        } else {
+            return supervisorRunning;
+        }
+    }
+    private final Runnable supervisorRunnable = new Runnable() {
+        @Override
+        public void run() {
+            d("Supervisor tick", 1);
+            ensureObdAndAfrAreAlive();
+
+            for (TripComputerListener l : listeners.values()) {
+                l.onGpsPulse(gps);
+                l.onAfrPulse(mSpartanStudio.isAlive());
+                l.onObdPulse(mObdStudio.isAlive());
+            }
+
+            supervisorHandler.postDelayed(this, 1000);
+        }
+    };
 
     public void startRecording() {
         mDataLog.clearAllEntries();
@@ -159,11 +180,6 @@ public class TripComputer implements ObdStudioListener, SpartanStudioListener {
         mDataLog.saveAsCsv();
         isRecording = false;
     }
-
-    public void stopSupervisor() {
-        supervisorHandler.removeCallbacksAndMessages(null);
-    }
-
 
     public boolean isGpsLogging() {
         return System.currentTimeMillis() - timeDistanceLogged < 2000;
@@ -212,7 +228,6 @@ public class TripComputer implements ObdStudioListener, SpartanStudioListener {
 
     public void onPause(Context context) {
         saveStats();
-        stopSupervisor();
     }
 
     public void onDestroy(Context context) {

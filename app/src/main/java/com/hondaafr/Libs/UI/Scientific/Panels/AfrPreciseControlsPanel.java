@@ -44,6 +44,7 @@ public class AfrPreciseControlsPanel  extends Panel {
 
     @Override
     public void onAfrTargetValue(double targetAfr) {
+        d("Target value received:" + targetAfr, VERBOSE);
         textTargetAfr.setText(String.format("%.2f", targetAfr));
     }
 }

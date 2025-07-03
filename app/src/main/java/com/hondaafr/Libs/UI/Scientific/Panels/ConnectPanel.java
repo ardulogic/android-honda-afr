@@ -1,6 +1,7 @@
 package com.hondaafr.Libs.UI.Scientific.Panels;
 
 import android.annotation.SuppressLint;
+import android.app.BackgroundServiceStartNotAllowedException;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -213,9 +214,14 @@ public class ConnectPanel extends Panel {
         BluetoothService.disconnect(mainActivity, "spartan");
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.S)
     public void startBtService() {
         if (!BluetoothService.isRunning(mainActivity)) {
-            mainActivity.startService(new Intent(mainActivity, BluetoothService.class));
+            try {
+                mainActivity.startService(new Intent(mainActivity, BluetoothService.class));
+            } catch (BackgroundServiceStartNotAllowedException e) {
+                Log.e("ConnectPanel", "Cant start bluetooth service, - not allowed!");
+            }
         }
     }
 

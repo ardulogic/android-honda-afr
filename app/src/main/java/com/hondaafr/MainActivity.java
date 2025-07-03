@@ -7,6 +7,7 @@ import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.StrictMode;
 import android.util.Log;
 import android.util.Rational;
 import android.view.WindowManager;
@@ -37,6 +38,15 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
+
+        // Detects leaked objects
+//        if (BuildConfig.DEBUG) {
+//            StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder()
+//                    .detectLeakedClosableObjects() // This is key
+//                    .penaltyLog()                  // Log to Logcat
+//                    .penaltyDeath()                // (Optional) Crash the app for visibility
+//                    .build());
+//        }
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.layoutScientific), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());

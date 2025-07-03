@@ -69,6 +69,7 @@ public class FuelStatsPanel extends Panel {
         FuelDisplayMode[] values = FuelDisplayMode.values();
         int nextOrdinal = (mode.ordinal() + 1) % values.length;
         mode = values[nextOrdinal];
+
         updateDisplay();
 
         ((CornerStatsPanel) parent.getPanel(CornerStatsPanel.class)).updateDisplay();
