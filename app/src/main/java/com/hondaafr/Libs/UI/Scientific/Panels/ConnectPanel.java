@@ -129,54 +129,93 @@ public class ConnectPanel extends Panel {
         }
     }
 
-    public void OnBluetoothStateChanged(int state, String device_id) {
-        if (device_id != null) {
-            String stateLabel = BluetoothStates.labelOfState(state);
-            String deviceLabel = device_id.toUpperCase();
-            Button connectButton = device_id.equals("spartan") ? buttonConnectSpartan : buttonConnectObd;
-            Studio studio = device_id.equals("spartan") ? tripComputer.mSpartanStudio : tripComputer.mObdStudio;
+    public void OnBluetoothStateChanged(int state, String deviceId) {
+        String stateLabel = BluetoothStates.labelOfState(state);
 
-            onConnectionMessage(device_id, stateLabel);
-            Log.d("MainActivity (" + device_id + ") bluetoothStateChanged:", stateLabel);
-
-            switch (state) {
-                case BluetoothStates.STATE_BT_CONNECTED:
-                    updateConnectButton(connectButton, stateLabel, false);
-                    studio.start();
-                    break;
-
-                case BluetoothStates.STATE_BT_BUSY:
-                case BluetoothStates.STATE_BT_CONNECTING:
-                case BluetoothStates.STATE_BT_ENABLING:
-                    updateConnectButton(connectButton, stateLabel, false);
-                    break;
-
-                case BluetoothStates.STATE_BT_DISCONNECTED:
-                    updateConnectButton(connectButton, stateLabel, true);
-
-                    if (device_id.equals("spartan")) {
-                        connectSpartanSoon();
-                    } else if (device_id.equals("obd")) {
-                        connectObdSoon();
-                    }
-
-                    break;
-
-                case BluetoothStates.STATE_BT_NONE:
-                case BluetoothStates.STATE_BT_UNPAIRED:
-                    updateConnectButton(connectButton, "Connect " + deviceLabel, true);
-                    break;
-
-                case BluetoothStates.STATE_BT_DISABLED:
-                    Permissions.promptEnableBluetooth(mainActivity);
-                    updateConnectButton(connectButton, "Connect " + deviceLabel, false);
-                    break;
-
-                default:
-                    updateConnectButton(connectButton, "Connect " + deviceLabel, true);
-            }
+        if (deviceId == null) {
+            handleGlobalBluetoothState(state, stateLabel);
+        } else {
+            handleDeviceBluetoothState(state, deviceId, stateLabel);
         }
+    }
 
+    private void handleGlobalBluetoothState(int state, String stateLabel) {
+        onConnectionMessage("obd", stateLabel);
+        onConnectionMessage("spartan", stateLabel);
+
+        switch (state) {
+            case BluetoothStates.STATE_BT_ENABLING:
+                setConnectButtonsEnabled(false, "Connect");
+                break;
+
+            case BluetoothStates.STATE_BT_ENABLED:
+                setConnectButtonsEnabled(true, "Connect");
+                connectSpartanSoon();
+                connectObdSoon();
+                break;
+
+            case BluetoothStates.STATE_BT_DISABLED:
+                Permissions.promptEnableBluetooth(mainActivity);
+                setConnectButtonsEnabled(false, "Connect");
+                break;
+        }
+    }
+
+    private void handleDeviceBluetoothState(int state, String deviceId, String stateLabel) {
+        String deviceLabel = deviceId.toUpperCase();
+        Button connectButton = getConnectButton(deviceId);
+        Studio studio = getStudio(deviceId);
+
+        onConnectionMessage(deviceId, stateLabel);
+        Log.d("MainActivity (" + deviceId + ") bluetoothStateChanged:", stateLabel);
+
+        switch (state) {
+            case BluetoothStates.STATE_BT_CONNECTED:
+                updateConnectButton(connectButton, "Connected", false);
+                studio.start();
+                break;
+
+            case BluetoothStates.STATE_BT_BUSY:
+            case BluetoothStates.STATE_BT_ENABLING:
+                updateConnectButton(connectButton, "Connect", false);
+                break;
+
+            case BluetoothStates.STATE_BT_CONNECTING:
+                updateConnectButton(connectButton, "Connecting", false);
+                break;
+
+            case BluetoothStates.STATE_BT_DISCONNECTED:
+                updateConnectButton(connectButton, "Disconnected", true);
+                reconnectDeviceSoon(deviceId);
+                break;
+
+            case BluetoothStates.STATE_BT_NONE:
+            case BluetoothStates.STATE_BT_UNPAIRED:
+            default:
+                updateConnectButton(connectButton, "Connect", true);
+                break;
+        }
+    }
+
+    private void setConnectButtonsEnabled(boolean enabled, String label) {
+        updateConnectButton(buttonConnectSpartan, label, enabled);
+        updateConnectButton(buttonConnectObd, label, enabled);
+    }
+
+    private Button getConnectButton(String deviceId) {
+        return deviceId.equals("spartan") ? buttonConnectSpartan : buttonConnectObd;
+    }
+
+    private Studio getStudio(String deviceId) {
+        return deviceId.equals("spartan") ? tripComputer.mSpartanStudio : tripComputer.mObdStudio;
+    }
+
+    private void reconnectDeviceSoon(String deviceId) {
+        if (deviceId.equals("spartan")) {
+            connectSpartanSoon();
+        } else if (deviceId.equals("obd")) {
+            connectObdSoon();
+        }
     }
 
     private void updateConnectButton(Button button, String text, boolean isEnabled) {

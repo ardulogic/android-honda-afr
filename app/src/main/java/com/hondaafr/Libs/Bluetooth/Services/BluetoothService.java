@@ -24,13 +24,16 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class BluetoothService extends Service {
 
     private static final String LOG_NAME = "BluetoothService";
-    private static int D = 0;
+    private static int D = 3;
 
-    private static final int STOP_DELAY = 60000;
+    private static final int STOP_DELAY = 10000;
 
     public static final String ACTION_BT_COMMAND = "com.hondaafr.Libs.Bluetooth.Services.action.bt.service.bt.action";
     public static final String ACTION_UI_UPDATE = "com.hondaafr.Libs.Bluetooth.Services.action.bt.service.ui.action";
@@ -103,12 +106,6 @@ public class BluetoothService extends Service {
         d("onDestroy", 2);
         disconnectAll();
         unregisterReceiver(BluetoothBroadcastReceiver);
-    }
-
-    public void connectToPrevious() {
-        // TODO: Connect to previous connections
-//        mBtConnections
-
     }
 
     public void connectTo(String ssid_or_mac, String device_id, @Nullable String uuid) {
@@ -334,6 +331,7 @@ public class BluetoothService extends Service {
         @Override
         public void onReceive(Context context, Intent intent) {
             setAutoShutdownTimer();
+            d("Received broadcast: " + intent.getAction(), 2);
             processIntent(intent);
         }
     };
@@ -364,22 +362,26 @@ public class BluetoothService extends Service {
 
         switch (bluetoothState) {
             case BluetoothAdapter.STATE_CONNECTING:
+                d("Adapter connecting", 1);
                 notifyUIOfBtStateChange(BluetoothStates.STATE_BT_CONNECTING, device_id);
                 break;
 
             case BluetoothAdapter.STATE_TURNING_OFF:
+                d("Adapter turning off", 1);
                 notifyUIOfBtStateChange(BluetoothStates.STATE_BT_DISABLING, device_id);
                 break;
 
             case BluetoothAdapter.STATE_TURNING_ON:
+                d("Adapter turning on", 1);
                 notifyUIOfBtStateChange(BluetoothStates.STATE_BT_ENABLING, device_id);
                 break;
 
             case BluetoothAdapter.STATE_ON:
-                notifyUIOfBtStateChange(BluetoothStates.STATE_BT_ENABLED, device_id);
-                connectToPrevious();
+                d("Adapter is ON", 1);
+                notifyUIOfBtStateChange(BluetoothStates.STATE_BT_ENABLED, null);
                 break;
             case BluetoothAdapter.STATE_OFF:
+                d("Adapter is OFF", 1);
                 notifyUIOfBtStateChange(BluetoothStates.STATE_BT_DISABLED, device_id);
                 break;
         }

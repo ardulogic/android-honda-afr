@@ -7,7 +7,6 @@ import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.StrictMode;
 import android.util.Log;
 import android.util.Rational;
 import android.view.WindowManager;
@@ -172,6 +171,12 @@ public class MainActivity extends AppCompatActivity {
         mTripComputer.onDestroy(this);
 
         super.onDestroy();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        Permissions.onActivityResult(requestCode, resultCode, data);
     }
 
     @Override

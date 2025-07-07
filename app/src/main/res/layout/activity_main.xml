@@ -833,11 +833,11 @@
 
                     <Button
                         android:id="@+id/buttonConnectObd"
-                        android:layout_width="wrap_content"
+                        android:layout_width="150dp"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="0dp"
                         android:backgroundTint="#595959"
-                        android:text="Connect OBD" />
+                        android:text="Connect" />
 
                     <Space
                         android:layout_width="10dp"
@@ -846,10 +846,10 @@
 
                     <Button
                         android:id="@+id/buttonConnectSpartan"
-                        android:layout_width="wrap_content"
+                        android:layout_width="150dp"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="0dp"
-                        android:text="Connect Spartan" />
+                        android:text="Connect" />
 
                 </LinearLayout>
 
