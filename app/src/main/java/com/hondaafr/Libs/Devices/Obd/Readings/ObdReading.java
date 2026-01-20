@@ -31,7 +31,7 @@ public abstract class ObdReading {
     }
 
     private String getRequestCommand() {
-        return "01" + getPid() + "\r";
+        return "01 " + getPid() + "\r";
     }
 
     public void request(Context context) {
@@ -63,8 +63,11 @@ public abstract class ObdReading {
     }
 
     public boolean incomingDataIsReply(String data) {
-        // Check if the response data contains the PID for Throttle Position
-        return data.contains("41 " + getPid() + " ");
+        // Check if the response data contains the PID
+        // With ATS0 (spaces off), format is "4105XX" instead of "41 05 XX"
+        // Check both formats for compatibility
+        String pid = getPid();
+        return data.contains("41" + pid) || data.contains("41 " + pid + " ");
     }
 
     protected int parseReading(String data) {
@@ -112,14 +115,19 @@ public abstract class ObdReading {
     }
 
     protected Matcher parseHexValues(String data) {
-        // Define the regex pattern to extract three two-digit hex numbers
-        String pattern = "41\\s" + getPid() + "\\s([0-9A-Fa-f]{2})";
+        // Remove spaces to normalize the data (ATS0 format: "4105XX" instead of "41 05 XX")
+        String normalizedData = data.replaceAll("\\s+", "");
+        String pid = getPid();
+        
+        // Single pattern for compact format: "4105XX" or "4105XXXX"
+        String pattern = "41" + pid + "([0-9A-Fa-f]{2})";
         if (getDataByteCount() == 2) {
-            pattern = "41\\s" + getPid() + "\\s([0-9A-Fa-f]{2})\\s([0-9A-Fa-f]{2})";
+            pattern = "41" + pid + "([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})";
         }
+        
         Pattern r = Pattern.compile(pattern);
-        Matcher m = r.matcher(data);
-
+        Matcher m = r.matcher(normalizedData);
+        
         if (m.find()) {
             return m;
         }

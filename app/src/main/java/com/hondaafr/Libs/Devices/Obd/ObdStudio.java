@@ -102,15 +102,22 @@ public class ObdStudio extends Studio {
     // ────────────────────────────────────────────────────────────────────────────────
 
     private static final List<String> BASE_INIT_CMDS = Arrays.asList(
-            "ATZ",     // Reset ELM327 adapter (required for some clones on first connect)
+            "ATZ",     // Reset ELM327 adapter
+            "ATD",     // Set defaults
+            "ATD0",    // Set DLC (Data Length Code) to 0 (auto)
             "ATE0",    // Echo off
-            "ATSP3",   // ISO 15765‑4, CAN 11‑bit, 500 kbps
-            "ATSTFF",  // Timeout 255 × 4 ms
-            "ATAT2"    // Adaptive timing auto 2
+            "ATM0",    // Memory off
+            "ATL0",    // Linefeeds off
+            "ATS0",    // Spaces off (responses will be compact: "4105XX" instead of "41 05 XX")
+            "ATH0",    // Headers off
+            "ATAT1",   // Adaptive timing auto 1
+            "ATST96",  // Timeout 96 × 4ms = 384ms
+            "ATAL",    // Allow long messages
+            "ATSP0"    // Set protocol to auto detection
     );
 
     private static final List<String> RECOVERY_CMDS = Arrays.asList(
-            "ATSP3"   // ISO 15765‑4, CAN 11‑bit, 500 kbps
+            "ATSP0"   // Set protocol to auto detection
     );
 
     /** Resets the init queue and sends the very first command. */
@@ -179,9 +186,10 @@ public class ObdStudio extends Studio {
             String head = initQueue.peek();
             if (head != null && raw.trim().equalsIgnoreCase(head)) return;
 
-            // ATZ returns version string (e.g., "ELM327 v1.5"), other commands return "OK"
-            boolean isOk = raw.toUpperCase().contains("OK");
-            boolean isAtzResponse = head != null && head.equals("ATZ") && raw.toUpperCase().contains("ELM327");
+            // Handle different response formats
+            String rawUpper = raw.toUpperCase().trim();
+            boolean isOk = rawUpper.contains("OK");
+            boolean isAtzResponse = head != null && head.equals("ATZ") && rawUpper.contains("ELM327");
             
             if (isOk || isAtzResponse) {
                 initQueue.pop();

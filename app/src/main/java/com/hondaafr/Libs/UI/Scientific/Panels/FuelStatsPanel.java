@@ -5,6 +5,7 @@ import android.widget.TextView;
 import com.hondaafr.Libs.Helpers.TripComputer.InstantStats;
 import com.hondaafr.Libs.Helpers.TripComputer.TotalStats;
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputer;
+import com.hondaafr.Libs.UI.Scientific.DraggableFuelStatsDialog;
 import com.hondaafr.Libs.UI.UiView;
 import com.hondaafr.R;
 import com.hondaafr.MainActivity;
@@ -13,6 +14,7 @@ public class FuelStatsPanel extends Panel {
 
     private final TextView textStatsInfo, textStatsBig, textStatsMedium, textStatsSmall;
     private final TextView textStatsMediumLabel, textStatsSmallLabel;
+    private DraggableFuelStatsDialog dialog;
 
     public boolean isVisible() {
         return mode != FuelDisplayMode.FuelOff;
@@ -41,6 +43,7 @@ public class FuelStatsPanel extends Panel {
     public FuelStatsPanel(MainActivity mainActivity, TripComputer tripComputer, UiView view) {
         super(mainActivity, tripComputer, view);
 
+        // Keep references to old views for backward compatibility, but they're now hidden
         textStatsInfo = mainActivity.findViewById(R.id.textStatsTitle);
         textStatsBig = mainActivity.findViewById(R.id.textStatsBig);
         textStatsMedium = mainActivity.findViewById(R.id.textStatsMedium);
@@ -48,15 +51,47 @@ public class FuelStatsPanel extends Panel {
         textStatsMediumLabel = mainActivity.findViewById(R.id.textStatsMediumLabel);
         textStatsSmallLabel = mainActivity.findViewById(R.id.textStatsSmallLabel);
 
-        textStatsBig.setOnLongClickListener(v -> {
-            if (mode == FuelDisplayMode.FuelTotal) {
-                tripComputer.totalStats.reset(mainActivity);
-            } else {
-                tripComputer.tripStats.reset(mainActivity);
-            }
+        // Hide the old overlay
+        setVisibility(false);
 
-            updateDisplay();
-            return true;
+        // Create dialog (but don't show it yet)
+        dialog = new DraggableFuelStatsDialog(mainActivity);
+        
+        // Set up dismiss listener to sync button state
+        dialog.setCustomDismissListener(() -> {
+            mode = FuelDisplayMode.FuelOff;
+            // Update button state through TopButtonsPanel
+            try {
+                TopButtonsPanel topButtonsPanel = (TopButtonsPanel) parent.getPanel(TopButtonsPanel.class);
+                if (topButtonsPanel != null) {
+                    topButtonsPanel.updateFuelButtonState(false);
+                }
+            } catch (Exception e) {
+                // Ignore if panel not found
+            }
+        });
+        
+        // Set up mode switch listener
+        dialog.setModeSwitchListener(() -> {
+            toggleMode();
+        });
+        
+        // Set up long click listener on dialog's big text view
+        dialog.setOnShowListener(dialogInterface -> {
+            TextView dialogBigText = dialog.getTextStatsBig();
+            if (dialogBigText != null) {
+                dialogBigText.setOnLongClickListener(v -> {
+                    if (mode == FuelDisplayMode.FuelTotal) {
+                        tripComputer.totalStats.reset(mainActivity);
+                    } else {
+                        tripComputer.tripStats.reset(mainActivity);
+                    }
+                    updateDisplay();
+                    return true;
+                });
+            }
+            // Update mode button text when dialog is shown
+            updateModeButtonText();
         });
     }
 
@@ -69,59 +104,111 @@ public class FuelStatsPanel extends Panel {
         FuelDisplayMode[] values = FuelDisplayMode.values();
         int nextOrdinal = (mode.ordinal() + 1) % values.length;
         mode = values[nextOrdinal];
+        
+        // Skip FuelOff when cycling from dialog - go back to FuelTrip
+        if (mode == FuelDisplayMode.FuelOff && dialog != null && dialog.isShowing()) {
+            mode = FuelDisplayMode.FuelTrip;
+        }
 
         updateDisplay();
+        updateModeButtonText();
 
         ((CornerStatsPanel) parent.getPanel(CornerStatsPanel.class)).updateDisplay();
+    }
+    
+    private void updateModeButtonText() {
+        if (dialog != null && dialog.isShowing()) {
+            String modeText = getModeDisplayText();
+            dialog.updateModeButtonText(modeText);
+        }
+    }
+    
+    private String getModeDisplayText() {
+        switch (mode) {
+            case FuelTrip:
+                return "Trip";
+            case FuelInst:
+                return "Instant";
+            case FuelTotal:
+                return "Total";
+            case FuelOff:
+            default:
+                return "Off";
+        }
     }
 
     public void updateDisplay() {
         if (!isInPip()) {
             switch (mode) {
                 case FuelTrip: {
-                    setVisibility(true);
-                    displayFuelConsumption(tripComputer.tripStats);
+                    showDialog();
+                    dialog.displayFuelConsumption(tripComputer.tripStats);
+                    updateModeButtonText();
                     break;
                 }
                 case FuelTotal: {
-                    setVisibility(true);
-                    displayFuelConsumption(tripComputer.totalStats);
+                    showDialog();
+                    dialog.displayFuelConsumption(tripComputer.totalStats);
+                    updateModeButtonText();
                     break;
                 }
 
                 case FuelInst: {
-                    setVisibility(true);
-                    displayFuelConsumption(tripComputer.instStats);
+                    showDialog();
+                    dialog.displayFuelConsumption(tripComputer.instStats);
+                    updateModeButtonText();
                     break;
                 }
 
                 case FuelOff:
                 default:
-                    setVisibility(false);
+                    hideDialog();
                     break;
             }
         }
     }
 
+    private void showDialog() {
+        if (dialog != null && !dialog.isShowing()) {
+            dialog.show();
+            // Update button state
+            try {
+                TopButtonsPanel topButtonsPanel = (TopButtonsPanel) parent.getPanel(TopButtonsPanel.class);
+                if (topButtonsPanel != null) {
+                    topButtonsPanel.updateFuelButtonState(true);
+                }
+            } catch (Exception e) {
+                // Ignore if panel not found
+            }
+        }
+    }
+
+    private void hideDialog() {
+        if (dialog != null && dialog.isShowing()) {
+            dialog.dismiss();
+        }
+        // Update button state
+        try {
+            TopButtonsPanel topButtonsPanel = (TopButtonsPanel) parent.getPanel(TopButtonsPanel.class);
+            if (topButtonsPanel != null) {
+                topButtonsPanel.updateFuelButtonState(false);
+            }
+        } catch (Exception e) {
+            // Ignore if panel not found
+        }
+    }
+
     public void displayFuelConsumption(TotalStats stats) {
-        textStatsInfo.setText(stats.getName());
-        textStatsBig.setText(String.format("%06.1f", stats.getDistanceKm()));
-
-        textStatsMediumLabel.setText("TOTAL");
-        textStatsMedium.setText(String.format("%.2f l", stats.getLiters()));
-
-        textStatsSmallLabel.setText("100KM");
-        textStatsSmall.setText(String.format("%.1f l", stats.getLitersPer100km()));
+        // This method is kept for backward compatibility but now updates the dialog
+        if (dialog != null && dialog.isShowing()) {
+            dialog.displayFuelConsumption(stats);
+        }
     }
 
     public void displayFuelConsumption(InstantStats stats) {
-        textStatsInfo.setText(stats.getName());
-        textStatsBig.setText(String.format("%.2f l/h", stats.getLphAvg()));
-
-        textStatsMediumLabel.setText("100KM");
-        textStatsMedium.setText(String.format("%.2f l", stats.getLp100km()));
-
-        textStatsSmallLabel.setText("100KM");
-        textStatsSmall.setText(String.format("%.1f l", stats.getLp100kmAvg()));
+        // This method is kept for backward compatibility but now updates the dialog
+        if (dialog != null && dialog.isShowing()) {
+            dialog.displayFuelConsumption(stats);
+        }
     }
 }

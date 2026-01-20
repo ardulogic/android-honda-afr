@@ -61,19 +61,27 @@ public class PhoneGps {
 
     @SuppressLint("MissingPermission")
     private void startLocationUpdates() {
-        if (!hasLocationPermission(context)) return;
-
-        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.S) {
-            Log.w("PhoneGps", "Unsupported SDK version for location updates.");
+        if (!hasLocationPermission(context)) {
+            Log.w("PhoneGps", "Location permission not granted.");
             return;
         }
 
-        LocationRequest locationRequest = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY)
-                .setMinUpdateIntervalMillis(UPDATE_INTERVAL_MS)
-                .setPriority(Priority.PRIORITY_HIGH_ACCURACY )
-                .setIntervalMillis(UPDATE_INTERVAL_MS)
-                .build();
-
+        LocationRequest locationRequest;
+        
+        // Use new Builder API for Android 12+ (API 31+), fallback to older API for compatibility
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            locationRequest = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY)
+                    .setMinUpdateIntervalMillis(UPDATE_INTERVAL_MS)
+                    .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
+                    .setIntervalMillis(UPDATE_INTERVAL_MS)
+                    .build();
+        } else {
+            // Use older API for Android versions below 12 (Huawei P30 compatibility)
+            locationRequest = LocationRequest.create()
+                    .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
+                    .setInterval(UPDATE_INTERVAL_MS)
+                    .setFastestInterval(UPDATE_INTERVAL_MS);
+        }
 
         locationCallback = new LocationCallback() {
             @Override
@@ -111,7 +119,14 @@ public class PhoneGps {
             }
         };
 
-        fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
+        try {
+            fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
+            Log.d("PhoneGps", "Location updates started successfully.");
+        } catch (SecurityException e) {
+            Log.e("PhoneGps", "SecurityException starting location updates: " + e.getMessage());
+        } catch (Exception e) {
+            Log.e("PhoneGps", "Error starting location updates: " + e.getMessage());
+        }
     }
 
     private void updateSunriseSunset(@NonNull Location location) {

@@ -70,4 +70,10 @@ public class TopButtonsPanel extends Panel {
         buttonShowCluster.setOnClickListener(v -> mainActivity.showCluster());
     }
 
+    public void updateFuelButtonState(boolean isVisible) {
+        if (buttonToggleFuel != null) {
+            buttonToggleFuel.setIconState(isVisible);
+        }
+    }
+
 }
