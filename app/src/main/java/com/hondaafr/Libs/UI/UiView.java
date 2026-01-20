@@ -21,6 +21,7 @@ abstract public class UiView extends Debuggable implements TripComputerListener 
     protected final MainActivity mainActivity;
     protected final TripComputer tripComputer;
     protected final Panel[] panels;
+    private final View rootView;
     private final View container;
     protected boolean isInPip = false;
 
@@ -30,10 +31,11 @@ abstract public class UiView extends Debuggable implements TripComputerListener 
 
     abstract public int getContainerId();
 
-    public UiView(MainActivity mainActivity, TripComputer tripComputer) {
+    public UiView(MainActivity mainActivity, TripComputer tripComputer, View rootView) {
         this.mainActivity = mainActivity;
         this.tripComputer = tripComputer;
-        this.container = mainActivity.findViewById(getContainerId());
+        this.rootView = rootView;
+        this.container = rootView.findViewById(getContainerId());
         panels = initPanels();
 
         attachListener();
@@ -64,12 +66,26 @@ abstract public class UiView extends Debuggable implements TripComputerListener 
         return this.container;
     }
 
+    public View getRootView() {
+        return rootView;
+    }
+
     abstract public Panel[] initPanels();
 
     public void setVisibility(boolean visible) {
         container.setVisibility(visible ? View.VISIBLE : View.GONE);
 
         if (visible) {
+            attachPanelListeners();
+            attachListener();
+        } else {
+            detachPanelListeners();
+            detachListener();
+        }
+    }
+
+    public void setActive(boolean active) {
+        if (active) {
             attachPanelListeners();
             attachListener();
         } else {

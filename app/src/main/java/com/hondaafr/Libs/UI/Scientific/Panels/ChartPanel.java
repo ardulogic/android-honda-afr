@@ -44,7 +44,7 @@ public class ChartPanel extends Panel {
 
     @Override
     public LineChart getContainerView() {
-        return mainActivity.findViewById(getContainerId());
+        return rootView.findViewById(getContainerId());
     }
 
     @Override
@@ -72,3 +72,5 @@ public class ChartPanel extends Panel {
         onTargetAfrUpdated(targetAfr);
     }
 }
+
+

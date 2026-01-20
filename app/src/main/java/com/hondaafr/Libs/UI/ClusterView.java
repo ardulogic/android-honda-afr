@@ -1,6 +1,7 @@
 package com.hondaafr.Libs.UI;
 
 import android.graphics.Color;
+import android.view.View;
 
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputer;
 import com.hondaafr.Libs.UI.Cluster.Panels.GaugePanel;
@@ -17,8 +18,8 @@ public class ClusterView extends UiView {
         return "cluster_view";
     }
 
-    public ClusterView(MainActivity mainActivity, TripComputer tripComputer) {
-        super(mainActivity, tripComputer);
+    public ClusterView(MainActivity mainActivity, TripComputer tripComputer, View rootView) {
+        super(mainActivity, tripComputer, rootView);
 
         getContainerView().setOnLongClickListener(v -> {
             mainActivity.showScientific();

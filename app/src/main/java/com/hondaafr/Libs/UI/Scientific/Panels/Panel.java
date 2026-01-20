@@ -15,6 +15,7 @@ abstract public class Panel extends Debuggable implements TripComputerListener {
 
     protected final MainActivity mainActivity;
     protected final TripComputer tripComputer;
+    protected final View rootView;
     protected final View container;
     protected final UiView parent;
 
@@ -33,7 +34,8 @@ abstract public class Panel extends Debuggable implements TripComputerListener {
     public Panel (MainActivity mainActivity, TripComputer tripComputer, UiView view) {
         this.mainActivity = mainActivity;
         this.tripComputer = tripComputer;
-        this.container = mainActivity.findViewById(getContainerId());
+        this.rootView = view.getRootView();
+        this.container = rootView.findViewById(getContainerId());
         this.parent = view;
     }
 

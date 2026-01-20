@@ -47,7 +47,7 @@ public class BeeperPanel extends Panel {
     public BeeperPanel(MainActivity activity, TripComputer tripComputer, UiView parent) {
         super(activity, tripComputer, parent);
 
-        mainActivity.findViewById(getContainerId()).setOnClickListener(v -> showConfigDialog());
+        rootView.findViewById(getContainerId()).setOnClickListener(v -> showConfigDialog());
 
         AudioAttributes audioAttributes = new AudioAttributes.Builder()
                 .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
@@ -181,3 +181,4 @@ public class BeeperPanel extends Panel {
 
     }
 }
+

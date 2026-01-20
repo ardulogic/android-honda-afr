@@ -44,12 +44,12 @@ public class FuelStatsPanel extends Panel {
         super(mainActivity, tripComputer, view);
 
         // Keep references to old views for backward compatibility, but they're now hidden
-        textStatsInfo = mainActivity.findViewById(R.id.textStatsTitle);
-        textStatsBig = mainActivity.findViewById(R.id.textStatsBig);
-        textStatsMedium = mainActivity.findViewById(R.id.textStatsMedium);
-        textStatsSmall = mainActivity.findViewById(R.id.textStatsSmall);
-        textStatsMediumLabel = mainActivity.findViewById(R.id.textStatsMediumLabel);
-        textStatsSmallLabel = mainActivity.findViewById(R.id.textStatsSmallLabel);
+        textStatsInfo = rootView.findViewById(R.id.textStatsTitle);
+        textStatsBig = rootView.findViewById(R.id.textStatsBig);
+        textStatsMedium = rootView.findViewById(R.id.textStatsMedium);
+        textStatsSmall = rootView.findViewById(R.id.textStatsSmall);
+        textStatsMediumLabel = rootView.findViewById(R.id.textStatsMediumLabel);
+        textStatsSmallLabel = rootView.findViewById(R.id.textStatsSmallLabel);
 
         // Hide the old overlay
         setVisibility(false);
@@ -212,3 +212,4 @@ public class FuelStatsPanel extends Panel {
         }
     }
 }
+

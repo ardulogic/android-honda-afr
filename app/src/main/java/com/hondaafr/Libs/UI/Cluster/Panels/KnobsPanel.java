@@ -31,12 +31,12 @@ public class KnobsPanel extends Panel {
     public KnobsPanel(MainActivity mainActivity, TripComputer tripComputer, UiView view) {
         super(mainActivity, tripComputer, view);
 
-        this.buttonTripKnob = mainActivity.findViewById(R.id.buttonClusterTripKnob);
-        this.buttonTotalsKnob = mainActivity.findViewById(R.id.buttonClusterTotalsKnob);
-        this.buttonInstKnob = mainActivity.findViewById(R.id.buttonClusterInstKnob);
-        this.textKnobTotals = mainActivity.findViewById(R.id.textViewKnobTotals);
-        this.textKnobInst = mainActivity.findViewById(R.id.textViewKnobInst);
-        this.textKnobTrip = mainActivity.findViewById(R.id.textViewKnobTrip);
+        this.buttonTripKnob = rootView.findViewById(R.id.buttonClusterTripKnob);
+        this.buttonTotalsKnob = rootView.findViewById(R.id.buttonClusterTotalsKnob);
+        this.buttonInstKnob = rootView.findViewById(R.id.buttonClusterInstKnob);
+        this.textKnobTotals = rootView.findViewById(R.id.textViewKnobTotals);
+        this.textKnobInst = rootView.findViewById(R.id.textViewKnobInst);
+        this.textKnobTrip = rootView.findViewById(R.id.textViewKnobTrip);
         this.vibrator = (Vibrator) mainActivity.getApplicationContext().getSystemService(Context.VIBRATOR_SERVICE);
     }
 
@@ -190,4 +190,5 @@ public class KnobsPanel extends Panel {
     }
 
 }
+
 

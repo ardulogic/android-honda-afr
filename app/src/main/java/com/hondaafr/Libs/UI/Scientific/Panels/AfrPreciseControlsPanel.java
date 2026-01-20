@@ -24,9 +24,9 @@ public class AfrPreciseControlsPanel  extends Panel {
     public AfrPreciseControlsPanel(MainActivity mainActivity, TripComputer tripComputer, UiView parent) {
         super(mainActivity, tripComputer, parent);
 
-        buttonIncreaseAfr = mainActivity.findViewById(R.id.buttonIncreaseAFR);
-        buttonDecreaseAfr = mainActivity.findViewById(R.id.buttonDecreaseAFR);
-        textTargetAfr = mainActivity.findViewById(R.id.textTargetAFR);
+        buttonIncreaseAfr = rootView.findViewById(R.id.buttonIncreaseAFR);
+        buttonDecreaseAfr = rootView.findViewById(R.id.buttonDecreaseAFR);
+        textTargetAfr = rootView.findViewById(R.id.textTargetAFR);
 
         buttonIncreaseAfr.setOnClickListener(view -> tripComputer.mSpartanStudio.adjustAFR(0.05));
         buttonDecreaseAfr.setOnClickListener(view -> tripComputer.mSpartanStudio.adjustAFR(-0.05));
@@ -48,3 +48,4 @@ public class AfrPreciseControlsPanel  extends Panel {
         textTargetAfr.setText(String.format("%.2f", targetAfr));
     }
 }
+

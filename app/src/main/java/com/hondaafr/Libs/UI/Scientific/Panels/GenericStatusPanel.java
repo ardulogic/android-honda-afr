@@ -35,9 +35,9 @@ public class GenericStatusPanel  extends Panel {
     public GenericStatusPanel(MainActivity mainActivity, TripComputer tripComputer, UiView view) {
         super(mainActivity, tripComputer, view);
 
-        textStatusGeneric = mainActivity.findViewById(R.id.textStatusGeneric);
-        textStatusObd = mainActivity.findViewById(R.id.textStatusObd);
-        textStatusSpartan = mainActivity.findViewById(R.id.textStatusSpartan);
+        textStatusGeneric = rootView.findViewById(R.id.textStatusGeneric);
+        textStatusObd = rootView.findViewById(R.id.textStatusObd);
+        textStatusSpartan = rootView.findViewById(R.id.textStatusSpartan);
     }
 
     private String stripNewlines(String message) {
@@ -64,3 +64,4 @@ public class GenericStatusPanel  extends Panel {
     }
 
 }
+

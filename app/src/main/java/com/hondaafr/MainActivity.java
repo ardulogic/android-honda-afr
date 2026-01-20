@@ -12,46 +12,27 @@ import android.util.Rational;
 import android.view.WindowManager;
 
 import androidx.activity.EdgeToEdge;
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
+import androidx.viewpager2.widget.ViewPager2;
 
 import com.hondaafr.Libs.Bluetooth.Services.BluetoothForegroundService;
-import com.hondaafr.Libs.UI.ClusterView;
 import com.hondaafr.Libs.Helpers.Permissions;
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputer;
-import com.hondaafr.Libs.UI.ScientificView;
+import com.hondaafr.Libs.UI.Fragments.PipAware;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     private MainActivity mContext;
     private boolean canEnterPip = false;
     private TripComputer mTripComputer;
-    private ClusterView mCluster;
-    private ScientificView mScientific;
+    private ViewPager2 viewPager;
+    private MainPagerAdapter pagerAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
-
-        // Detects leaked objects
-//        if (BuildConfig.DEBUG) {
-//            StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder()
-//                    .detectLeakedClosableObjects() // This is key
-//                    .penaltyLog()                  // Log to Logcat
-//                    .penaltyDeath()                // (Optional) Crash the app for visibility
-//                    .build());
-//        }
-
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.layoutScientific), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
 
         Permissions.askForAllPermissions(this);
 
@@ -61,8 +42,21 @@ public class MainActivity extends AppCompatActivity {
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         mTripComputer = new TripComputer(this);
-        mScientific = new ScientificView(this, mTripComputer);
-        mCluster = new ClusterView(this, mTripComputer);
+        viewPager = findViewById(R.id.viewPager);
+        pagerAdapter = new MainPagerAdapter(this);
+        viewPager.setAdapter(pagerAdapter);
+        viewPager.setOffscreenPageLimit(2);
+        viewPager.setCurrentItem(MainPagerAdapter.PAGE_SCIENTIFIC, false);
+        mTripComputer.setObdForFuelConsumption(false);
+
+        viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+            @Override
+            public void onPageSelected(int position) {
+                boolean needsFuelConsumption = position == MainPagerAdapter.PAGE_CLUSTER
+                        || position == MainPagerAdapter.PAGE_MAP;
+                mTripComputer.setObdForFuelConsumption(needsFuelConsumption);
+            }
+        });
 
 //        keepInBackground();
     }
@@ -77,34 +71,23 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void showCluster() {
-        mTripComputer.setObdForFuelConsumption(true);
-
-        mCluster.setVisibility(true);
-        mScientific.setVisibility(false);
+        viewPager.setCurrentItem(MainPagerAdapter.PAGE_CLUSTER, true);
     }
 
     public void showScientific() {
-        mCluster.setVisibility(false);
-        mScientific.setVisibility(true);
+        viewPager.setCurrentItem(MainPagerAdapter.PAGE_SCIENTIFIC, true);
     }
 
     @Override
     public void onStop() {
         super.onStop();
         Log.d("MainActivity", "onStop");
-
-        mCluster.onStop(this);
-        mScientific.onStop(this);
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
     @Override
     public void onStart() {
         super.onStart();
         Log.d("MainActivity", "onStart");
-
-        mCluster.onStart(this);
-        mScientific.onStart(this);
     }
 
     @Override
@@ -134,11 +117,9 @@ public class MainActivity extends AppCompatActivity {
 
 
         if (isInPictureInPictureMode) {
-            mCluster.showPipView();
-            mScientific.showPipView();
+            dispatchPipState(true);
         } else {
-            mCluster.restoreFullView();
-            mScientific.restoreFullView();
+            dispatchPipState(false);
         }
     }
 
@@ -147,8 +128,6 @@ public class MainActivity extends AppCompatActivity {
         Log.d("MainActivity", "onResume");
         super.onResume();
 
-        mScientific.onResume(this);
-        mCluster.onResume(this);
         mTripComputer.onResume(this);
     }
 
@@ -158,16 +137,12 @@ public class MainActivity extends AppCompatActivity {
         super.onPause();
 
         mTripComputer.onPause(this);
-        mScientific.onPause(this);
-        mCluster.onPause(this);
     }
 
     @Override
     protected void onDestroy() {
         Log.d("Lifecycle", "onDestroy");
 
-        mScientific.onDestroy(this);
-        mCluster.onDestroy(this);
         mTripComputer.onDestroy(this);
 
         super.onDestroy();
@@ -189,6 +164,28 @@ public class MainActivity extends AppCompatActivity {
             // You can use the location now.
         } else {
             Log.e("Permissions", "Permission denied for : " + requestCode);
+        }
+    }
+
+    public TripComputer getTripComputer() {
+        return mTripComputer;
+    }
+
+    public void setSwipeEnabled(boolean enabled) {
+        if (viewPager != null) {
+            viewPager.setUserInputEnabled(enabled);
+        }
+    }
+
+    private void dispatchPipState(boolean isInPip) {
+        for (androidx.fragment.app.Fragment fragment : getSupportFragmentManager().getFragments()) {
+            if (fragment instanceof PipAware) {
+                if (isInPip) {
+                    ((PipAware) fragment).onEnterPip();
+                } else {
+                    ((PipAware) fragment).onExitPip();
+                }
+            }
         }
     }
 

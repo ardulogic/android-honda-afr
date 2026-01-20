@@ -31,7 +31,7 @@ public class ObdPanel extends Panel {
     public ObdPanel(MainActivity mainActivity, TripComputer tripComputer, UiView parentView) {
         super(mainActivity, tripComputer, parentView);
 
-        mTextSpeedSource = mainActivity.findViewById(R.id.textSpeedSource);
+        mTextSpeedSource = rootView.findViewById(R.id.textSpeedSource);
 
         setObdOnClickListeners();
     }
@@ -49,7 +49,7 @@ public class ObdPanel extends Panel {
     }
 
     private void initObdButton(int textViewId, String reading_name) {
-        TextView textView = mainActivity.findViewById(textViewId);
+        TextView textView = rootView.findViewById(textViewId);
         obdButtons.put(reading_name, textView);
         updateToggleAppearance(textView, tripComputer.mObdStudio.readings.isActive(reading_name));
 
@@ -61,7 +61,7 @@ public class ObdPanel extends Panel {
 
 
     private void setObdReadingText(int textViewId, ObdReading reading) {
-        TextView textView = mainActivity.findViewById(textViewId);
+        TextView textView = rootView.findViewById(textViewId);
         textView.setText(reading.getDisplayValue());
         updateToggleAppearance(textView, true);
     }
@@ -118,7 +118,7 @@ public class ObdPanel extends Panel {
         if (tripComputer.isGpsSpeedUsed()) {
             mTextSpeedSource.setText("GPS");
 
-            TextView textView = mainActivity.findViewById(R.id.textSpeed);
+            TextView textView = rootView.findViewById(R.id.textSpeed);
             textView.setText(String.format("%.1f km/h", speed));
         }
     }
@@ -133,3 +133,4 @@ public class ObdPanel extends Panel {
         updateObdReadingDisplay(reading);
     }
 }
+

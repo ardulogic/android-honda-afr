@@ -21,13 +21,13 @@ public class AfrBoundStatsPanel extends Panel {
     public AfrBoundStatsPanel(MainActivity mainActivity, TripComputer mTripComputer, UiView view) {
         super(mainActivity, mTripComputer, view);
 
-        mToggleClearAfrMin = mainActivity.findViewById(R.id.buttonClearAfrMin);
+        mToggleClearAfrMin = rootView.findViewById(R.id.buttonClearAfrMin);
         mToggleClearAfrMin.setOnClickListener(v -> mTripComputer.afrHistory.clearMin());
 
-        mToggleClearAfrAll = mainActivity.findViewById(R.id.buttonClearAfrAll);
+        mToggleClearAfrAll = rootView.findViewById(R.id.buttonClearAfrAll);
         mToggleClearAfrAll.setOnClickListener(v -> mTripComputer.afrHistory.clear());
 
-        mToggleClearAfrMax = mainActivity.findViewById(R.id.buttonClearAfrMax);
+        mToggleClearAfrMax = rootView.findViewById(R.id.buttonClearAfrMax);
         mToggleClearAfrMax.setOnClickListener(v -> mTripComputer.afrHistory.clearMax());
     }
 
@@ -50,3 +50,4 @@ public class AfrBoundStatsPanel extends Panel {
         mToggleClearAfrMax.setText(String.format("%.1f", tripComputer.afrHistory.getMaxValue()));
     }
 }
+

@@ -48,10 +48,10 @@ public class ConnectPanel extends Panel {
 
         genericStatusPanel = new GenericStatusPanel(mainActivity, tripComputer, parent);
 
-        buttonConnectSpartan = mainActivity.findViewById(R.id.buttonConnectSpartan);
+        buttonConnectSpartan = rootView.findViewById(R.id.buttonConnectSpartan);
         buttonConnectSpartan.setOnClickListener(view -> connectSpartan());
 
-        buttonConnectObd = mainActivity.findViewById(R.id.buttonConnectObd);
+        buttonConnectObd = rootView.findViewById(R.id.buttonConnectObd);
         buttonConnectObd.setOnClickListener(view -> connectObd());
     }
 
@@ -279,3 +279,4 @@ public class ConnectPanel extends Panel {
     }
 
 }
+

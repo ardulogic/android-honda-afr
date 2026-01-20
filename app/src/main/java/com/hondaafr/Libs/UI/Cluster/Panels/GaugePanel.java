@@ -53,16 +53,16 @@ public class GaugePanel extends Panel  {
     public GaugePanel(MainActivity mainActivity, TripComputer tripComputer, UiView view) {
         super(mainActivity, tripComputer, view);
 
-        this.imageNeedle = mainActivity.findViewById(R.id.imageClusterNeedle);
-        this.imageGauge = mainActivity.findViewById(R.id.imageClusterGauge);
-        this.imageLcd = mainActivity.findViewById(R.id.imageClusterLcd);
-        this.textClusterLcd = mainActivity.findViewById(R.id.textClusterLcd);
-        this.textClusterLcdMode1 = mainActivity.findViewById(R.id.textClusterLcdMode1);
-        this.textClusterLcdMode2 = mainActivity.findViewById(R.id.textClusterLcdMode2);
-        this.imageRichFuel = mainActivity.findViewById(R.id.imageClusterRichFuel);
-        this.imageObd = mainActivity.findViewById(R.id.imageClusterObd);
-        this.imageAfr = mainActivity.findViewById(R.id.imageClusterAfr);
-        this.imageGps = mainActivity.findViewById(R.id.imageClusterGps);
+        this.imageNeedle = rootView.findViewById(R.id.imageClusterNeedle);
+        this.imageGauge = rootView.findViewById(R.id.imageClusterGauge);
+        this.imageLcd = rootView.findViewById(R.id.imageClusterLcd);
+        this.textClusterLcd = rootView.findViewById(R.id.textClusterLcd);
+        this.textClusterLcdMode1 = rootView.findViewById(R.id.textClusterLcdMode1);
+        this.textClusterLcdMode2 = rootView.findViewById(R.id.textClusterLcdMode2);
+        this.imageRichFuel = rootView.findViewById(R.id.imageClusterRichFuel);
+        this.imageObd = rootView.findViewById(R.id.imageClusterObd);
+        this.imageAfr = rootView.findViewById(R.id.imageClusterAfr);
+        this.imageGps = rootView.findViewById(R.id.imageClusterGps);
     }
 
     @Override
@@ -306,3 +306,4 @@ public class GaugePanel extends Panel  {
         super.exitPip();
     }
 }
+

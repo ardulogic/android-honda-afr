@@ -9,7 +9,6 @@ import com.hondaafr.MainActivity;
 import com.hondaafr.R;
 
 public class TopButtonsPanel extends Panel {
-    private final ImageButtonRounded buttonShowCluster;
     private final Button buttonClear;
     private final ImageButtonRounded buttonToggleEngineSounds;
     private ImageButtonRounded buttonToggleFuel;
@@ -28,12 +27,11 @@ public class TopButtonsPanel extends Panel {
     public TopButtonsPanel(MainActivity mainActivity, TripComputer tripComputer, UiView parentView) {
         super(mainActivity, tripComputer, parentView);
 
-        this.buttonRecord = mainActivity.findViewById(R.id.buttonRecord);
-        this.buttonToggleFuel = mainActivity.findViewById(R.id.buttonShowFuelPanel);
-        this.buttonShowCluster = mainActivity.findViewById(R.id.buttonShowCluster);
-        this.buttonToggleEngineSounds = mainActivity.findViewById(R.id.buttonToggleSound);
+        this.buttonRecord = rootView.findViewById(R.id.buttonRecord);
+        this.buttonToggleFuel = rootView.findViewById(R.id.buttonShowFuelPanel);
+        this.buttonToggleEngineSounds = rootView.findViewById(R.id.buttonToggleSound);
 
-        buttonClear = mainActivity.findViewById(R.id.buttonClear);
+        buttonClear = rootView.findViewById(R.id.buttonClear);
         buttonClear.setOnClickListener(view -> {
             parent.getPanel(ChartPanel.class).clear();
         });
@@ -67,7 +65,6 @@ public class TopButtonsPanel extends Panel {
             buttonToggleEngineSounds.setIconState(soundPanel.isEnabled());
         });
 
-        buttonShowCluster.setOnClickListener(v -> mainActivity.showCluster());
     }
 
     public void updateFuelButtonState(boolean isVisible) {
@@ -77,3 +74,4 @@ public class TopButtonsPanel extends Panel {
     }
 
 }
+

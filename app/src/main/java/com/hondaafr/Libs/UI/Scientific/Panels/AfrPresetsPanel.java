@@ -38,7 +38,7 @@ public class AfrPresetsPanel  extends Panel {
         });
 
         for (Map.Entry<Integer, String> entry : buttonPresetMap.entrySet()) {
-            mainActivity.findViewById(entry.getKey()).setOnLongClickListener(v -> {
+            rootView.findViewById(entry.getKey()).setOnLongClickListener(v -> {
                 save(entry.getValue(), tripComputer.mSpartanStudio.targetAfr);
                 return true;
             });
@@ -69,6 +69,7 @@ public class AfrPresetsPanel  extends Panel {
     }
 
     public MaterialButtonToggleGroup getContainerView() {
-        return mainActivity.findViewById(getContainerId());
+        return rootView.findViewById(getContainerId());
     }
 }
+

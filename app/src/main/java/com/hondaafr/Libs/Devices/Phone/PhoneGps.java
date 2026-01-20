@@ -9,6 +9,7 @@ import android.os.Looper;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
@@ -170,6 +171,14 @@ public class PhoneGps {
         }
 
         return readings;
+    }
+
+    @Nullable
+    public Location getLastLocation() {
+        if (locationHistory.isEmpty()) {
+            return null;
+        }
+        return locationHistory.getLast();
     }
 
     public void setMinDistanceDeltaInMeters(int delta) {

@@ -26,8 +26,8 @@ public class CornerStatsPanel extends Panel {
     public CornerStatsPanel(MainActivity mainActivity, TripComputer tripComputer, UiView parent) {
         super(mainActivity, tripComputer, parent);
 
-        textBig = mainActivity.findViewById(R.id.textCornerStatsBig);
-        textSmaller = mainActivity.findViewById(R.id.textCornerStatsSmall);
+        textBig = rootView.findViewById(R.id.textCornerStatsBig);
+        textSmaller = rootView.findViewById(R.id.textCornerStatsSmall);
     }
 
     @Override
@@ -97,3 +97,4 @@ public class CornerStatsPanel extends Panel {
         updateDisplay();
     }
 }
+

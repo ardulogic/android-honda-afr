@@ -20,8 +20,8 @@ import com.hondaafr.R;
 
 public class ScientificView extends UiView {
 
-    public ScientificView(MainActivity mainActivity, TripComputer tripComputer) {
-        super(mainActivity, tripComputer);
+    public ScientificView(MainActivity mainActivity, TripComputer tripComputer, View rootView) {
+        super(mainActivity, tripComputer, rootView);
     }
 
     @Override

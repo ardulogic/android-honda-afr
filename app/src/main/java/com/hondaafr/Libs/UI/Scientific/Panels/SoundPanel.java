@@ -31,7 +31,7 @@ public class SoundPanel  extends Panel {
         mEngineSound = new EngineSound();
         mEngineSound.init(mainActivity);
 
-        ((SeekBar) mainActivity.findViewById(R.id.seekTps)).setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+        ((SeekBar) rootView.findViewById(R.id.seekTps)).setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 mEngineSound.setTargetTPS(seekBar.getProgress());
@@ -48,7 +48,7 @@ public class SoundPanel  extends Panel {
 
             }
         });
-        ((SeekBar) mainActivity.findViewById(R.id.seekRev)).setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+        ((SeekBar) rootView.findViewById(R.id.seekRev)).setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 mEngineSound.setTargetRpm((int) (6000 * ((float) seekBar.getProgress() / 100)));
@@ -64,7 +64,7 @@ public class SoundPanel  extends Panel {
 
             }
         });
-        ((SeekBar) mainActivity.findViewById(R.id.seekSmooth)).setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+        ((SeekBar) rootView.findViewById(R.id.seekSmooth)).setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 mEngineSound.setTargetSmoothness(seekBar.getProgress());
@@ -128,3 +128,4 @@ public class SoundPanel  extends Panel {
     }
 
 }
+
