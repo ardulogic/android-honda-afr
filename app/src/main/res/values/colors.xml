@@ -3,4 +3,20 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="orange">#DB5914</color>
+    
+    <!-- Scientific view colors - Light theme -->
+    <color name="scientific_background">#FFFFFFFF</color>
+    <color name="scientific_text_primary">#FF000000</color>
+    <color name="scientific_text_secondary">#FF757575</color>
+    <color name="scientific_text_status">#FFA1A1A1</color>
+    <color name="button_background_primary">#FF575757</color>
+    <color name="button_background_secondary">#FF606060</color>
+    <color name="button_background_afr">#FF6E23D8</color>
+    <color name="button_text_light">#FFFFFFFF</color>
+    <color name="button_text_dark">#FF000000</color>
+    
+    <!-- Chart colors - Light theme -->
+    <color name="chart_background">#FFFFFFFF</color>
+    <color name="chart_text_color">#FF000000</color>
+    <color name="chart_no_data_text">#FF808080</color>
 </resources>

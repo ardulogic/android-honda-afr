@@ -280,6 +280,7 @@
         android:id="@+id/layoutScientific"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:background="@color/scientific_background"
         android:visibility="visible">
 
 
@@ -312,7 +313,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center"
-                android:text="Total" />
+                android:text="Total"
+                android:textColor="@color/scientific_text_primary" />
 
             <TextView
                 android:id="@+id/textStatsBig"
@@ -321,6 +323,7 @@
                 android:foregroundGravity="center"
                 android:gravity="center"
                 android:text="00000.0"
+                android:textColor="@color/scientific_text_primary"
                 android:textSize="44sp" />
 
             <Space
@@ -341,6 +344,7 @@
                     android:foregroundGravity="center"
                     android:gravity="center"
                     android:text="0.00"
+                    android:textColor="@color/scientific_text_primary"
                     android:textSize="40sp" />
 
                 <TextView
@@ -350,6 +354,7 @@
                     android:gravity="center"
                     android:rotation="90"
                     android:text="100km"
+                    android:textColor="@color/scientific_text_secondary"
                     android:textSize="10sp" />
             </LinearLayout>
 
@@ -367,6 +372,7 @@
                     android:foregroundGravity="center"
                     android:gravity="center"
                     android:text="0.00"
+                    android:textColor="@color/scientific_text_primary"
                     android:textSize="34sp" />
 
                 <TextView
@@ -376,6 +382,7 @@
                     android:gravity="center"
                     android:rotation="90"
                     android:text="Total"
+                    android:textColor="@color/scientific_text_secondary"
                     android:textSize="10sp" />
             </LinearLayout>
 
@@ -398,7 +405,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:gravity="center"
-                android:text="Engine Smoothing" />
+                android:text="Engine Smoothing"
+                android:textColor="@color/scientific_text_primary" />
 
             <SeekBar
                 android:id="@+id/seekSmooth"
@@ -411,7 +419,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center"
-                android:text="Throttle" />
+                android:text="Throttle"
+                android:textColor="@color/scientific_text_primary" />
 
             <SeekBar
                 android:id="@+id/seekTps"
@@ -424,7 +433,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center"
-                android:text="RPM" />
+                android:text="RPM"
+                android:textColor="@color/scientific_text_primary" />
 
             <SeekBar
                 android:id="@+id/seekRev"
@@ -451,8 +461,9 @@
                 android:id="@+id/buttonRecord"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:backgroundTint="#575757"
-                android:text="Record" />
+                android:backgroundTint="@color/button_background_primary"
+                android:text="Record"
+                android:textColor="@color/button_text_light" />
 
             <Space
                 android:layout_width="@dimen/top_button_spacing"
@@ -511,8 +522,9 @@
                 android:id="@+id/buttonClear"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:backgroundTint="#606060"
-                android:text="Clear" />
+                android:backgroundTint="@color/button_background_secondary"
+                android:text="Clear"
+                android:textColor="@color/button_text_light" />
 
         </LinearLayout>
 
@@ -531,6 +543,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="0.00"
+                android:textColor="@color/scientific_text_primary"
                 android:textSize="34sp" />
 
             <Space
@@ -542,6 +555,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="0.00"
+                android:textColor="@color/scientific_text_primary"
                 android:textSize="48sp" />
 
         </LinearLayout>
@@ -578,7 +592,8 @@
                         android:layout_height="match_parent"
                         android:layout_marginBottom="0dp"
                         android:padding="@dimen/obd_text_padding"
-                        android:text="TPS" />
+                        android:text="TPS"
+                        android:textColor="@color/scientific_text_primary" />
 
                     <Space
                         android:layout_width="wrap_content"
@@ -591,7 +606,8 @@
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="0dp"
                         android:padding="@dimen/obd_text_padding"
-                        android:text="IAT" />
+                        android:text="IAT"
+                        android:textColor="@color/scientific_text_primary" />
 
                     <Space
                         android:layout_width="wrap_content"
@@ -604,7 +620,8 @@
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="0dp"
                         android:padding="@dimen/obd_text_padding"
-                        android:text="VOLT" />
+                        android:text="VOLT"
+                        android:textColor="@color/scientific_text_primary" />
 
 
                 </LinearLayout>
@@ -620,7 +637,8 @@
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
                         android:padding="@dimen/obd_text_padding"
-                        android:text="RPM" />
+                        android:text="RPM"
+                        android:textColor="@color/scientific_text_primary" />
 
                     <Space
                         android:layout_width="wrap_content"
@@ -632,7 +650,8 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:padding="@dimen/obd_text_padding"
-                        android:text="MAP" />
+                        android:text="MAP"
+                        android:textColor="@color/scientific_text_primary" />
 
                     <Space
                         android:layout_width="wrap_content"
@@ -644,7 +663,8 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:padding="@dimen/obd_text_padding"
-                        android:text="LTFT" />
+                        android:text="LTFT"
+                        android:textColor="@color/scientific_text_primary" />
 
                 </LinearLayout>
 
@@ -659,7 +679,8 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:padding="@dimen/obd_text_padding"
-                        android:text="ECT" />
+                        android:text="ECT"
+                        android:textColor="@color/scientific_text_primary" />
 
                     <Space
                         android:layout_width="wrap_content"
@@ -681,7 +702,8 @@
                             android:paddingTop="15dp"
                             android:paddingRight="15dp"
                             android:paddingBottom="5dp"
-                            android:text="SPD" />
+                            android:text="SPD"
+                            android:textColor="@color/scientific_text_primary" />
 
                         <TextView
                             android:id="@+id/textSpeedSource"
@@ -689,7 +711,8 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="0.2"
                             android:gravity="center"
-                            android:text="OBD" />
+                            android:text="OBD"
+                            android:textColor="@color/scientific_text_secondary" />
                     </LinearLayout>
 
                     <Space
@@ -702,7 +725,8 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:padding="@dimen/obd_text_padding"
-                        android:text="STFT" />
+                        android:text="STFT"
+                        android:textColor="@color/scientific_text_primary" />
 
                 </LinearLayout>
 
@@ -754,8 +778,9 @@
                     android:id="@+id/buttonDecreaseAFR"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:backgroundTint="#6E23D8"
-                    android:text="-0.05 AFR" />
+                    android:backgroundTint="@color/button_background_afr"
+                    android:text="-0.05 AFR"
+                    android:textColor="@color/button_text_light" />
 
                 <Space
                     android:layout_width="@dimen/afr_button_spacing"
@@ -767,6 +792,7 @@
                     android:layout_height="wrap_content"
                     android:fontFamily="sans-serif-condensed"
                     android:text="00.0"
+                    android:textColor="@color/scientific_text_primary"
                     android:textSize="34sp" />
 
                 <Space
@@ -777,8 +803,9 @@
                     android:id="@+id/buttonIncreaseAFR"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:backgroundTint="#6E23D8"
-                    android:text="+0.05 AFR" />
+                    android:backgroundTint="@color/button_background_afr"
+                    android:text="+0.05 AFR"
+                    android:textColor="@color/button_text_light" />
 
             </LinearLayout>
 
@@ -839,8 +866,9 @@
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="0dp"
                         android:layout_weight="1"
-                        android:backgroundTint="#595959"
-                        android:text="Connect" />
+                        android:backgroundTint="@color/button_background_primary"
+                        android:text="Connect"
+                        android:textColor="@color/button_text_light" />
 
                     <Space
                         android:layout_width="@dimen/connect_button_spacing"
@@ -853,7 +881,9 @@
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="0dp"
                         android:layout_weight="1"
-                        android:text="Connect" />
+                        android:backgroundTint="@color/button_background_primary"
+                        android:text="Connect"
+                        android:textColor="@color/button_text_light" />
 
                 </LinearLayout>
 
@@ -872,7 +902,7 @@
                         android:layout_weight="1"
                         android:gravity="left|center_vertical"
                         android:text="Status (OBD): -"
-                        android:textColor="#A1A1A1"
+                        android:textColor="@color/scientific_text_status"
                         android:textSize="8sp" />
 
                     <Space
@@ -887,6 +917,7 @@
                         android:layout_weight="1"
                         android:gravity="center"
                         android:text="Status: -"
+                        android:textColor="@color/scientific_text_status"
                         android:textSize="8sp" />
 
                     <Space
@@ -902,6 +933,7 @@
                         android:layout_weight="1"
                         android:gravity="right|center_vertical"
                         android:text="Status (Spartan): -"
+                        android:textColor="@color/scientific_text_status"
                         android:textSize="8sp" />
 
                 </LinearLayout>

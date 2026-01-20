@@ -28,6 +28,7 @@ import java.util.Random;
 public class TimeChart {
     private final LineChart mChart;
     private final Typeface legendFont;
+    private final Activity activity;
     private boolean legendIsInitialized = false;
 
 
@@ -39,6 +40,7 @@ public class TimeChart {
 
     public TimeChart(Activity activity, LineChart chart) {
         this.mChart = chart;
+        this.activity = activity;
         this.mChart.setNoDataText("");
 
         mFormat = new SimpleDateFormat(DATE_FORMAT, Locale.ENGLISH);
@@ -65,9 +67,11 @@ public class TimeChart {
         mChart.setDrawGridBackground(false);
         mChart.setHighlightPerDragEnabled(true);
 
-        // set an alternative background color
-        mChart.setBackgroundColor(Color.WHITE);
-        mChart.setNoDataTextColor(Color.GRAY);
+        // set an alternative background color (theme-aware)
+        int backgroundColor = ResourcesCompat.getColor(activity.getResources(), R.color.chart_background, activity.getTheme());
+        int noDataTextColor = ResourcesCompat.getColor(activity.getResources(), R.color.chart_no_data_text, activity.getTheme());
+        mChart.setBackgroundColor(backgroundColor);
+        mChart.setNoDataTextColor(noDataTextColor);
         mChart.setViewPortOffsets(0f, 0f, 0f, 0f);
     }
 
@@ -124,7 +128,8 @@ public class TimeChart {
         xAxis.setPosition(XAxis.XAxisPosition.TOP_INSIDE);
         xAxis.setTypeface(legendFont);
         xAxis.setTextSize(10f);
-        xAxis.setTextColor(Color.BLACK);
+        int textColor = ResourcesCompat.getColor(activity.getResources(), R.color.chart_text_color, activity.getTheme());
+        xAxis.setTextColor(textColor);
         xAxis.setDrawAxisLine(false);
         xAxis.setDrawGridLines(true);
         xAxis.setCenterAxisLabels(true);
@@ -141,7 +146,8 @@ public class TimeChart {
         YAxis leftAxis = mChart.getAxisLeft();
         leftAxis.setPosition(YAxis.YAxisLabelPosition.INSIDE_CHART);
         leftAxis.setTypeface(legendFont);
-        leftAxis.setTextColor(Color.BLACK);
+        int axisTextColor = ResourcesCompat.getColor(activity.getResources(), R.color.chart_text_color, activity.getTheme());
+        leftAxis.setTextColor(axisTextColor);
         leftAxis.setDrawGridLines(true);
         leftAxis.setGranularityEnabled(true);
         leftAxis.setAxisMinimum(8);

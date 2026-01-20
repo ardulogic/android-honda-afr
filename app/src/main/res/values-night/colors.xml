@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Scientific view colors - Dark theme -->
+    <color name="scientific_background">#FF121212</color>
+    <color name="scientific_text_primary">#FFFFFFFF</color>
+    <color name="scientific_text_secondary">#FFB0B0B0</color>
+    <color name="scientific_text_status">#FF808080</color>
+    <color name="button_background_primary">#FF424242</color>
+    <color name="button_background_secondary">#FF4A4A4A</color>
+    <color name="button_background_afr">#FF8B5CF6</color>
+    <color name="button_text_light">#FFFFFFFF</color>
+    <color name="button_text_dark">#FF000000</color>
+    
+    <!-- Chart colors - Dark theme -->
+    <color name="chart_background">#FF121212</color>
+    <color name="chart_text_color">#FFFFFFFF</color>
+    <color name="chart_no_data_text">#FF808080</color>
+</resources>
+
