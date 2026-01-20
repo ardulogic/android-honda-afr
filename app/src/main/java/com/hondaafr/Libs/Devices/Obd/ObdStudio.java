@@ -102,10 +102,11 @@ public class ObdStudio extends Studio {
     // ────────────────────────────────────────────────────────────────────────────────
 
     private static final List<String> BASE_INIT_CMDS = Arrays.asList(
+            "ATZ",     // Reset ELM327 adapter (required for some clones on first connect)
             "ATE0",    // Echo off
-            "ATSP3",   // ISO 15765‑4, CAN 11‑bit, 500 kbps
-            "ATSTFF",  // Timeout 255 × 4 ms
-            "ATAT2"    // Adaptive timing auto 2
+            "ATSP3",   // ISO 15765‑4, CAN 11‑bit, 500 kbps
+            "ATSTFF",  // Timeout 255 × 4 ms
+            "ATAT2"    // Adaptive timing auto 2
     );
 
     private static final List<String> RECOVERY_CMDS = Arrays.asList(
@@ -178,7 +179,11 @@ public class ObdStudio extends Studio {
             String head = initQueue.peek();
             if (head != null && raw.trim().equalsIgnoreCase(head)) return;
 
-            if (raw.toUpperCase().contains("OK")) {
+            // ATZ returns version string (e.g., "ELM327 v1.5"), other commands return "OK"
+            boolean isOk = raw.toUpperCase().contains("OK");
+            boolean isAtzResponse = head != null && head.equals("ATZ") && raw.toUpperCase().contains("ELM327");
+            
+            if (isOk || isAtzResponse) {
                 initQueue.pop();
                 sendNextInitCommand();
                 return;

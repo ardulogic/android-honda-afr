@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dimensions for narrower screens (like Huawei P30 Pro) -->
+    <dimen name="obd_layout_margin_horizontal">24dp</dimen>
+    <dimen name="connect_button_width">0dp</dimen>
+    <dimen name="status_text_width">0dp</dimen>
+    <dimen name="obd_text_padding">10dp</dimen>
+    <dimen name="top_button_spacing">8dp</dimen>
+    <dimen name="section_spacing">24dp</dimen>
+    <dimen name="afr_button_spacing">16dp</dimen>
+    <dimen name="connect_button_spacing">8dp</dimen>
+    
+    <!-- Cluster view dimensions - scaled down for narrower screens -->
+    <dimen name="cluster_configure_padding">40dp</dimen>
+    <dimen name="cluster_lcd_width">136dp</dimen>
+    <dimen name="cluster_lcd_height">57dp</dimen>
+    <dimen name="cluster_lcd_text_width">120dp</dimen>
+    <dimen name="cluster_lcd_text_size">34sp</dimen>
+    <dimen name="cluster_lcd_mode_text_size">9sp</dimen>
+    <dimen name="cluster_icon_large">41dp</dimen>
+    <dimen name="cluster_icon_medium">34dp</dimen>
+    <dimen name="cluster_icon_small">24dp</dimen>
+    <dimen name="cluster_knob_size">80dp</dimen>
+    <dimen name="cluster_knob_text_size">20sp</dimen>
+    <dimen name="cluster_knob_spacing">32dp</dimen>
+</resources>
+

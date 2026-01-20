@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Default dimensions for larger screens -->
+    <dimen name="obd_layout_margin_horizontal">64dp</dimen>
+    <dimen name="connect_button_width">150dp</dimen>
+    <dimen name="status_text_width">120dp</dimen>
+    <dimen name="obd_text_padding">15dp</dimen>
+    <dimen name="top_button_spacing">16dp</dimen>
+    <dimen name="section_spacing">32dp</dimen>
+    <dimen name="afr_button_spacing">32dp</dimen>
+    <dimen name="connect_button_spacing">10dp</dimen>
+    
+    <!-- Cluster view dimensions -->
+    <dimen name="cluster_configure_padding">40dp</dimen>
+    <dimen name="cluster_lcd_width">160dp</dimen>
+    <dimen name="cluster_lcd_height">67dp</dimen>
+    <dimen name="cluster_lcd_text_width">141dp</dimen>
+    <dimen name="cluster_lcd_text_size">40sp</dimen>
+    <dimen name="cluster_lcd_mode_text_size">10sp</dimen>
+    <dimen name="cluster_icon_large">48dp</dimen>
+    <dimen name="cluster_icon_medium">40dp</dimen>
+    <dimen name="cluster_icon_small">28dp</dimen>
+    <dimen name="cluster_knob_size">80dp</dimen>
+    <dimen name="cluster_knob_text_size">20sp</dimen>
+    <dimen name="cluster_knob_spacing">32dp</dimen>
+</resources>
+
