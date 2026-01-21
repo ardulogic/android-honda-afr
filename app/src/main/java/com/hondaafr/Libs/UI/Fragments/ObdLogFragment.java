@@ -12,16 +12,19 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.hondaafr.Libs.Devices.Obd.ObdLogStore;
+import com.hondaafr.Libs.UI.Fragments.PipAware;
 import com.hondaafr.Libs.UI.Fragments.ObdLog.ObdLogAdapter;
 import com.hondaafr.R;
 
 import java.util.List;
 
-public class ObdLogFragment extends Fragment implements ObdLogStore.LogListener {
+public class ObdLogFragment extends Fragment implements ObdLogStore.LogListener, PipAware {
     private ObdLogAdapter adapter;
     private RecyclerView recyclerView;
     private boolean autoScrollEnabled = true;
     private android.widget.Button autoScrollButton;
+    private View headerView;
+    private boolean inPip = false;
 
     @Nullable
     @Override
@@ -37,7 +40,9 @@ public class ObdLogFragment extends Fragment implements ObdLogStore.LogListener 
         adapter = new ObdLogAdapter();
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
         recyclerView.setAdapter(adapter);
+        adapter.setMaxItems(Integer.MAX_VALUE);
 
+        headerView = view.findViewById(R.id.layoutObdLogHeader);
         autoScrollButton = view.findViewById(R.id.buttonAutoScroll);
         updateAutoScrollButton();
         autoScrollButton.setOnClickListener(v -> {
@@ -58,7 +63,9 @@ public class ObdLogFragment extends Fragment implements ObdLogStore.LogListener 
 
     @Override
     public void onPause() {
-        ObdLogStore.removeListener(this);
+        if (!inPip) {
+            ObdLogStore.removeListener(this);
+        }
         super.onPause();
     }
 
@@ -69,7 +76,9 @@ public class ObdLogFragment extends Fragment implements ObdLogStore.LogListener 
         }
         adapter.setItems(entries);
         if (autoScrollEnabled && entries != null && !entries.isEmpty()) {
-            recyclerView.scrollToPosition(entries.size() - 1);
+            if (!recyclerView.canScrollVertically(1)) {
+                recyclerView.scrollToPosition(entries.size() - 1);
+            }
         }
     }
 
@@ -80,6 +89,35 @@ public class ObdLogFragment extends Fragment implements ObdLogStore.LogListener 
         autoScrollButton.setText(autoScrollEnabled ? "Auto" : "Manual");
         autoScrollButton.setBackgroundTintList(android.content.res.ColorStateList.valueOf(
                 autoScrollEnabled ? 0xFF2ECC71 : 0xFF333333));
+    }
+
+    @Override
+    public void onEnterPip() {
+        inPip = true;
+        ObdLogStore.addListener(this);
+        if (adapter != null) {
+            adapter.setShowTimestamp(false);
+            adapter.setMaxItems(5);
+        }
+        updatePipUiState(true);
+    }
+
+    @Override
+    public void onExitPip() {
+        inPip = false;
+        if (adapter != null) {
+            adapter.setShowTimestamp(true);
+            adapter.setMaxItems(Integer.MAX_VALUE);
+        }
+        updateAutoScrollButton();
+        updatePipUiState(false);
+    }
+
+    private void updatePipUiState(boolean isInPip) {
+        if (headerView == null) {
+            return;
+        }
+        headerView.setVisibility(isInPip ? View.GONE : View.VISIBLE);
     }
 }
 

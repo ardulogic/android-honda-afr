@@ -21,13 +21,30 @@ public class ObdLogAdapter extends RecyclerView.Adapter<ObdLogAdapter.LogViewHol
     private final List<ObdLogStore.LogEntry> items = new ArrayList<>();
     private final SimpleDateFormat timeFormat =
             new SimpleDateFormat("HH:mm:ss.SSS", Locale.getDefault());
+    private boolean showTimestamp = true;
+    private int maxItems = Integer.MAX_VALUE;
 
     public void setItems(List<ObdLogStore.LogEntry> entries) {
         items.clear();
         if (entries != null) {
-            items.addAll(entries);
+            if (entries.size() > maxItems) {
+                items.addAll(entries.subList(entries.size() - maxItems, entries.size()));
+            } else {
+                items.addAll(entries);
+            }
         }
         notifyDataSetChanged();
+    }
+
+    public void setShowTimestamp(boolean show) {
+        if (showTimestamp != show) {
+            showTimestamp = show;
+            notifyDataSetChanged();
+        }
+    }
+
+    public void setMaxItems(int maxItems) {
+        this.maxItems = Math.max(1, maxItems);
     }
 
     @NonNull
@@ -41,7 +58,12 @@ public class ObdLogAdapter extends RecyclerView.Adapter<ObdLogAdapter.LogViewHol
     @Override
     public void onBindViewHolder(@NonNull LogViewHolder holder, int position) {
         ObdLogStore.LogEntry entry = items.get(position);
-        holder.textTime.setText(timeFormat.format(new Date(entry.timestamp)));
+        if (showTimestamp) {
+            holder.textTime.setVisibility(View.VISIBLE);
+            holder.textTime.setText(timeFormat.format(new Date(entry.timestamp)));
+        } else {
+            holder.textTime.setVisibility(View.GONE);
+        }
         holder.textDirection.setText(entry.direction);
         holder.textMessage.setText(entry.message);
     }
