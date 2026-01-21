@@ -294,24 +294,17 @@ public class BluetoothConnection extends Debuggable {
                     String readedPart = new String(buffer, 0, bytes);
                     messageBuffer += readedPart;
 
-                    boolean endedWithNewline = messageBuffer.contains("\n");
+                    messageBuffer = messageBuffer.replace("\r", " ").replace("\n", " ");
 
-                    messageBuffer = messageBuffer.replace("\r\r", "\r");
-                    boolean endedWithRR = messageBuffer.contains(("\r"));
+                    int promptIndex = messageBuffer.indexOf(">");
+                    while (promptIndex >= 0) {
+                        String receivedLine = messageBuffer.substring(0, promptIndex).trim();
+                        messageBuffer = messageBuffer.substring(promptIndex + 1);
 
-                    if (endedWithNewline || endedWithRR) {
-                        int newlineIndex = -1;
-                        if (endedWithNewline)
-                            newlineIndex = messageBuffer.indexOf("\n");
-                        else if (endedWithRR) {
-                            newlineIndex = messageBuffer.indexOf("\r");
+                        if (!receivedLine.isEmpty()) {
+                            listener.onDataReceived(receivedLine, id);
                         }
-
-                        String receivedLine = messageBuffer.substring(0, newlineIndex + 1);
-                        messageBuffer = messageBuffer.substring(newlineIndex + 1);
-
-                        listener.onDataReceived(receivedLine, id);
-                        ;
+                        promptIndex = messageBuffer.indexOf(">");
                     }
                 } catch (IOException e) {
                     d("Disconnected while trying to read stream.", 3);

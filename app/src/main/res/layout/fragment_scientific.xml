@@ -1,0 +1,649 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/layoutScientific"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/scientific_background"
+    tools:context=".MainActivity">
+
+    <com.github.mikephil.charting.charts.LineChart
+        android:id="@+id/chart"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toTopOf="@+id/layoutMainControls"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.0" />
+
+    <LinearLayout
+        android:id="@+id/layoutFuelStats"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@+id/chart"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/chart">
+
+        <TextView
+            android:id="@+id/textStatsTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="Total"
+            android:textColor="@color/scientific_text_primary" />
+
+        <TextView
+            android:id="@+id/textStatsBig"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:foregroundGravity="center"
+            android:gravity="center"
+            android:text="00000.0"
+            android:textColor="@color/scientific_text_primary"
+            android:textSize="44sp" />
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="8dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/textStatsMedium"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:foregroundGravity="center"
+                android:gravity="center"
+                android:text="0.00"
+                android:textColor="@color/scientific_text_primary"
+                android:textSize="40sp" />
+
+            <TextView
+                android:id="@+id/textStatsMediumLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:rotation="90"
+                android:text="100km"
+                android:textColor="@color/scientific_text_secondary"
+                android:textSize="10sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/textStatsSmall"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:foregroundGravity="center"
+                android:gravity="center"
+                android:text="0.00"
+                android:textColor="@color/scientific_text_primary"
+                android:textSize="34sp" />
+
+            <TextView
+                android:id="@+id/textStatsSmallLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:rotation="90"
+                android:text="Total"
+                android:textColor="@color/scientific_text_secondary"
+                android:textSize="10sp" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/layoutSound"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:orientation="vertical"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/panelTopButtons">
+
+        <TextView
+            android:id="@+id/textSoundSmoothing"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:gravity="center"
+            android:text="Engine Smoothing"
+            android:textColor="@color/scientific_text_primary" />
+
+        <SeekBar
+            android:id="@+id/seekSmooth"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp" />
+
+        <TextView
+            android:id="@+id/textSoundTps"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="Throttle"
+            android:textColor="@color/scientific_text_primary" />
+
+        <SeekBar
+            android:id="@+id/seekTps"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp" />
+
+        <TextView
+            android:id="@+id/textSoundRpm"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="RPM"
+            android:textColor="@color/scientific_text_primary" />
+
+        <SeekBar
+            android:id="@+id/seekRev"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/panelTopButtons"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:orientation="horizontal"
+        app:layout_constraintEnd_toEndOf="@+id/chart"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <Button
+            android:id="@+id/buttonRecord"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:backgroundTint="@color/button_background_primary"
+            android:text="Record"
+            android:textColor="@color/button_text_light" />
+
+        <Space
+            android:layout_width="@dimen/top_button_spacing"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
+        <com.hondaafr.Libs.UI.Scientific.ImageButtonRounded
+            android:id="@+id/buttonShowFuelPanel"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@drawable/image_button_on"
+            android:contentDescription="Toggle Gas Consumption"
+            android:padding="13dp"
+            android:scaleType="centerInside"
+            android:src="@drawable/gas"
+            app:tint="#FFFFFF" />
+
+        <Space
+            android:layout_width="@dimen/top_button_spacing"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
+        <com.hondaafr.Libs.UI.Scientific.ImageButtonRounded
+            android:id="@+id/buttonToggleSound"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@drawable/image_button_on"
+            android:contentDescription="Toggle Sound"
+            android:padding="13dp"
+            android:scaleType="centerInside"
+            android:src="@drawable/sound"
+            app:tint="#FFFFFF" />
+
+        <Space
+            android:layout_width="@dimen/top_button_spacing"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
+        <Button
+            android:id="@+id/buttonClear"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:backgroundTint="@color/button_background_secondary"
+            android:text="Clear"
+            android:textColor="@color/button_text_light" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/layoutCornerStats"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginBottom="16dp"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toBottomOf="@+id/chart"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <TextView
+            android:id="@+id/textCornerStatsSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0.00"
+            android:textColor="@color/scientific_text_primary"
+            android:textSize="34sp" />
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <TextView
+            android:id="@+id/textCornerStatsBig"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0.00"
+            android:textColor="@color/scientific_text_primary"
+            android:textSize="48sp" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/layoutMainControls"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="visible"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <LinearLayout
+            android:id="@+id/layoutObd"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/obd_layout_margin_horizontal"
+            android:layout_marginEnd="@dimen/obd_layout_margin_horizontal"
+            android:layout_marginBottom="@dimen/section_spacing"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:id="@+id/linearLayoutObd3"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/textTps"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_marginBottom="0dp"
+                    android:padding="@dimen/obd_text_padding"
+                    android:text="TPS"
+                    android:textColor="@color/scientific_text_primary" />
+
+                <Space
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1" />
+
+                <TextView
+                    android:id="@+id/textIat"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="0dp"
+                    android:padding="@dimen/obd_text_padding"
+                    android:text="IAT"
+                    android:textColor="@color/scientific_text_primary" />
+
+                <Space
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1" />
+
+                <TextView
+                    android:id="@+id/textLambdaVoltage"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="0dp"
+                    android:padding="@dimen/obd_text_padding"
+                    android:text="VOLT"
+                    android:textColor="@color/scientific_text_primary" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/linearLayoutObd2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/textRpm"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:padding="@dimen/obd_text_padding"
+                    android:text="RPM"
+                    android:textColor="@color/scientific_text_primary" />
+
+                <Space
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1" />
+
+                <TextView
+                    android:id="@+id/textMap"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="@dimen/obd_text_padding"
+                    android:text="MAP"
+                    android:textColor="@color/scientific_text_primary" />
+
+                <Space
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1" />
+
+                <TextView
+                    android:id="@+id/textLtft"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="@dimen/obd_text_padding"
+                    android:text="LTFT"
+                    android:textColor="@color/scientific_text_primary" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/linearLayoutObd1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/textEct"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="@dimen/obd_text_padding"
+                    android:text="ECT"
+                    android:textColor="@color/scientific_text_primary" />
+
+                <Space
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/textSpeed"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="0.8"
+                        android:paddingStart="15dp"
+                        android:paddingLeft="15dp"
+                        android:paddingTop="15dp"
+                        android:paddingRight="15dp"
+                        android:paddingBottom="5dp"
+                        android:text="SPD"
+                        android:textColor="@color/scientific_text_primary" />
+
+                    <TextView
+                        android:id="@+id/textSpeedSource"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="0.2"
+                        android:gravity="center"
+                        android:text="OBD"
+                        android:textColor="@color/scientific_text_secondary" />
+                </LinearLayout>
+
+                <Space
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1" />
+
+                <TextView
+                    android:id="@+id/textStft"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="@dimen/obd_text_padding"
+                    android:text="STFT"
+                    android:textColor="@color/scientific_text_primary" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <com.google.android.material.button.MaterialButtonToggleGroup
+            android:id="@+id/toggleAfrBoundStatsGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:gravity="center"
+            app:singleSelection="true">
+
+            <Button
+                android:id="@+id/buttonClearAfrMin"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="00.0"
+                android:textSize="20sp" />
+
+            <Button
+                android:id="@+id/buttonClearAfrAll"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="00.0"
+                android:textSize="20sp" />
+
+            <Button
+                android:id="@+id/buttonClearAfrMax"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="00.0"
+                android:textSize="20sp" />
+
+        </com.google.android.material.button.MaterialButtonToggleGroup>
+
+        <LinearLayout
+            android:id="@+id/layoutAfrControls"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/buttonDecreaseAFR"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:backgroundTint="@color/button_background_afr"
+                android:text="-0.05 AFR"
+                android:textColor="@color/button_text_light" />
+
+            <Space
+                android:layout_width="@dimen/afr_button_spacing"
+                android:layout_height="wrap_content" />
+
+            <TextView
+                android:id="@+id/textTargetAFR"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-condensed"
+                android:text="00.0"
+                android:textColor="@color/scientific_text_primary"
+                android:textSize="34sp" />
+
+            <Space
+                android:layout_width="@dimen/afr_button_spacing"
+                android:layout_height="wrap_content" />
+
+            <Button
+                android:id="@+id/buttonIncreaseAFR"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:backgroundTint="@color/button_background_afr"
+                android:text="+0.05 AFR"
+                android:textColor="@color/button_text_light" />
+
+        </LinearLayout>
+
+        <com.google.android.material.button.MaterialButtonToggleGroup
+            android:id="@+id/toggleAfrPresets"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/section_spacing"
+            android:gravity="center"
+            app:singleSelection="true">
+
+            <Button
+                android:id="@+id/buttonAfrSportPlus"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Sport+" />
+
+            <Button
+                android:id="@+id/buttonAfrSport"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Sport" />
+
+            <Button
+                android:id="@+id/buttonAfrEco"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Eco" />
+
+            <Button
+                android:id="@+id/buttonAfrEcoPlus"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Eco+" />
+        </com.google.android.material.button.MaterialButtonToggleGroup>
+
+        <LinearLayout
+            android:id="@+id/layoutConnection"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:id="@+id/layoutConnectButtons"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/section_spacing"
+                android:gravity="center"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/buttonConnectObd"
+                    android:layout_width="@dimen/connect_button_width"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="0dp"
+                    android:layout_weight="1"
+                    android:backgroundTint="@color/button_background_primary"
+                    android:text="Connect"
+                    android:textColor="@color/button_text_light" />
+
+                <Space
+                    android:layout_width="@dimen/connect_button_spacing"
+                    android:layout_height="match_parent"
+                    android:layout_weight="0" />
+
+                <Button
+                    android:id="@+id/buttonConnectSpartan"
+                    android:layout_width="@dimen/connect_button_width"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="0dp"
+                    android:layout_weight="1"
+                    android:backgroundTint="@color/button_background_primary"
+                    android:text="Connect"
+                    android:textColor="@color/button_text_light" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/layoutConnStatus"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:gravity="center"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/textStatusObd"
+                    android:layout_width="@dimen/status_text_width"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="16dp"
+                    android:layout_weight="1"
+                    android:gravity="left|center_vertical"
+                    android:text="Status (OBD): -"
+                    android:textColor="@color/scientific_text_status"
+                    android:textSize="8sp" />
+
+                <Space
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1" />
+
+                <TextView
+                    android:id="@+id/textStatusGeneric"
+                    android:layout_width="@dimen/status_text_width"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:text="Status: -"
+                    android:textColor="@color/scientific_text_status"
+                    android:textSize="8sp" />
+
+                <Space
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1" />
+
+                <TextView
+                    android:id="@+id/textStatusSpartan"
+                    android:layout_width="@dimen/status_text_width"
+                    android:layout_height="match_parent"
+                    android:layout_marginEnd="16dp"
+                    android:layout_weight="1"
+                    android:gravity="right|center_vertical"
+                    android:text="Status (Spartan): -"
+                    android:textColor="@color/scientific_text_status"
+                    android:textSize="8sp" />
+
+            </LinearLayout>
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+

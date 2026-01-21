@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="4dp">
+
+    <TextView
+        android:id="@+id/textLogTime"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="00:00:00.000"
+        android:textColor="#B0B0B0"
+        android:textSize="12sp" />
+
+    <Space
+        android:layout_width="8dp"
+        android:layout_height="wrap_content" />
+
+    <TextView
+        android:id="@+id/textLogDirection"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="TX"
+        android:textColor="#FFFFFF"
+        android:textSize="12sp" />
+
+    <Space
+        android:layout_width="8dp"
+        android:layout_height="wrap_content" />
+
+    <TextView
+        android:id="@+id/textLogMessage"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="ATZ"
+        android:textColor="#FFFFFF"
+        android:textSize="12sp" />
+
+</LinearLayout>
+

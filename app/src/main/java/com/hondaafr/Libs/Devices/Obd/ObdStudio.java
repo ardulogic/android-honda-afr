@@ -39,7 +39,7 @@ public class ObdStudio extends Studio {
     // Configuration constants
     // ────────────────────────────────────────────────────────────────────────────────
 
-    private static final long LINK_TIMEOUT_MS          = 3_000L;  // liveness threshold
+    private static final long LINK_TIMEOUT_MS          = 5_000L;  // liveness threshold
     private static final long SUPERVISOR_PERIOD_MS     = 1_000L;  // watchdog tick
     private static final long INIT_RESPONSE_TIMEOUT_MS = 2_000L;  // wait for OK
     private static final long READING_DELAY = 75;
@@ -135,6 +135,7 @@ public class ObdStudio extends Studio {
         }
 
         String cmd = initQueue.peek() + "\r"; // keep head, wait for OK before pop
+        ObdLogStore.logTx(cmd);
         BluetoothService.send(context, new ArrayList<>(Arrays.asList(cmd)), "obd");
         initCmdSentTimestamp = System.currentTimeMillis();
         d("• Sent init cmd: " + cmd.trim(), 2);
@@ -155,6 +156,7 @@ public class ObdStudio extends Studio {
     public void onDataReceived(String raw) {
         if (raw == null || raw.trim().isEmpty()) return;
 
+        ObdLogStore.logRx(raw);
         listener.onObdConnectionPulse(true);
 
         lastResponseTimestamp = System.currentTimeMillis();

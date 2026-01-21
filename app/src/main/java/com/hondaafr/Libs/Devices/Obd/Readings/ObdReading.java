@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 
 import com.hondaafr.Libs.Bluetooth.Services.BluetoothService;
+import com.hondaafr.Libs.Devices.Obd.ObdLogStore;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -35,7 +36,9 @@ public abstract class ObdReading {
     }
 
     public void request(Context context) {
-        BluetoothService.send(context, getRequestCommand(), "obd");
+        String cmd = getRequestCommand();
+        ObdLogStore.logTx(cmd);
+        BluetoothService.send(context, cmd, "obd");
     }
 
     public void onData(String data) {

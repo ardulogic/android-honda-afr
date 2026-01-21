@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/layoutCluster"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0E0E0E"
+    tools:context=".MainActivity">
+
+    <ImageButton
+        android:id="@+id/imageClusterConfigure"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="#00FFFFFF"
+        android:padding="@dimen/cluster_configure_padding"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@android:drawable/ic_menu_manage" />
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/layoutClusterGauge"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintDimensionRatio="1:1"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.3">
+
+        <ImageView
+            android:id="@+id/imageClusterGauge"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/fuel_gauge_day" />
+
+        <ImageView
+            android:id="@+id/imageClusterLcd"
+            android:layout_width="@dimen/cluster_lcd_width"
+            android:layout_height="@dimen/cluster_lcd_height"
+            android:scaleType="fitXY"
+            app:layout_constraintBottom_toBottomOf="@id/imageClusterGauge"
+            app:layout_constraintEnd_toEndOf="@id/imageClusterGauge"
+            app:layout_constraintStart_toStartOf="@id/imageClusterGauge"
+            app:layout_constraintTop_toTopOf="@id/imageClusterGauge"
+            app:layout_constraintVertical_bias="0.8"
+            app:srcCompat="@drawable/fuel_gauge_lcd_day" />
+
+        <TextView
+            android:id="@+id/textClusterLcd"
+            android:layout_width="@dimen/cluster_lcd_text_width"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/dsmonospace"
+            android:gravity="right"
+            android:text="100.00 L"
+            android:textColor="#121212"
+            android:textSize="@dimen/cluster_lcd_text_size"
+            app:layout_constraintBottom_toBottomOf="@+id/imageClusterLcd"
+            app:layout_constraintEnd_toEndOf="@+id/imageClusterLcd"
+            app:layout_constraintStart_toStartOf="@+id/imageClusterLcd"
+            app:layout_constraintTop_toTopOf="@+id/imageClusterLcd"
+            app:layout_constraintVertical_bias="0.703" />
+
+        <ImageView
+            android:id="@+id/imageClusterRichFuel"
+            android:layout_width="@dimen/cluster_icon_large"
+            android:layout_height="@dimen/cluster_icon_large"
+            android:foregroundGravity="center"
+            android:foregroundTintMode="add"
+            android:paddingLeft="1dp"
+            android:scaleType="fitXY"
+            android:tint="#222222"
+            app:layout_constraintBottom_toBottomOf="@+id/imageClusterNeedle"
+            app:layout_constraintEnd_toEndOf="@+id/imageClusterNeedle"
+            app:layout_constraintHorizontal_bias="0.697"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/imageClusterNeedle"
+            app:layout_constraintVertical_bias="0.44"
+            app:srcCompat="@drawable/fuel_gauge_rich_fuel" />
+
+        <ImageView
+            android:id="@+id/imageClusterObd"
+            android:layout_width="@dimen/cluster_icon_medium"
+            android:layout_height="@dimen/cluster_icon_small"
+            android:foregroundTintMode="add"
+            android:tint="#222222"
+            app:layout_constraintEnd_toEndOf="@+id/imageClusterRichFuel"
+            app:layout_constraintStart_toStartOf="@+id/imageClusterRichFuel"
+            app:layout_constraintTop_toBottomOf="@+id/imageClusterRichFuel"
+            app:srcCompat="@drawable/obd" />
+
+        <ImageView
+            android:id="@+id/imageClusterGps"
+            android:layout_width="@dimen/cluster_icon_small"
+            android:layout_height="@dimen/cluster_icon_small"
+            android:foregroundGravity="center"
+            android:foregroundTintMode="add"
+            android:scaleType="fitXY"
+            android:tint="#5F9529"
+            app:layout_constraintBottom_toBottomOf="@+id/imageClusterRichFuel"
+            app:layout_constraintEnd_toEndOf="@+id/imageClusterNeedle"
+            app:layout_constraintHorizontal_bias="0.3"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/imageClusterRichFuel"
+            app:layout_constraintVertical_bias="0.43"
+            app:srcCompat="@drawable/gps" />
+
+        <ImageView
+            android:id="@+id/imageClusterAfr"
+            android:layout_width="@dimen/cluster_icon_medium"
+            android:layout_height="@dimen/cluster_icon_small"
+            android:adjustViewBounds="true"
+            android:foregroundGravity="center"
+            android:foregroundTintMode="add"
+            android:scaleType="fitCenter"
+            android:tint="#222222"
+            app:layout_constraintEnd_toEndOf="@+id/imageClusterObd"
+            app:layout_constraintStart_toStartOf="@+id/imageClusterObd"
+            app:layout_constraintTop_toBottomOf="@+id/imageClusterObd"
+            app:srcCompat="@drawable/afr" />
+
+        <ImageView
+            android:id="@+id/imageClusterNeedle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintBottom_toBottomOf="@id/imageClusterGauge"
+            app:layout_constraintEnd_toEndOf="@id/imageClusterGauge"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toStartOf="@id/imageClusterGauge"
+            app:layout_constraintTop_toTopOf="@id/imageClusterGauge"
+            app:srcCompat="@drawable/fuel_gauge_needle_night" />
+
+        <TextView
+            android:id="@+id/textClusterLcdMode1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="10dp"
+            android:fontFamily="@font/lcd_mode"
+            android:layerType="software"
+            android:paddingLeft="4dp"
+            android:paddingRight="4dp"
+            android:text="TRIP"
+            android:textColor="#222222"
+            android:textSize="@dimen/cluster_lcd_mode_text_size"
+            app:layout_constraintStart_toStartOf="@+id/imageClusterLcd"
+            app:layout_constraintTop_toTopOf="@+id/imageClusterLcd" />
+
+        <TextView
+            android:id="@+id/textClusterLcdMode2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:layout_marginEnd="8dp"
+            android:fontFamily="@font/lcd_mode"
+            android:layerType="software"
+            android:paddingLeft="4dp"
+            android:paddingRight="4dp"
+            android:text="l/100"
+            android:textColor="#222222"
+            android:textSize="@dimen/cluster_lcd_mode_text_size"
+            app:layout_constraintEnd_toEndOf="@+id/imageClusterLcd"
+            app:layout_constraintTop_toTopOf="@+id/imageClusterLcd" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <LinearLayout
+        android:id="@+id/layoutClusterKnobs"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal|center_vertical"
+        android:orientation="horizontal"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/layoutClusterGauge">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:orientation="vertical">
+
+            <ImageButton
+                android:id="@+id/buttonClusterTripKnob"
+                android:layout_width="@dimen/cluster_knob_size"
+                android:layout_height="@dimen/cluster_knob_size"
+                android:background="@android:color/transparent"
+                android:scaleType="fitCenter"
+                app:srcCompat="@drawable/trip_knob_day" />
+
+            <TextView
+                android:id="@+id/textViewKnobTrip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/grotesk"
+                android:gravity="center"
+                android:text="Trip"
+                android:textSize="@dimen/cluster_knob_text_size" />
+
+        </LinearLayout>
+
+        <Space
+            android:layout_width="@dimen/cluster_knob_spacing"
+            android:layout_height="wrap_content" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:orientation="vertical">
+
+            <ImageButton
+                android:id="@+id/buttonClusterInstKnob"
+                android:layout_width="@dimen/cluster_knob_size"
+                android:layout_height="@dimen/cluster_knob_size"
+                android:background="@android:color/transparent"
+                android:scaleType="fitCenter"
+                app:srcCompat="@drawable/trip_knob_day" />
+
+            <TextView
+                android:id="@+id/textViewKnobInst"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/grotesk"
+                android:paddingLeft="5dp"
+                android:text="Inst"
+                android:textSize="@dimen/cluster_knob_text_size" />
+        </LinearLayout>
+
+        <Space
+            android:layout_width="32dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:orientation="vertical">
+
+            <ImageButton
+                android:id="@+id/buttonClusterTotalsKnob"
+                android:layout_width="@dimen/cluster_knob_size"
+                android:layout_height="@dimen/cluster_knob_size"
+                android:background="@android:color/transparent"
+                android:scaleType="fitCenter"
+                app:srcCompat="@drawable/trip_knob_day" />
+
+            <TextView
+                android:id="@+id/textViewKnobTotals"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/grotesk"
+                android:text="Total"
+                android:textSize="@dimen/cluster_knob_text_size" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+

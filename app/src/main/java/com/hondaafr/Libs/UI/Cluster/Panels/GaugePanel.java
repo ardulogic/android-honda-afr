@@ -114,14 +114,32 @@ public class GaugePanel extends Panel  {
     private final ModeDescriptor[] modeDescriptors = new ModeDescriptor[]{
             new ModeDescriptor("TRIP", "", tc -> String.format("%.1f", tc.tripStats.getDistanceKm())),                   // MODE_TRIP_KM
             new ModeDescriptor("TRIP", "", tc -> String.format("%.2f L", tc.tripStats.getLiters())),                     // MODE_TRIP_L
-            new ModeDescriptor("TRIP", "/100", tc -> String.format("%.2f L", tc.tripStats.getLitersPer100km())),         // MODE_TRIP_L100
+            new ModeDescriptor("TRIP", "/100", tc -> {
+                double value = tc.tripStats.getLitersPer100km();
+                if (value > 30.0) {
+                    return "30.00+ L";
+                }
+                return String.format("%.2f L", value);
+            }),         // MODE_TRIP_L100
 
             new ModeDescriptor("TOTAL", "", tc -> String.format("%05.0f", tc.totalStats.getDistanceKm())),               // MODE_TOTAL_KM
             new ModeDescriptor("TOTAL", "", tc -> String.format("%.2f L", tc.totalStats.getLiters())),                   // MODE_TOTAL_L
-            new ModeDescriptor("TOTAL", "/100", tc -> String.format("%.2f L", tc.totalStats.getLitersPer100km())),        // MODE_TOTAL_L100
+            new ModeDescriptor("TOTAL", "/100", tc -> {
+                double value = tc.totalStats.getLitersPer100km();
+                if (value > 30.0) {
+                    return "30.00+ L";
+                }
+                return String.format("%.2f L", value);
+            }),        // MODE_TOTAL_L100
 
             new ModeDescriptor("INST", "/h", tc -> String.format("%.2f L", tc.instStats.getLphAvg())),                // MODE_TRIP_L
-            new ModeDescriptor("INST", "/100", tc -> String.format("%.2f L", tc.instStats.getLp100kmAvg())),                // MODE_TRIP_L
+            new ModeDescriptor("INST", "/100", tc -> {
+                double value = tc.instStats.getLp100kmAvg();
+                if (value > 30.0) {
+                    return "30.00+ L";
+                }
+                return String.format("%.2f L", value);
+            }),                // MODE_TRIP_L
             new ModeDescriptor("INST", "AFR", tc -> String.format("%.2f", tc.afrHistory.getAvg()))                     // MODE_AFR
     };
 
