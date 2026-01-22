@@ -22,6 +22,8 @@ import com.hondaafr.Libs.UI.Fragments.PipAware;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
+    private static final String PREFS_NAME = "main_pager";
+    private static final String PREF_LAST_PAGE = "last_page";
     private MainActivity mContext;
     private boolean canEnterPip = false;
     private TripComputer mTripComputer;
@@ -46,7 +48,9 @@ public class MainActivity extends AppCompatActivity {
         pagerAdapter = new MainPagerAdapter(this);
         viewPager.setAdapter(pagerAdapter);
         viewPager.setOffscreenPageLimit(2);
-        viewPager.setCurrentItem(MainPagerAdapter.PAGE_SCIENTIFIC, false);
+        int startPage = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+                .getInt(PREF_LAST_PAGE, MainPagerAdapter.PAGE_CLUSTER);
+        viewPager.setCurrentItem(startPage, false);
         mTripComputer.setObdForFuelConsumption(false);
 
         viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
@@ -55,6 +59,10 @@ public class MainActivity extends AppCompatActivity {
                 boolean needsFuelConsumption = position == MainPagerAdapter.PAGE_CLUSTER
                         || position == MainPagerAdapter.PAGE_MAP;
                 mTripComputer.setObdForFuelConsumption(needsFuelConsumption);
+                getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+                        .edit()
+                        .putInt(PREF_LAST_PAGE, position)
+                        .apply();
             }
         });
 

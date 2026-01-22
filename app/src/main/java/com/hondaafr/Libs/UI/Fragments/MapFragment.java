@@ -40,6 +40,8 @@ import org.osmdroid.views.overlay.Polyline;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class MapFragment extends Fragment implements TripComputerListener, PipAware {
     private static final String LISTENER_ID = "map_fragment";
@@ -80,6 +82,7 @@ public class MapFragment extends Fragment implements TripComputerListener, PipAw
     private final List<TripFuelTrackStore.TrackPoint> fuelSamples = new ArrayList<>();
     private final List<Marker> fuelLabels = new ArrayList<>();
     private final List<Polyline> renderedSegments = new ArrayList<>();
+    private ExecutorService trackLoadExecutor;
     private String sessionId = "";
     private TripFuelTrackStore trackStore;
     private long lastRenderMs = 0;
@@ -125,16 +128,7 @@ public class MapFragment extends Fragment implements TripComputerListener, PipAw
         tripComputer = ((MainActivity) requireActivity()).getTripComputer();
         sessionId = tripComputer.tripStats.getSessionId(requireContext());
         trackStore = new TripFuelTrackStore(requireContext(), sessionId);
-        fuelSamples.clear();
-        fuelSamples.addAll(trackStore.loadAll());
-        if (!fuelSamples.isEmpty()) {
-            TripFuelTrackStore.TrackPoint last = fuelSamples.get(fuelSamples.size() - 1);
-            lastPoint = new GeoPoint(last.latitude, last.longitude);
-        }
-        mapView.post(() -> {
-            refreshTrackOverlays();
-            ensureInitialViewport();
-        });
+        loadTrackAsync();
         updateFollowButton();
         followToggleButton.setOnClickListener(v -> toggleFollowMode());
         updateFollowInteraction();
@@ -158,6 +152,15 @@ public class MapFragment extends Fragment implements TripComputerListener, PipAw
         applyNightMode(isSystemNightMode());
         updateLegendTitle();
         updatePipUiState(requireActivity().isInPictureInPictureMode());
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if (trackLoadExecutor != null) {
+            trackLoadExecutor.shutdownNow();
+            trackLoadExecutor = null;
+        }
     }
 
     @Override
@@ -346,6 +349,36 @@ public class MapFragment extends Fragment implements TripComputerListener, PipAw
         TripFuelTrackStore.TrackPoint last = fuelSamples.get(fuelSamples.size() - 1);
         mapView.getController().setCenter(new GeoPoint(last.latitude, last.longitude));
         didInitialZoom = true;
+    }
+
+    private void loadTrackAsync() {
+        if (trackStore == null) {
+            return;
+        }
+        if (trackLoadExecutor == null) {
+            trackLoadExecutor = Executors.newSingleThreadExecutor();
+        }
+        trackLoadExecutor.submit(() -> {
+            List<TripFuelTrackStore.TrackPoint> loaded = trackStore.loadAll();
+            if (!isAdded()) {
+                return;
+            }
+            requireActivity().runOnUiThread(() -> {
+                if (!isAdded()) {
+                    return;
+                }
+                fuelSamples.clear();
+                fuelSamples.addAll(loaded);
+                if (!fuelSamples.isEmpty()) {
+                    TripFuelTrackStore.TrackPoint last = fuelSamples.get(fuelSamples.size() - 1);
+                    lastPoint = new GeoPoint(last.latitude, last.longitude);
+                }
+                if (mapView != null) {
+                    refreshTrackOverlays();
+                    ensureInitialViewport();
+                }
+            });
+        });
     }
 
     private void refreshTrackOverlays() {
@@ -679,6 +712,10 @@ public class MapFragment extends Fragment implements TripComputerListener, PipAw
 
     @Override
     public void onCalculationsUpdated() {
+        if (tripComputer == null || mapView == null || !isAdded()) {
+            return;
+        }
+        handleSessionChange();
     }
 
     @Override

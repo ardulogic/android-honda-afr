@@ -86,6 +86,7 @@ public class FuelStatsPanel extends Panel {
                     } else {
                         tripComputer.tripStats.reset(mainActivity);
                     }
+                    tripComputer.notifyCalculationsUpdated();
                     updateDisplay();
                     return true;
                 });

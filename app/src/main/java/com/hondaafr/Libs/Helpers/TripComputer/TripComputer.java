@@ -123,6 +123,12 @@ public class TripComputer extends Debuggable implements ObdStudioListener, Spart
         }
     }
 
+    public void notifyCalculationsUpdated() {
+        for (TripComputerListener l : listeners.values()) {
+            l.onCalculationsUpdated();
+        }
+    }
+
     private void saveStats() {
         tripStats.save(context);
         totalStats.save(context);
