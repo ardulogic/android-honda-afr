@@ -8,7 +8,7 @@ import androidx.viewpager2.adapter.FragmentStateAdapter;
 import com.hondaafr.Libs.UI.Fragments.ClusterFragment;
 import com.hondaafr.Libs.UI.Fragments.MapFragment;
 import com.hondaafr.Libs.UI.Fragments.AdaptiveAfrFragment;
-import com.hondaafr.Libs.UI.Fragments.ObdLogFragment;
+import com.hondaafr.Libs.UI.Fragments.ConnectionFragment;
 import com.hondaafr.Libs.UI.Fragments.ScientificFragment;
 
 public class MainPagerAdapter extends FragmentStateAdapter {
@@ -36,7 +36,7 @@ public class MainPagerAdapter extends FragmentStateAdapter {
                 return new ScientificFragment();
             case PAGE_OBD_LOG:
             default:
-                return new ObdLogFragment();
+                return new ConnectionFragment();
         }
     }
 

@@ -29,6 +29,7 @@ public class MainActivity extends AppCompatActivity {
     private TripComputer mTripComputer;
     private ViewPager2 viewPager;
     private MainPagerAdapter pagerAdapter;
+    private com.hondaafr.Libs.Bluetooth.BluetoothConnectionManager bluetoothConnectionManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,10 +45,13 @@ public class MainActivity extends AppCompatActivity {
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         mTripComputer = new TripComputer(this);
+        bluetoothConnectionManager = new com.hondaafr.Libs.Bluetooth.BluetoothConnectionManager(this, mTripComputer);
         viewPager = findViewById(R.id.viewPager);
         pagerAdapter = new MainPagerAdapter(this);
         viewPager.setAdapter(pagerAdapter);
-        viewPager.setOffscreenPageLimit(2);
+        // Keep all pages in memory to prevent fragment destruction/recreation
+        // This helps with map tile loading and other fragment state preservation
+        viewPager.setOffscreenPageLimit(4); // Keep all 5 pages (current + 4 offscreen)
         int startPage = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
                 .getInt(PREF_LAST_PAGE, MainPagerAdapter.PAGE_CLUSTER);
         viewPager.setCurrentItem(startPage, false);
@@ -96,6 +100,9 @@ public class MainActivity extends AppCompatActivity {
     public void onStart() {
         super.onStart();
         Log.d("MainActivity", "onStart");
+        if (bluetoothConnectionManager != null) {
+            bluetoothConnectionManager.onStart();
+        }
     }
 
     @Override
@@ -137,6 +144,9 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
 
         mTripComputer.onResume(this);
+        if (bluetoothConnectionManager != null) {
+            bluetoothConnectionManager.onResume();
+        }
     }
 
     @Override
@@ -151,6 +161,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         Log.d("Lifecycle", "onDestroy");
 
+        if (bluetoothConnectionManager != null) {
+            bluetoothConnectionManager.onDestroy();
+        }
         mTripComputer.onDestroy(this);
 
         super.onDestroy();

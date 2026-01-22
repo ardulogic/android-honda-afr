@@ -13,6 +13,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.github.mikephil.charting.charts.LineChart;
@@ -163,10 +164,13 @@ public class AdaptiveAfrFragment extends Fragment implements TripComputerListene
         chart.setTouchEnabled(false);
         chart.setDrawGridBackground(false);
         chart.getAxisRight().setEnabled(false);
-        chart.getAxisLeft().setTextColor(Color.WHITE);
-        chart.getXAxis().setTextColor(Color.WHITE);
+        int textColor = ContextCompat.getColor(requireContext(), R.color.app_text_primary);
+        int backgroundColor = ContextCompat.getColor(requireContext(), R.color.app_background);
+        chart.getAxisLeft().setTextColor(textColor);
+        chart.getXAxis().setTextColor(textColor);
+        chart.setBackgroundColor(backgroundColor);
         Legend legend = chart.getLegend();
-        legend.setTextColor(Color.WHITE);
+        legend.setTextColor(textColor);
     }
 
     private void buildTable() {
@@ -201,7 +205,7 @@ public class AdaptiveAfrFragment extends Fragment implements TripComputerListene
     private TextView makeHeaderCell(String text) {
         TextView view = new TextView(requireContext());
         view.setText(text);
-        view.setTextColor(Color.WHITE);
+        view.setTextColor(ContextCompat.getColor(requireContext(), R.color.app_text_primary));
         view.setPadding(12, 8, 12, 8);
         return view;
     }
@@ -209,7 +213,7 @@ public class AdaptiveAfrFragment extends Fragment implements TripComputerListene
     private TextView makeValueCell(String text) {
         TextView view = new TextView(requireContext());
         view.setText(text);
-        view.setTextColor(Color.LTGRAY);
+        view.setTextColor(ContextCompat.getColor(requireContext(), R.color.app_text_secondary));
         view.setPadding(12, 8, 12, 8);
         return view;
     }

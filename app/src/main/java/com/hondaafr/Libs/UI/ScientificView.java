@@ -7,7 +7,6 @@ import com.hondaafr.Libs.UI.Scientific.Panels.AfrBoundStatsPanel;
 import com.hondaafr.Libs.UI.Scientific.Panels.AfrPreciseControlsPanel;
 import com.hondaafr.Libs.UI.Scientific.Panels.AfrPresetsPanel;
 import com.hondaafr.Libs.UI.Scientific.Panels.ChartPanel;
-import com.hondaafr.Libs.UI.Scientific.Panels.ConnectPanel;
 import com.hondaafr.Libs.UI.Scientific.Panels.CornerStatsPanel;
 import com.hondaafr.Libs.UI.Scientific.Panels.FuelStatsPanel;
 import com.hondaafr.Libs.UI.Scientific.Panels.GenericStatusPanel;
@@ -41,7 +40,6 @@ public class ScientificView extends UiView {
                 new AfrPreciseControlsPanel(mainActivity, tripComputer, this),
                 new AfrPresetsPanel(mainActivity, tripComputer, this),
                 new ChartPanel(mainActivity, tripComputer, this),
-                new ConnectPanel(mainActivity, tripComputer, this),
                 new CornerStatsPanel(mainActivity, tripComputer, this),
                 new FuelStatsPanel(mainActivity, tripComputer, this),
                 new GenericStatusPanel(mainActivity, tripComputer, this),

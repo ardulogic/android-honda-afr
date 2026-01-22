@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/app_background">
+
+    <LinearLayout
+        android:id="@+id/layoutConnection"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <LinearLayout
+            android:id="@+id/layoutConnectionHeader"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/app_spacing_sm"
+            android:layout_marginTop="@dimen/app_spacing_sm"
+            android:layout_marginEnd="@dimen/app_spacing_sm"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/textConnectionTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Connection"
+            android:textColor="@color/app_text_primary"
+            android:textSize="16sp" />
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+    </LinearLayout>
+
+        <ScrollView
+            android:id="@+id/scrollConnection"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="@dimen/app_spacing_sm">
+
+            <!-- Connect Buttons Section -->
+            <LinearLayout
+                android:id="@+id/layoutConnectButtons"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/app_spacing_md"
+                android:gravity="center"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/buttonConnectObd"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:backgroundTint="@color/app_button_primary_bg"
+                    android:text="Connect OBD"
+                    android:textColor="@color/app_button_text_light" />
+
+                <Space
+                    android:layout_width="@dimen/app_spacing_sm"
+                    android:layout_height="match_parent" />
+
+                <Button
+                    android:id="@+id/buttonConnectSpartan"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:backgroundTint="@color/app_button_primary_bg"
+                    android:text="Connect AFR"
+                    android:textColor="@color/app_button_text_light" />
+            </LinearLayout>
+
+            <!-- Connection Status -->
+            <LinearLayout
+                android:id="@+id/layoutConnStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/app_spacing_md"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:padding="@dimen/app_spacing_sm">
+
+                <TextView
+                    android:id="@+id/textStatusObd"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="left|center_vertical"
+                    android:text="OBD: -"
+                    android:textColor="@color/app_text_status"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/textStatusGeneric"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:text="Status: -"
+                    android:textColor="@color/app_text_status"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/textStatusSpartan"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="right|center_vertical"
+                    android:text="AFR: -"
+                    android:textColor="@color/app_text_status"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <!-- Tab Buttons -->
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                android:id="@+id/toggleLogTabs"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/app_spacing_md"
+                android:gravity="center"
+                app:singleSelection="true"
+                app:selectionRequired="true">
+
+                <Button
+                    android:id="@+id/buttonTabObd"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="OBD Log" />
+
+                <Button
+                    android:id="@+id/buttonTabAfr"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="AFR Log" />
+            </com.google.android.material.button.MaterialButtonToggleGroup>
+
+            <!-- OBD Log Section -->
+            <LinearLayout
+                android:id="@+id/layoutObdLogSection"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="visible">
+
+                <LinearLayout
+                    android:id="@+id/layoutObdLogHeader"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/app_spacing_sm"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/textObdLogTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="OBD Log"
+                        android:textColor="@color/app_text_primary"
+                        android:textSize="14sp" />
+
+                    <Space
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1" />
+
+                    <Button
+                        android:id="@+id/buttonAutoScroll"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:backgroundTint="@color/app_button_primary_bg"
+                        android:text="Auto"
+                        android:textColor="@color/app_button_text_light" />
+
+                    <Space
+                        android:layout_width="@dimen/app_spacing_sm"
+                        android:layout_height="wrap_content" />
+
+                    <Button
+                        android:id="@+id/buttonClearObdLog"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:backgroundTint="@color/app_button_primary_bg"
+                        android:text="Clear"
+                        android:textColor="@color/app_button_text_light" />
+                </LinearLayout>
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recyclerObdLog"
+                    android:layout_width="match_parent"
+                    android:layout_height="400dp"
+                    android:padding="@dimen/app_spacing_sm" />
+            </LinearLayout>
+
+            <!-- AFR Log Section -->
+            <LinearLayout
+                android:id="@+id/layoutAfrLogSection"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:id="@+id/layoutAfrLogHeader"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/app_spacing_sm"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/textAfrLogTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="AFR Log"
+                        android:textColor="@color/app_text_primary"
+                        android:textSize="14sp" />
+
+                    <Space
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1" />
+
+                    <Button
+                        android:id="@+id/buttonClearAfrLog"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:backgroundTint="@color/app_button_primary_bg"
+                        android:text="Clear"
+                        android:textColor="@color/app_button_text_light" />
+                </LinearLayout>
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recyclerAfrLog"
+                    android:layout_width="match_parent"
+                    android:layout_height="400dp"
+                    android:padding="@dimen/app_spacing_sm" />
+            </LinearLayout>
+
+        </LinearLayout>
+        </ScrollView>
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+

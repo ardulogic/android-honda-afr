@@ -8,7 +8,7 @@
     <com.github.mikephil.charting.charts.LineChart
         android:id="@+id/adaptiveRpmChart"
         android:layout_width="0dp"
-        android:layout_height="140dp"
+        android:layout_height="120dp"
         android:layout_marginTop="@dimen/app_spacing_sm"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -17,7 +17,7 @@
     <com.github.mikephil.charting.charts.LineChart
         android:id="@+id/adaptiveMapChart"
         android:layout_width="0dp"
-        android:layout_height="140dp"
+        android:layout_height="120dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/adaptiveRpmChart" />
@@ -25,7 +25,7 @@
     <com.github.mikephil.charting.charts.LineChart
         android:id="@+id/adaptiveAfrChart"
         android:layout_width="0dp"
-        android:layout_height="140dp"
+        android:layout_height="120dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/adaptiveMapChart" />
@@ -98,12 +98,12 @@
         android:id="@+id/switchAdaptiveAfr"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="@dimen/app_spacing_md"
-        android:layout_marginTop="@dimen/app_spacing_md"
-        android:text="Adaptive AFR"
+        android:text="Enable Adaptive AFR"
         android:textColor="@color/app_text_primary"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@+id/toggleAdaptivePresets" />
 
     <com.google.android.material.button.MaterialButtonToggleGroup
         android:id="@+id/toggleAdaptivePresets"

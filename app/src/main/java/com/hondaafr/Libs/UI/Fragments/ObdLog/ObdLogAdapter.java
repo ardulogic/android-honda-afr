@@ -6,6 +6,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.hondaafr.Libs.Devices.Obd.ObdLogStore;
@@ -51,7 +52,7 @@ public class ObdLogAdapter extends RecyclerView.Adapter<ObdLogAdapter.LogViewHol
     @Override
     public LogViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_obd_log, parent, false);
+                .inflate(R.layout.item_log, parent, false);
         return new LogViewHolder(view);
     }
 
@@ -66,6 +67,15 @@ public class ObdLogAdapter extends RecyclerView.Adapter<ObdLogAdapter.LogViewHol
         }
         holder.textDirection.setText(entry.direction);
         holder.textMessage.setText(entry.message);
+        
+        // Set colors based on direction (TX/RX)
+        int directionColor;
+        if ("TX".equals(entry.direction)) {
+            directionColor = ContextCompat.getColor(holder.itemView.getContext(), R.color.log_tx);
+        } else {
+            directionColor = ContextCompat.getColor(holder.itemView.getContext(), R.color.log_rx);
+        }
+        holder.textDirection.setTextColor(directionColor);
     }
 
     @Override

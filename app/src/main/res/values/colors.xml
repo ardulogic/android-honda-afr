@@ -33,4 +33,8 @@
     <color name="chart_background">#FFFFFFFF</color>
     <color name="chart_text_color">#FF000000</color>
     <color name="chart_no_data_text">#FF808080</color>
+    
+    <!-- Log colors - Light theme -->
+    <color name="log_tx">#FF2196F3</color>
+    <color name="log_rx">#FF4CAF50</color>
 </resources>

@@ -4,6 +4,7 @@ import android.graphics.Color;
 import android.graphics.Point;
 import android.location.Location;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -44,6 +45,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class MapFragment extends Fragment implements TripComputerListener, PipAware {
+    private static final String TAG = "MapFragment";
     private static final String LISTENER_ID = "map_fragment";
     private static final float TRACK_WIDTH = 8f;
     private static final double MAX_CONSUMPTION = 15.0;
@@ -109,11 +111,13 @@ public class MapFragment extends Fragment implements TripComputerListener, PipAw
         super.onViewCreated(view, savedInstanceState);
         Configuration.getInstance().setUserAgentValue(BuildConfig.APPLICATION_ID);
         mapView = view.findViewById(R.id.mapView);
-        mapView.setTileSource(TileSourceFactory.MAPNIK);
         mapView.setMultiTouchControls(true);
         mapView.setTilesScaledToDpi(true);
-        mapView.getController().setZoom(16.0);
         mapView.setBuiltInZoomControls(false);
+        mapView.getController().setZoom(16.0);
+        
+        isNightMode = isSystemNightMode();
+        mapView.setTileSource(isNightMode ? DARK_TILE_SOURCE : TileSourceFactory.MAPNIK);
         followToggleButton = view.findViewById(R.id.buttonMapFollow);
         legendContainer = view.findViewById(R.id.layoutFuelLegend);
         legendTitle = view.findViewById(R.id.textLegendTitle);
@@ -128,15 +132,13 @@ public class MapFragment extends Fragment implements TripComputerListener, PipAw
         toggleMetricButton = view.findViewById(R.id.buttonToggleMetric);
 
         myLocationOverlay = new MyLocationNewOverlay(new GpsMyLocationProvider(requireContext()), mapView);
-        myLocationOverlay.enableMyLocation();
-        myLocationOverlay.enableFollowLocation();
         mapView.getOverlays().add(myLocationOverlay);
-        mapReady = true;
 
         tripComputer = ((MainActivity) requireActivity()).getTripComputer();
         sessionId = tripComputer.tripStats.getSessionId(requireContext());
         trackStore = new TripFuelTrackStore(requireContext(), sessionId);
         loadTrackAsync();
+        
         updateFollowButton();
         followToggleButton.setOnClickListener(v -> toggleFollowMode());
         updateFollowInteraction();
@@ -144,6 +146,7 @@ public class MapFragment extends Fragment implements TripComputerListener, PipAw
         zoomOutButton.setOnClickListener(v -> mapView.getController().zoomOut());
         exportTripButton.setOnClickListener(v -> exportTripCsv());
         toggleMetricButton.setOnClickListener(v -> toggleMetric());
+        
         mapView.addMapListener(new MapListener() {
             @Override
             public boolean onScroll(ScrollEvent event) {
@@ -157,9 +160,11 @@ public class MapFragment extends Fragment implements TripComputerListener, PipAw
                 return false;
             }
         });
-        applyNightMode(isSystemNightMode());
+        
+        applyNightMode(isNightMode);
         updateLegendTitle();
         updatePipUiState(requireActivity().isInPictureInPictureMode());
+        mapReady = true;
     }
 
     @Override
@@ -183,11 +188,13 @@ public class MapFragment extends Fragment implements TripComputerListener, PipAw
         super.onResume();
         if (mapView != null) {
             mapView.onResume();
-            mapView.post(resumeRefreshRunnable);
         }
         if (myLocationOverlay != null) {
             ensureMyLocationProvider();
             myLocationOverlay.enableMyLocation();
+            if (followEnabled) {
+                myLocationOverlay.enableFollowLocation();
+            }
         }
         if (tripComputer != null) {
             tripComputer.addListener(LISTENER_ID, this);
@@ -197,20 +204,19 @@ public class MapFragment extends Fragment implements TripComputerListener, PipAw
 
     @Override
     public void onPause() {
+        super.onPause();
         if (tripComputer != null) {
             tripComputer.removeListener(LISTENER_ID);
-        }
-        if (trackStore != null) {
-            trackStore.flush();
         }
         if (myLocationOverlay != null) {
             myLocationOverlay.disableMyLocation();
         }
         if (mapView != null) {
-            mapView.removeCallbacks(resumeRefreshRunnable);
             mapView.onPause();
         }
-        super.onPause();
+        if (trackStore != null) {
+            trackStore.flush();
+        }
     }
 
     private void ensureMyLocationProvider() {
@@ -678,7 +684,8 @@ public class MapFragment extends Fragment implements TripComputerListener, PipAw
         if (mapView == null) {
             return;
         }
-        mapView.setTileSource(nightMode ? DARK_TILE_SOURCE : TileSourceFactory.MAPNIK);
+        ITileSource tileSource = nightMode ? DARK_TILE_SOURCE : TileSourceFactory.MAPNIK;
+        mapView.setTileSource(tileSource);
         mapView.setBackgroundColor(nightMode ? Color.BLACK : Color.WHITE);
         if (legendContainer != null) {
             legendContainer.setBackgroundColor(nightMode ? 0x66000000 : 0xCCFFFFFF);

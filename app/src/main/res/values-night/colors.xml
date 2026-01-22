@@ -29,5 +29,9 @@
     <color name="chart_background">#FF121212</color>
     <color name="chart_text_color">#FFFFFFFF</color>
     <color name="chart_no_data_text">#FF808080</color>
+    
+    <!-- Log colors - Dark theme -->
+    <color name="log_tx">#FF64B5F6</color>
+    <color name="log_rx">#FF81C784</color>
 </resources>
 
