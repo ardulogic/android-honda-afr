@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Global spacing scale -->
+    <dimen name="app_spacing_xs">4dp</dimen>
+    <dimen name="app_spacing_sm">8dp</dimen>
+    <dimen name="app_spacing_md">16dp</dimen>
+    <dimen name="app_spacing_lg">24dp</dimen>
+    <dimen name="app_icon_button_padding">13dp</dimen>
+
     <!-- Default dimensions for larger screens -->
     <dimen name="obd_layout_margin_horizontal">64dp</dimen>
     <dimen name="connect_button_width">150dp</dimen>

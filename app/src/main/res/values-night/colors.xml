@@ -1,15 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Scientific view colors - Dark theme -->
-    <color name="scientific_background">#FF121212</color>
-    <color name="scientific_text_primary">#FFFFFFFF</color>
-    <color name="scientific_text_secondary">#FFB0B0B0</color>
-    <color name="scientific_text_status">#FF808080</color>
-    <color name="button_background_primary">#FF424242</color>
-    <color name="button_background_secondary">#FF4A4A4A</color>
-    <color name="button_background_afr">#FF8B5CF6</color>
-    <color name="button_text_light">#FFFFFFFF</color>
-    <color name="button_text_dark">#FF000000</color>
+    <!-- Shared overlay colors -->
+    <color name="overlay_background">#66000000</color>
+
+    <!-- Global app colors - Dark theme -->
+    <color name="app_background">#FF121212</color>
+    <color name="app_text_primary">#FFFFFFFF</color>
+    <color name="app_text_secondary">#FFB0B0B0</color>
+    <color name="app_text_status">#FF808080</color>
+    <color name="app_button_primary_bg">#FF424242</color>
+    <color name="app_button_secondary_bg">#FF4A4A4A</color>
+    <color name="app_button_accent_bg">#FF8B5CF6</color>
+    <color name="app_button_text_light">#FFFFFFFF</color>
+    <color name="app_button_text_dark">#FF000000</color>
+
+    <!-- Legacy scientific/button aliases -->
+    <color name="scientific_background">@color/app_background</color>
+    <color name="scientific_text_primary">@color/app_text_primary</color>
+    <color name="scientific_text_secondary">@color/app_text_secondary</color>
+    <color name="scientific_text_status">@color/app_text_status</color>
+    <color name="button_background_primary">@color/app_button_primary_bg</color>
+    <color name="button_background_secondary">@color/app_button_secondary_bg</color>
+    <color name="button_background_afr">@color/app_button_accent_bg</color>
+    <color name="button_text_light">@color/app_button_text_light</color>
+    <color name="button_text_dark">@color/app_button_text_dark</color>
     
     <!-- Chart colors - Dark theme -->
     <color name="chart_background">#FF121212</color>
