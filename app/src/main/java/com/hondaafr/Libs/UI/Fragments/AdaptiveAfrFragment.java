@@ -42,7 +42,9 @@ public class AdaptiveAfrFragment extends Fragment implements TripComputerListene
     private static final String PREF_CELL_PREFIX = "cell_";
     private static final String PREF_PRESET = "adaptive_preset";
 
-    private LineChart chart;
+    private LineChart rpmChart;
+    private LineChart mapChart;
+    private LineChart afrChart;
     private LineDataSet rpmDataSet;
     private LineDataSet mapDataSet;
     private LineDataSet afrDataSet;
@@ -79,7 +81,9 @@ public class AdaptiveAfrFragment extends Fragment implements TripComputerListene
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        chart = view.findViewById(R.id.adaptiveAfrChart);
+        rpmChart = view.findViewById(R.id.adaptiveRpmChart);
+        mapChart = view.findViewById(R.id.adaptiveMapChart);
+        afrChart = view.findViewById(R.id.adaptiveAfrChart);
         textRpm = view.findViewById(R.id.textAdaptiveRpm);
         textMap = view.findViewById(R.id.textAdaptiveMap);
         textAfr = view.findViewById(R.id.textAdaptiveAfr);
@@ -135,11 +139,24 @@ public class AdaptiveAfrFragment extends Fragment implements TripComputerListene
         afrDataSet = createDataSet("AFR", Color.parseColor("#FFC107"));
         targetDataSet = createDataSet("Target AFR", Color.parseColor("#FF5722"));
 
-        LineData data = new LineData();
-        data.addDataSet(rpmDataSet);
-        data.addDataSet(mapDataSet);
-        data.addDataSet(afrDataSet);
-        data.addDataSet(targetDataSet);
+        configureChart(rpmChart, new LineData(rpmDataSet));
+        configureChart(mapChart, new LineData(mapDataSet));
+        LineData afrData = new LineData();
+        afrData.addDataSet(afrDataSet);
+        afrData.addDataSet(targetDataSet);
+        configureChart(afrChart, afrData);
+    }
+
+    private LineDataSet createDataSet(String label, int color) {
+        LineDataSet set = new LineDataSet(new ArrayList<>(), label);
+        set.setColor(color);
+        set.setDrawCircles(false);
+        set.setLineWidth(2f);
+        set.setDrawValues(false);
+        return set;
+    }
+
+    private void configureChart(LineChart chart, LineData data) {
         chart.setData(data);
         chart.getDescription().setEnabled(false);
         chart.setNoDataText("Waiting for data...");
@@ -150,15 +167,6 @@ public class AdaptiveAfrFragment extends Fragment implements TripComputerListene
         chart.getXAxis().setTextColor(Color.WHITE);
         Legend legend = chart.getLegend();
         legend.setTextColor(Color.WHITE);
-    }
-
-    private LineDataSet createDataSet(String label, int color) {
-        LineDataSet set = new LineDataSet(new ArrayList<>(), label);
-        set.setColor(color);
-        set.setDrawCircles(false);
-        set.setLineWidth(2f);
-        set.setDrawValues(false);
-        return set;
     }
 
     private void buildTable() {
@@ -221,11 +229,24 @@ public class AdaptiveAfrFragment extends Fragment implements TripComputerListene
         rpmDataSet.addEntry(new Entry(time, (float) lastRpm));
         mapDataSet.addEntry(new Entry(time, (float) lastMap));
         afrDataSet.addEntry(new Entry(time, (float) lastAfr));
-        chart.getData().notifyDataChanged();
-        chart.notifyDataSetChanged();
-        chart.setVisibleXRangeMaximum(30f);
-        chart.moveViewToX(time);
-        chart.invalidate();
+
+        rpmChart.getData().notifyDataChanged();
+        rpmChart.notifyDataSetChanged();
+        rpmChart.setVisibleXRangeMaximum(30f);
+        rpmChart.moveViewToX(time);
+        rpmChart.invalidate();
+
+        mapChart.getData().notifyDataChanged();
+        mapChart.notifyDataSetChanged();
+        mapChart.setVisibleXRangeMaximum(30f);
+        mapChart.moveViewToX(time);
+        mapChart.invalidate();
+
+        afrChart.getData().notifyDataChanged();
+        afrChart.notifyDataSetChanged();
+        afrChart.setVisibleXRangeMaximum(30f);
+        afrChart.moveViewToX(time);
+        afrChart.invalidate();
 
         double targetAfr = adaptiveEnabled ? lookupTargetAfr(lastRpm, lastMap) : Double.NaN;
         textRpm.setText(String.format("RPM: %.0f", lastRpm));
@@ -237,6 +258,9 @@ public class AdaptiveAfrFragment extends Fragment implements TripComputerListene
 
         if (adaptiveEnabled) {
             targetDataSet.addEntry(new Entry(time, (float) targetAfr));
+            afrChart.getData().notifyDataChanged();
+            afrChart.notifyDataSetChanged();
+            afrChart.invalidate();
             updateActiveCellFromLiveData(lastRpm, lastMap);
         }
     }

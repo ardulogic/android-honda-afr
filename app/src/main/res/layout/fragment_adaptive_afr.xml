@@ -6,12 +6,29 @@
     android:background="#0E0E0E">
 
     <com.github.mikephil.charting.charts.LineChart
-        android:id="@+id/adaptiveAfrChart"
+        android:id="@+id/adaptiveRpmChart"
         android:layout_width="0dp"
-        android:layout_height="220dp"
+        android:layout_height="140dp"
+        android:layout_marginTop="8dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <com.github.mikephil.charting.charts.LineChart
+        android:id="@+id/adaptiveMapChart"
+        android:layout_width="0dp"
+        android:layout_height="140dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/adaptiveRpmChart" />
+
+    <com.github.mikephil.charting.charts.LineChart
+        android:id="@+id/adaptiveAfrChart"
+        android:layout_width="0dp"
+        android:layout_height="140dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/adaptiveMapChart" />
 
     <LinearLayout
         android:id="@+id/layoutAdaptiveAfrInfo"
@@ -81,23 +98,22 @@
         android:id="@+id/switchAdaptiveAfr"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
         android:layout_marginTop="16dp"
         android:text="Adaptive AFR"
         android:textColor="#FFFFFF"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/scrollAdaptiveAfrTable" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <com.google.android.material.button.MaterialButtonToggleGroup
         android:id="@+id/toggleAdaptivePresets"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_margin="8dp"
-        android:layout_marginTop="16dp"
         android:gravity="center"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/switchAdaptiveAfr"
+        app:layout_constraintTop_toBottomOf="@+id/scrollAdaptiveAfrTable"
         app:singleSelection="true">
 
         <Button

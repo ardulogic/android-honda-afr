@@ -156,10 +156,13 @@ public class GaugePanel extends Panel  {
             textClusterLcd.setText(descriptor.formatter.format(tripComputer));
         }
 
-        if (tripComputer.mObdStudio.isReading()) {
+        boolean obdReading = tripComputer.mObdStudio.isReading() && tripComputer.mObdStudio.isAlive();
+        if (obdReading) {
             this.targetNeedleRotation = calculateNeedleRotation(tripComputer.instStats.getLphAvg());
         } else {
             this.targetNeedleRotation = calculateNeedleRotation(0);
+            currentNeedleRotation = targetNeedleRotation;
+            imageNeedle.setRotation(currentNeedleRotation);
         }
 
         int richFuelIconColor = tripComputer.afrIsRich() && tripComputer.mSpartanStudio.lastSensorAfr > 0 ? orange : gray;
