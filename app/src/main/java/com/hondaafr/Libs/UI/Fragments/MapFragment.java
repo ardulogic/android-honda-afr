@@ -89,6 +89,13 @@ public class MapFragment extends Fragment implements TripComputerListener, PipAw
     private boolean didInitialZoom = false;
     private boolean segmentBreakPending = false;
     private boolean useLph = false;
+    private boolean mapReady = false;
+    private final Runnable resumeRefreshRunnable = () -> {
+        if (mapReady && mapView != null && isAdded()) {
+            refreshTrackOverlays();
+            ensureInitialViewport();
+        }
+    };
 
     @Nullable
     @Override
@@ -124,6 +131,7 @@ public class MapFragment extends Fragment implements TripComputerListener, PipAw
         myLocationOverlay.enableMyLocation();
         myLocationOverlay.enableFollowLocation();
         mapView.getOverlays().add(myLocationOverlay);
+        mapReady = true;
 
         tripComputer = ((MainActivity) requireActivity()).getTripComputer();
         sessionId = tripComputer.tripStats.getSessionId(requireContext());
@@ -161,6 +169,13 @@ public class MapFragment extends Fragment implements TripComputerListener, PipAw
             trackLoadExecutor.shutdownNow();
             trackLoadExecutor = null;
         }
+        if (mapView != null) {
+            mapView.removeCallbacks(resumeRefreshRunnable);
+            mapView.getOverlays().clear();
+            mapView.onDetach();
+            mapView = null;
+        }
+        mapReady = false;
     }
 
     @Override
@@ -168,12 +183,10 @@ public class MapFragment extends Fragment implements TripComputerListener, PipAw
         super.onResume();
         if (mapView != null) {
             mapView.onResume();
-            mapView.post(() -> {
-                refreshTrackOverlays();
-                ensureInitialViewport();
-            });
+            mapView.post(resumeRefreshRunnable);
         }
         if (myLocationOverlay != null) {
+            ensureMyLocationProvider();
             myLocationOverlay.enableMyLocation();
         }
         if (tripComputer != null) {
@@ -194,9 +207,23 @@ public class MapFragment extends Fragment implements TripComputerListener, PipAw
             myLocationOverlay.disableMyLocation();
         }
         if (mapView != null) {
+            mapView.removeCallbacks(resumeRefreshRunnable);
             mapView.onPause();
         }
         super.onPause();
+    }
+
+    private void ensureMyLocationProvider() {
+        if (mapView == null) {
+            return;
+        }
+        if (myLocationOverlay == null || myLocationOverlay.getMyLocationProvider() == null) {
+            if (myLocationOverlay != null) {
+                mapView.getOverlays().remove(myLocationOverlay);
+            }
+            myLocationOverlay = new MyLocationNewOverlay(new GpsMyLocationProvider(requireContext()), mapView);
+            mapView.getOverlays().add(myLocationOverlay);
+        }
     }
 
     @Override
@@ -382,7 +409,8 @@ public class MapFragment extends Fragment implements TripComputerListener, PipAw
     }
 
     private void refreshTrackOverlays() {
-        if (mapView == null) {
+        MapView mapViewRef = mapView;
+        if (mapViewRef == null || !isAdded()) {
             return;
         }
 
@@ -393,13 +421,13 @@ public class MapFragment extends Fragment implements TripComputerListener, PipAw
         lastRenderMs = now;
 
         for (Polyline segment : renderedSegments) {
-            mapView.getOverlayManager().remove(segment);
+            mapViewRef.getOverlayManager().remove(segment);
         }
         renderedSegments.clear();
 
         if (fuelSamples.size() < 2) {
             updateFuelLabels();
-            mapView.invalidate();
+            mapViewRef.invalidate();
             return;
         }
 
@@ -439,12 +467,12 @@ public class MapFragment extends Fragment implements TripComputerListener, PipAw
             segment.setColor(consumptionToColor(metricValue));
             segment.setWidth(TRACK_WIDTH);
             renderedSegments.add(segment);
-            mapView.getOverlayManager().add(segment);
+            mapViewRef.getOverlayManager().add(segment);
             prev = curr;
         }
 
         updateFuelLabels();
-        mapView.invalidate();
+        mapViewRef.invalidate();
     }
 
     private boolean shouldRenderSegment(TripFuelTrackStore.TrackPoint a,
@@ -467,21 +495,28 @@ public class MapFragment extends Fragment implements TripComputerListener, PipAw
     }
 
     private void updateFuelLabels() {
-        if (mapView == null) {
+        MapView mapViewRef = mapView;
+        if (!mapReady || mapViewRef == null || !isAdded()) {
+            return;
+        }
+        if (!mapViewRef.isAttachedToWindow()) {
+            return;
+        }
+        if (mapViewRef.getRepository() == null) {
             return;
         }
 
         for (Marker marker : fuelLabels) {
-            mapView.getOverlayManager().remove(marker);
+            mapViewRef.getOverlayManager().remove(marker);
         }
         fuelLabels.clear();
 
         if (fuelSamples.isEmpty()) {
-            mapView.invalidate();
+            mapViewRef.invalidate();
             return;
         }
 
-        Projection projection = mapView.getProjection();
+        Projection projection = mapViewRef.getProjection();
         int minPixelSpacing = MIN_LABEL_SPACING_PX;
         Point lastPixel = null;
 
@@ -503,7 +538,7 @@ public class MapFragment extends Fragment implements TripComputerListener, PipAw
                 }
             }
 
-            Marker marker = new Marker(mapView);
+            Marker marker = new Marker(mapViewRef);
             marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
             marker.setPosition(new GeoPoint(sample.latitude, sample.longitude));
             marker.setTitle(String.format("%.1f", metricValue));
@@ -513,12 +548,12 @@ public class MapFragment extends Fragment implements TripComputerListener, PipAw
             marker.setInfoWindow(null);
             marker.setTextIcon(String.format("%.1f", metricValue));
             fuelLabels.add(marker);
-            mapView.getOverlayManager().add(marker);
+            mapViewRef.getOverlayManager().add(marker);
 
             lastPixel = pixel;
         }
 
-        mapView.invalidate();
+        mapViewRef.invalidate();
     }
 
     private int lerpColor(int start, int end, double t) {

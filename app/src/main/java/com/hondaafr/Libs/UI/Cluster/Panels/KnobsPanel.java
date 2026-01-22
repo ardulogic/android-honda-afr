@@ -67,6 +67,7 @@ public class KnobsPanel extends Panel {
     private void setKnobOnLongClick(ImageButton b, TotalStats stats) {
         b.setOnLongClickListener(v -> {
             stats.reset(mainActivity);
+            tripComputer.notifyCalculationsUpdated();
             updateGauge();
 
             if (vibrator != null) {
