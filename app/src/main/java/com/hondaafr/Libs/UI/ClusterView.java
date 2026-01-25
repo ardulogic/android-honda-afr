@@ -3,6 +3,7 @@ package com.hondaafr.Libs.UI;
 import android.graphics.Color;
 import android.view.View;
 
+import com.hondaafr.Libs.Helpers.AfrComputer.AfrComputer;
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputer;
 import com.hondaafr.Libs.UI.Cluster.Panels.GaugePanel;
 import com.hondaafr.Libs.UI.Cluster.Panels.KnobsPanel;
@@ -18,13 +19,8 @@ public class ClusterView extends UiView {
         return "cluster_view";
     }
 
-    public ClusterView(MainActivity mainActivity, TripComputer tripComputer, View rootView) {
-        super(mainActivity, tripComputer, rootView);
-
-        getContainerView().setOnLongClickListener(v -> {
-            mainActivity.showScientific();
-            return true;
-        });
+    public ClusterView(MainActivity mainActivity, TripComputer tripComputer, AfrComputer afrComputer, View rootView) {
+        super(mainActivity, tripComputer, afrComputer, rootView);
 
         getContainerView().setOnClickListener(v -> toggleSystemUI());
     }
@@ -33,7 +29,7 @@ public class ClusterView extends UiView {
     public Panel[] initPanels() {
         return new Panel[]{
                 new BeeperPanel(mainActivity, tripComputer, this),
-                new GaugePanel(mainActivity, tripComputer, this),
+                new GaugePanel(mainActivity, tripComputer, this, afrComputer),
                 new KnobsPanel(mainActivity, tripComputer, this),
         };
     }

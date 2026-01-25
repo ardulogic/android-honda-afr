@@ -24,5 +24,5 @@ public class ObdMap extends ObdReading {
     public int getDataByteCount() {
         return 1;
     }
-
+    
 }

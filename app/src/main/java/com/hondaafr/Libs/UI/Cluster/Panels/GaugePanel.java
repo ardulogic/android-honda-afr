@@ -12,13 +12,16 @@ import android.widget.TextView;
 
 import com.hondaafr.Libs.Devices.Obd.Readings.ObdReading;
 import com.hondaafr.Libs.Devices.Phone.PhoneGps;
+import com.hondaafr.Libs.Helpers.AfrComputer.AfrComputer;
+import com.hondaafr.Libs.Helpers.AfrComputer.AfrComputerListener;
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputer;
+import com.hondaafr.Libs.UI.AdaptiveAfr.AdaptiveAfrState;
 import com.hondaafr.Libs.UI.Scientific.Panels.Panel;
 import com.hondaafr.Libs.UI.UiView;
 import com.hondaafr.MainActivity;
 import com.hondaafr.R;
 
-public class GaugePanel extends Panel  {
+public class GaugePanel extends Panel implements AfrComputerListener {
 
     private final ImageView imageNeedle;
     private final TextView textClusterLcd;
@@ -28,8 +31,10 @@ public class GaugePanel extends Panel  {
     private final ImageView imageObd;
     private final ImageView imageAfr;
     private final ImageView imageGps;
+    private final ImageView imageAfrAdaptive;
     private final ImageView imageGauge;
     private final ImageView imageLcd;
+    private AfrComputer afrComputer;
     private ValueAnimator needleAnimator;
     private ValueAnimator gpsAnimator;
     private float targetNeedleRotation = 0;
@@ -38,6 +43,7 @@ public class GaugePanel extends Panel  {
     int gray = 0xFF222222;
     int red = 0xFFC82B28;
     int orange = 0xFFFFA500;
+    int green = 0xFF5F9529;
 
     @Override
     public int getContainerId() {
@@ -50,9 +56,10 @@ public class GaugePanel extends Panel  {
     }
 
 
-    public GaugePanel(MainActivity mainActivity, TripComputer tripComputer, UiView view) {
+    public GaugePanel(MainActivity mainActivity, TripComputer tripComputer, UiView view, AfrComputer afrComputer) {
         super(mainActivity, tripComputer, view);
 
+        this.afrComputer = afrComputer;
         this.imageNeedle = rootView.findViewById(R.id.imageClusterNeedle);
         this.imageGauge = rootView.findViewById(R.id.imageClusterGauge);
         this.imageLcd = rootView.findViewById(R.id.imageClusterLcd);
@@ -63,6 +70,11 @@ public class GaugePanel extends Panel  {
         this.imageObd = rootView.findViewById(R.id.imageClusterObd);
         this.imageAfr = rootView.findViewById(R.id.imageClusterAfr);
         this.imageGps = rootView.findViewById(R.id.imageClusterGps);
+        this.imageAfrAdaptive = rootView.findViewById(R.id.imageClusterAfrAdaptive);
+        
+        if (afrComputer != null) {
+            afrComputer.addListener(getListenerId(), this);
+        }
     }
 
     @Override
@@ -71,6 +83,7 @@ public class GaugePanel extends Panel  {
 
         updateAfrCel();
         updateObdCel();
+        updateAdaptiveAfrIcon();
         updateDisplay();
     }
 
@@ -83,7 +96,8 @@ public class GaugePanel extends Panel  {
                 textClusterLcdMode2,
                 imageRichFuel,
                 imageObd,
-                imageAfr
+                imageAfr,
+                imageAfrAdaptive
         };
     }
 
@@ -98,6 +112,7 @@ public class GaugePanel extends Panel  {
             imageAfr.setImageResource(R.drawable.afr_night);
             imageGps.setImageResource(R.drawable.gps_night);
             imageRichFuel.setImageResource(R.drawable.fuel_gauge_rich_fuel_night);
+            imageAfrAdaptive.setImageResource(R.drawable.afr_adaptive_night);
         } else {
             imageNeedle.setImageResource(R.drawable.fuel_gauge_needle_day);
             imageGauge.setImageResource(R.drawable.fuel_gauge_day);
@@ -107,6 +122,7 @@ public class GaugePanel extends Panel  {
             imageAfr.setImageResource(R.drawable.afr);
             imageGps.setImageResource(R.drawable.gps);
             imageRichFuel.setImageResource(R.drawable.fuel_gauge_rich_fuel);
+            imageAfrAdaptive.setImageResource(R.drawable.afr_adaptive);
         }
     }
 
@@ -306,6 +322,14 @@ public class GaugePanel extends Panel  {
         imageAfr.setTag(afrConnectionColor);
     }
 
+    public void updateAdaptiveAfrIcon() {
+        if (afrComputer.getState().isAdaptiveEnabled()) {
+            imageAfrAdaptive.setColorFilter(green);
+        } else {
+            imageAfrAdaptive.setColorFilter(gray);
+        }
+    }
+
     @Override
     public void onObdValue(ObdReading reading) {
         updateDisplay();
@@ -314,6 +338,17 @@ public class GaugePanel extends Panel  {
     public void onAfrValue(Double afr) {
         updateDisplay();
     }
+    
+    @Override
+    public void onAdaptiveAfrDataUpdated(AdaptiveAfrState state) {
+        // Not needed for this panel
+    }
+    
+    @Override
+    public void onIsActivatedChanged(AdaptiveAfrState state) {
+        updateAdaptiveAfrIcon();
+    }
+       
     @Override
     public boolean visibleInPip() {
         return true;

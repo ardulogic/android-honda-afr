@@ -92,7 +92,8 @@
                 android:layout_marginBottom="@dimen/app_spacing_md"
                 android:gravity="center"
                 android:orientation="horizontal"
-                android:padding="@dimen/app_spacing_sm">
+                android:padding="@dimen/app_spacing_sm"
+                android:visibility="gone">
 
                 <TextView
                     android:id="@+id/textStatusObd"

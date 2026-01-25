@@ -48,6 +48,13 @@ public class BluetoothConnectionManager {
                             intent.getStringExtra(BluetoothStates.KEY_DEVICE_ID)
                     );
                     break;
+                    
+                case BluetoothStates.EVENT_DATA_RECEIVED:
+                    onBluetoothDataReceived(
+                            intent.getStringExtra(BluetoothStates.KEY_DATA),
+                            intent.getStringExtra(BluetoothStates.KEY_DEVICE_ID)
+                    );
+                    break;
             }
         }
     };
@@ -131,6 +138,17 @@ public class BluetoothConnectionManager {
                 Log.d(TAG, "Device disconnected: " + deviceId + " - auto-reconnecting");
                 reconnectDeviceSoon(deviceId);
                 break;
+        }
+    }
+    
+    private void onBluetoothDataReceived(String data, String deviceId) {
+        // Route data to the appropriate studio for processing (app-wide handling)
+        if (tripComputer != null && data != null && !data.trim().isEmpty()) {
+            if ("spartan".equals(deviceId) && tripComputer.mSpartanStudio != null) {
+                tripComputer.mSpartanStudio.onDataReceived(data);
+            } else if ("obd".equals(deviceId) && tripComputer.mObdStudio != null) {
+                tripComputer.mObdStudio.onDataReceived(data);
+            }
         }
     }
     

@@ -8,19 +8,17 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
-import androidx.fragment.app.Fragment;
 
+import com.hondaafr.Libs.Helpers.AfrComputer.AfrComputer;
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputer;
 import com.hondaafr.Libs.UI.ClusterView;
 import com.hondaafr.MainActivity;
 import com.hondaafr.R;
 
-public class ClusterFragment extends Fragment implements PipAware {
+public class ClusterFragment extends BaseFragment {
     private ClusterView clusterView;
     private TripComputer tripComputer;
+    private AfrComputer afrComputer;
 
     @Nullable
     @Override
@@ -32,15 +30,11 @@ public class ClusterFragment extends Fragment implements PipAware {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        tripComputer = ((MainActivity) requireActivity()).getTripComputer();
-        clusterView = new ClusterView((MainActivity) requireActivity(), tripComputer, view);
+        MainActivity mainActivity = (MainActivity) requireActivity();
+        tripComputer = mainActivity.getTripComputer();
+        afrComputer = mainActivity.getAdaptiveAfrComputer();
+        clusterView = new ClusterView(mainActivity, tripComputer, afrComputer, view);
         clusterView.setVisibility(true);
-
-        ViewCompat.setOnApplyWindowInsetsListener(view, (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
     }
 
     @Override

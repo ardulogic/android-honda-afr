@@ -54,7 +54,9 @@ abstract public class Panel extends Debuggable implements TripComputerListener {
     }
 
     public void setVisibility(boolean visible) {
-        container.setVisibility(visible ? View.VISIBLE : View.GONE);
+        if (container != null) {
+            container.setVisibility(visible ? View.VISIBLE : View.GONE);
+        }
     }
 
     public View[] getViewsHiddenInPip() {
@@ -62,7 +64,9 @@ abstract public class Panel extends Debuggable implements TripComputerListener {
     }
 
     public void isVisible(boolean visible) {
-        container.setVisibility(visible ? View.VISIBLE : View.GONE);
+        if (container != null) {
+            container.setVisibility(visible ? View.VISIBLE : View.GONE);
+        }
     }
 
     abstract public int getContainerId();
@@ -74,10 +78,14 @@ abstract public class Panel extends Debuggable implements TripComputerListener {
 
     public void enterPip() {
         isInPip = true;
-        visibleBeforePip = getContainerView().getVisibility() == View.VISIBLE;
+        View containerView = getContainerView();
+        if (containerView == null) {
+            return;
+        }
+        visibleBeforePip = containerView.getVisibility() == View.VISIBLE;
 
         if (!visibleInPip()) {
-            getContainerView().setVisibility(View.GONE);
+            containerView.setVisibility(View.GONE);
         } else {
             View[] viewsHiddenInPip = getViewsHiddenInPip();
             if (viewsHiddenInPip != null) {
@@ -92,9 +100,13 @@ abstract public class Panel extends Debuggable implements TripComputerListener {
 
     public void exitPip() {
         isInPip = false;
+        View containerView = getContainerView();
+        if (containerView == null) {
+            return;
+        }
 
         if (visibleBeforePip)
-            getContainerView().setVisibility(View.VISIBLE);
+            containerView.setVisibility(View.VISIBLE);
 
         // Restore visibility of views hidden during PiP mode
         View[] viewsHiddenInPip = getViewsHiddenInPip();

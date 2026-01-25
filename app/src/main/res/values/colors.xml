@@ -37,4 +37,8 @@
     <!-- Log colors - Light theme -->
     <color name="log_tx">#FF2196F3</color>
     <color name="log_rx">#FF4CAF50</color>
+    
+    <!-- LED indicator colors -->
+    <color name="led_green">#00FF66</color>
+    <color name="led_gray">#666666</color>
 </resources>

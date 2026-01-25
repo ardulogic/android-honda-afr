@@ -8,17 +8,13 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
-import androidx.fragment.app.Fragment;
 
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputer;
 import com.hondaafr.Libs.UI.ScientificView;
 import com.hondaafr.MainActivity;
 import com.hondaafr.R;
 
-public class ScientificFragment extends Fragment implements PipAware {
+public class ScientificFragment extends BaseFragment {
     private ScientificView scientificView;
     private TripComputer tripComputer;
 
@@ -35,12 +31,6 @@ public class ScientificFragment extends Fragment implements PipAware {
         tripComputer = ((MainActivity) requireActivity()).getTripComputer();
         scientificView = new ScientificView((MainActivity) requireActivity(), tripComputer, view);
         scientificView.setVisibility(true);
-
-        ViewCompat.setOnApplyWindowInsetsListener(view, (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
     }
 
     @Override

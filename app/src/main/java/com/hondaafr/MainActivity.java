@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.util.Rational;
+import android.view.View;
 import android.view.WindowManager;
 
 import androidx.activity.EdgeToEdge;
@@ -16,6 +17,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.hondaafr.Libs.Bluetooth.Services.BluetoothForegroundService;
+import com.hondaafr.Libs.Helpers.AfrComputer.AfrComputer;
 import com.hondaafr.Libs.Helpers.Permissions;
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputer;
 import com.hondaafr.Libs.UI.Fragments.PipAware;
@@ -27,6 +29,7 @@ public class MainActivity extends AppCompatActivity {
     private MainActivity mContext;
     private boolean canEnterPip = false;
     private TripComputer mTripComputer;
+    private AfrComputer mAfrComputer;
     private ViewPager2 viewPager;
     private MainPagerAdapter pagerAdapter;
     private com.hondaafr.Libs.Bluetooth.BluetoothConnectionManager bluetoothConnectionManager;
@@ -34,8 +37,21 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        
+        // Set status bar and navigation bar to transparent before EdgeToEdge to prevent color flash
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            getWindow().setStatusBarColor(android.graphics.Color.TRANSPARENT);
+            getWindow().setNavigationBarColor(android.graphics.Color.TRANSPARENT);
+        }
+        
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
+        
+        // Setup EdgeToEdge window insets handling at activity level
+        View rootView = findViewById(R.id.main);
+        if (rootView != null) {
+            com.hondaafr.Libs.Helpers.EdgeToEdgeHelper.setup(rootView);
+        }
 
         Permissions.askForAllPermissions(this);
 
@@ -45,6 +61,7 @@ public class MainActivity extends AppCompatActivity {
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         mTripComputer = new TripComputer(this);
+        mAfrComputer = new AfrComputer(this, mTripComputer);
         bluetoothConnectionManager = new com.hondaafr.Libs.Bluetooth.BluetoothConnectionManager(this, mTripComputer);
         viewPager = findViewById(R.id.viewPager);
         pagerAdapter = new MainPagerAdapter(this);
@@ -144,6 +161,9 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
 
         mTripComputer.onResume(this);
+        if (mAfrComputer != null) {
+            mAfrComputer.onResume(this);
+        }
         if (bluetoothConnectionManager != null) {
             bluetoothConnectionManager.onResume();
         }
@@ -155,6 +175,9 @@ public class MainActivity extends AppCompatActivity {
         super.onPause();
 
         mTripComputer.onPause(this);
+        if (mAfrComputer != null) {
+            mAfrComputer.onPause(this);
+        }
     }
 
     @Override
@@ -163,6 +186,9 @@ public class MainActivity extends AppCompatActivity {
 
         if (bluetoothConnectionManager != null) {
             bluetoothConnectionManager.onDestroy();
+        }
+        if (mAfrComputer != null) {
+            mAfrComputer.onDestroy(this);
         }
         mTripComputer.onDestroy(this);
 
@@ -190,6 +216,10 @@ public class MainActivity extends AppCompatActivity {
 
     public TripComputer getTripComputer() {
         return mTripComputer;
+    }
+
+    public AfrComputer getAdaptiveAfrComputer() {
+        return mAfrComputer;
     }
 
     public void setSwipeEnabled(boolean enabled) {

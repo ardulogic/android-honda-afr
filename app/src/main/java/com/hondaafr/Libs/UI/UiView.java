@@ -10,6 +10,7 @@ import androidx.annotation.RequiresApi;
 
 import com.hondaafr.Libs.Devices.Obd.Readings.ObdReading;
 import com.hondaafr.Libs.Devices.Phone.PhoneGps;
+import com.hondaafr.Libs.Helpers.AfrComputer.AfrComputer;
 import com.hondaafr.Libs.Helpers.Debuggable;
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputer;
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputerListener;
@@ -20,6 +21,7 @@ abstract public class UiView extends Debuggable implements TripComputerListener 
 
     protected final MainActivity mainActivity;
     protected final TripComputer tripComputer;
+    protected final AfrComputer afrComputer;
     protected final Panel[] panels;
     private final View rootView;
     private final View container;
@@ -34,6 +36,19 @@ abstract public class UiView extends Debuggable implements TripComputerListener 
     public UiView(MainActivity mainActivity, TripComputer tripComputer, View rootView) {
         this.mainActivity = mainActivity;
         this.tripComputer = tripComputer;
+        this.afrComputer = null;
+        this.rootView = rootView;
+        this.container = rootView.findViewById(getContainerId());
+        panels = initPanels();
+
+        attachListener();
+        notifyPanelsLoaded();
+    }
+
+    public UiView(MainActivity mainActivity, TripComputer tripComputer, AfrComputer afrComputer, View rootView) {
+        this.mainActivity = mainActivity;
+        this.tripComputer = tripComputer;
+        this.afrComputer = afrComputer;
         this.rootView = rootView;
         this.container = rootView.findViewById(getContainerId());
         panels = initPanels();
@@ -130,17 +145,20 @@ abstract public class UiView extends Debuggable implements TripComputerListener 
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
             WindowInsetsController insetsController = mainActivity.getWindow().getInsetsController();
             if (insetsController != null) {
+                // Check if system bars (status + navigation) are visible
                 boolean isVisible = mainActivity.getWindow()
                         .getDecorView()
                         .getRootWindowInsets()
-                        .isVisible(WindowInsets.Type.navigationBars());
+                        .isVisible(WindowInsets.Type.systemBars());
 
                 if (isVisible) {
-                    insetsController.hide(WindowInsets.Type.navigationBars());
+                    // Hide both status and navigation bars
+                    insetsController.hide(WindowInsets.Type.systemBars());
                     insetsController.setSystemBarsBehavior(
                             WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
                 } else {
-                    insetsController.show(WindowInsets.Type.navigationBars());
+                    // Show both status and navigation bars
+                    insetsController.show(WindowInsets.Type.systemBars());
                 }
             }
         } else {

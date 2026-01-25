@@ -15,7 +15,6 @@ import com.hondaafr.Libs.Bluetooth.BluetoothStates;
 import com.hondaafr.Libs.Bluetooth.BluetoothUtils;
 import com.hondaafr.Libs.Bluetooth.Services.BluetoothService;
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputer;
-import com.hondaafr.Libs.UI.Scientific.Panels.GenericStatusPanel;
 import com.hondaafr.Libs.UI.Scientific.Panels.Panel;
 import com.hondaafr.Libs.UI.UiView;
 import com.hondaafr.MainActivity;
@@ -23,7 +22,6 @@ import com.hondaafr.R;
 
 public class ConnectionControlPanel extends Panel {
 
-    private final GenericStatusPanel genericStatusPanel;
     private final Button buttonConnectObd;
     private final Button buttonConnectSpartan;
     
@@ -47,10 +45,7 @@ public class ConnectionControlPanel extends Panel {
                     break;
                     
                 case BluetoothStates.EVENT_DATA_RECEIVED:
-                    onBluetoothDataReceived(
-                            intent.getStringExtra(BluetoothStates.KEY_DATA),
-                            intent.getStringExtra(BluetoothStates.KEY_DEVICE_ID)
-                    );
+                    // Data routing is handled app-wide by BluetoothConnectionManager
                     break;
             }
         }
@@ -68,8 +63,6 @@ public class ConnectionControlPanel extends Panel {
 
     public ConnectionControlPanel(MainActivity mainActivity, TripComputer tripComputer, UiView parent) {
         super(mainActivity, tripComputer, parent);
-        
-        genericStatusPanel = new GenericStatusPanel(mainActivity, tripComputer, parent);
         
         buttonConnectObd = rootView.findViewById(R.id.buttonConnectObd);
         buttonConnectObd.setOnClickListener(v -> connectObd());
@@ -95,7 +88,6 @@ public class ConnectionControlPanel extends Panel {
         } else {
             mainActivity.registerReceiver(btReceiver, btUiUpdateIntentFilter);
         }
-        updateConnectionStatus();
     }
 
     @Override
@@ -114,7 +106,6 @@ public class ConnectionControlPanel extends Panel {
 
     private void onBluetoothServiceStateChanged(int state) {
         // Just update UI - auto-connect is handled app-wide
-        updateConnectionStatus();
     }
 
     private void onBluetoothStateChanged(int state, String deviceId) {
@@ -125,7 +116,6 @@ public class ConnectionControlPanel extends Panel {
             // Device-specific state change
             handleDeviceBluetoothState(state, deviceId);
         }
-        updateConnectionStatus();
     }
 
     private void handleGlobalBluetoothState(int state) {
@@ -166,21 +156,6 @@ public class ConnectionControlPanel extends Panel {
                 break;
         }
     }
-
-    private void onBluetoothDataReceived(String data, String deviceId) {
-        // Handle data received - can update status if needed
-    }
-
-    private void updateConnectionStatus() {
-        // Update status text views via GenericStatusPanel
-        boolean obdConnected = tripComputer != null && tripComputer.mObdStudio != null && tripComputer.mObdStudio.isAlive();
-        boolean spartanConnected = tripComputer != null && tripComputer.mSpartanStudio != null && tripComputer.mSpartanStudio.isAlive();
-        
-        genericStatusPanel.onObdUpdate(obdConnected ? "Connected" : "Disconnected");
-        genericStatusPanel.onSpartanUpdate(spartanConnected ? "Connected" : "Disconnected");
-        genericStatusPanel.onGenericUpdate(obdConnected && spartanConnected ? "Ready" : "Waiting");
-    }
-
     private void setConnectButtonsEnabled(boolean enabled, String label) {
         updateConnectButton(buttonConnectObd, label, enabled);
         updateConnectButton(buttonConnectSpartan, label, enabled);

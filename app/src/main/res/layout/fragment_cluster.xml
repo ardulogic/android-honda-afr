@@ -126,6 +126,20 @@
             app:srcCompat="@drawable/afr" />
 
         <ImageView
+            android:id="@+id/imageClusterAfrAdaptive"
+            android:layout_width="@dimen/cluster_icon_small"
+            android:layout_height="@dimen/cluster_icon_small"
+            android:adjustViewBounds="true"
+            android:foregroundGravity="center"
+            android:foregroundTintMode="add"
+            android:scaleType="fitCenter"
+            android:tint="#222222"
+            app:layout_constraintBottom_toBottomOf="@+id/imageClusterGps"
+            app:layout_constraintStart_toEndOf="@+id/imageClusterGps"
+            app:layout_constraintTop_toTopOf="@+id/imageClusterGps"
+            app:srcCompat="@drawable/afr_adaptive" />
+
+        <ImageView
             android:id="@+id/imageClusterNeedle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -134,6 +148,7 @@
             app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="@id/imageClusterGauge"
             app:layout_constraintTop_toTopOf="@id/imageClusterGauge"
+            app:layout_constraintVertical_bias="1.0"
             app:srcCompat="@drawable/fuel_gauge_needle_night" />
 
         <TextView
