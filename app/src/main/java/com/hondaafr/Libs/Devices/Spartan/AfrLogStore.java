@@ -1,4 +1,4 @@
-package com.hondaafr.Libs.Devices.Obd;
+package com.hondaafr.Libs.Devices.Spartan;
 
 import android.os.Handler;
 import android.os.Looper;
@@ -9,7 +9,7 @@ import java.util.Deque;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public class ObdLogStore {
+public class AfrLogStore {
     private static final int MAX_ENTRIES = 100;
     private static final Deque<LogEntry> entries = new ArrayDeque<>();
     private static final CopyOnWriteArrayList<LogListener> listeners = new CopyOnWriteArrayList<>();

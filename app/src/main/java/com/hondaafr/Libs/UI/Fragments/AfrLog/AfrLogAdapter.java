@@ -1,4 +1,4 @@
-package com.hondaafr.Libs.UI.Fragments.ObdLog;
+package com.hondaafr.Libs.UI.Fragments.AfrLog;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -9,7 +9,7 @@ import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.hondaafr.Libs.Devices.Obd.ObdLogStore;
+import com.hondaafr.Libs.Devices.Spartan.AfrLogStore;
 import com.hondaafr.R;
 
 import java.text.SimpleDateFormat;
@@ -18,14 +18,14 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-public class ObdLogAdapter extends RecyclerView.Adapter<ObdLogAdapter.LogViewHolder> {
-    private final List<ObdLogStore.LogEntry> items = new ArrayList<>();
+public class AfrLogAdapter extends RecyclerView.Adapter<AfrLogAdapter.LogViewHolder> {
+    private final List<AfrLogStore.LogEntry> items = new ArrayList<>();
     private final SimpleDateFormat timeFormat =
             new SimpleDateFormat("HH:mm:ss.SSS", Locale.getDefault());
     private boolean showTimestamp = true;
     private int maxItems = Integer.MAX_VALUE;
 
-    public void setItems(List<ObdLogStore.LogEntry> entries) {
+    public void setItems(List<AfrLogStore.LogEntry> entries) {
         items.clear();
         if (entries != null) {
             if (entries.size() > maxItems) {
@@ -58,7 +58,7 @@ public class ObdLogAdapter extends RecyclerView.Adapter<ObdLogAdapter.LogViewHol
 
     @Override
     public void onBindViewHolder(@NonNull LogViewHolder holder, int position) {
-        ObdLogStore.LogEntry entry = items.get(position);
+        AfrLogStore.LogEntry entry = items.get(position);
         if (showTimestamp) {
             holder.textTime.setVisibility(View.VISIBLE);
             holder.textTime.setText(timeFormat.format(new Date(entry.timestamp)));

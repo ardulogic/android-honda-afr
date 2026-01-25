@@ -21,17 +21,9 @@ public class EdgeToEdgeHelper {
      */
     public static void setup(@NonNull View rootView) {
         ViewCompat.setOnApplyWindowInsetsListener(rootView, (v, insets) -> {
-            // Get insets for system bars (status bar + navigation bar)
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            // Apply padding based on current system bar visibility
-            // When bars are hidden, insets will be 0, so padding will be removed
-            // When bars are shown, insets will have values, so padding will be applied
-            //v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            // Consume insets to prevent propagation to child views
             return WindowInsetsCompat.CONSUMED;
         });
         
-        // Request window insets to ensure the listener is called
         ViewCompat.requestApplyInsets(rootView);
     }
 }

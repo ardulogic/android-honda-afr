@@ -79,6 +79,7 @@ public class ConnectionFragment extends BaseFragment {
     @Override
     public void onEnterPip() {
         if (connectionView != null) {
+            connectionView.showPipView();
             ObdLogPanel obdLogPanel = connectionView.getPanel(ObdLogPanel.class);
             if (obdLogPanel != null) {
                 obdLogPanel.setShowTimestamp(false);
@@ -90,6 +91,7 @@ public class ConnectionFragment extends BaseFragment {
     @Override
     public void onExitPip() {
         if (connectionView != null) {
+            connectionView.restoreFullView();
             ObdLogPanel obdLogPanel = connectionView.getPanel(ObdLogPanel.class);
             if (obdLogPanel != null) {
                 obdLogPanel.setShowTimestamp(true);

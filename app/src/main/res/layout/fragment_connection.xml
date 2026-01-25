@@ -52,39 +52,7 @@
             android:orientation="vertical"
             android:padding="@dimen/app_spacing_sm">
 
-            <!-- Connect Buttons Section -->
-            <LinearLayout
-                android:id="@+id/layoutConnectButtons"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/app_spacing_md"
-                android:gravity="center"
-                android:orientation="horizontal">
-
-                <Button
-                    android:id="@+id/buttonConnectObd"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:backgroundTint="@color/app_button_primary_bg"
-                    android:text="Connect OBD"
-                    android:textColor="@color/app_button_text_light" />
-
-                <Space
-                    android:layout_width="@dimen/app_spacing_sm"
-                    android:layout_height="match_parent" />
-
-                <Button
-                    android:id="@+id/buttonConnectSpartan"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:backgroundTint="@color/app_button_primary_bg"
-                    android:text="Connect AFR"
-                    android:textColor="@color/app_button_text_light" />
-            </LinearLayout>
-
-            <!-- Connection Status -->
+            <!-- Connection Status: Panel currently removed.-->
             <LinearLayout
                 android:id="@+id/layoutConnStatus"
                 android:layout_width="match_parent"

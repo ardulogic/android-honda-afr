@@ -4,7 +4,6 @@ import android.view.View;
 
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputer;
 import com.hondaafr.Libs.UI.Connection.Panels.AfrLogPanel;
-import com.hondaafr.Libs.UI.Connection.Panels.ConnectionControlPanel;
 import com.hondaafr.Libs.UI.Connection.Panels.LogTabsPanel;
 import com.hondaafr.Libs.UI.Connection.Panels.ObdLogPanel;
 import com.hondaafr.Libs.UI.Scientific.Panels.Panel;
@@ -30,7 +29,6 @@ public class ConnectionView extends UiView {
     @Override
     public Panel[] initPanels() {
         return new Panel[]{
-                new ConnectionControlPanel(mainActivity, tripComputer, this),
                 new LogTabsPanel(mainActivity, tripComputer, this),
                 new ObdLogPanel(mainActivity, tripComputer, this),
                 new AfrLogPanel(mainActivity, tripComputer, this),

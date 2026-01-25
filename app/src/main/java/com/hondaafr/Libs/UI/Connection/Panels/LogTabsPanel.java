@@ -12,6 +12,9 @@ import com.hondaafr.Libs.UI.UiView;
 import com.hondaafr.MainActivity;
 import com.hondaafr.R;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class LogTabsPanel extends Panel {
 
     private MaterialButtonToggleGroup toggleLogTabs;
@@ -34,6 +37,26 @@ public class LogTabsPanel extends Panel {
     @Override
     public String getListenerId() {
         return "log_tabs_panel";
+    }
+
+    @Override
+    public boolean visibleInPip() {
+        return true;
+    }
+
+    @Override
+    public View[] getViewsHiddenInPip() {
+        // Hide the tab toggle buttons and header layouts (which contain auto/clear buttons) in PiP, but keep the log content visible
+        View obdLogHeader = rootView.findViewById(R.id.layoutObdLogHeader);
+        View afrLogHeader = rootView.findViewById(R.id.layoutAfrLogHeader);
+        
+        // Build array with non-null views
+        List<View> viewsToHide = new ArrayList<>();
+        viewsToHide.add(toggleLogTabs);
+        if (obdLogHeader != null) viewsToHide.add(obdLogHeader);
+        if (afrLogHeader != null) viewsToHide.add(afrLogHeader);
+        
+        return viewsToHide.toArray(new View[0]);
     }
 
     public LogTabsPanel(MainActivity mainActivity, TripComputer tripComputer, UiView parent) {
