@@ -94,6 +94,63 @@
                     android:textSize="12sp" />
             </LinearLayout>
 
+            <!-- Simulator Section -->
+            <LinearLayout
+                android:id="@+id/layoutSimulatorSection"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/app_spacing_md"
+                android:orientation="vertical"
+                android:padding="@dimen/app_spacing_sm"
+                android:background="@color/app_background">
+
+                <TextView
+                    android:id="@+id/textSimulatorStatus"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/app_spacing_sm"
+                    android:text="Simulator: OFF"
+                    android:textColor="@color/app_text_secondary"
+                    android:textSize="12sp" />
+
+                <Button
+                    android:id="@+id/buttonEnableSimulator"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/app_spacing_sm"
+                    android:text="Enable Simulator"
+                    android:backgroundTint="@color/app_button_primary_bg"
+                    android:textColor="@color/app_button_text_light" />
+
+                <LinearLayout
+                    android:id="@+id/layoutSimulatorControls"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:visibility="gone">
+
+                    <Button
+                        android:id="@+id/buttonEnableAfrSimulator"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="@dimen/app_spacing_xs"
+                        android:text="AFR: OFF"
+                        android:backgroundTint="@color/app_button_primary_bg"
+                        android:textColor="@color/app_button_text_light" />
+
+                    <Button
+                        android:id="@+id/buttonEnableObdSimulator"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="@dimen/app_spacing_xs"
+                        android:text="OBD: OFF"
+                        android:backgroundTint="@color/app_button_primary_bg"
+                        android:textColor="@color/app_button_text_light" />
+                </LinearLayout>
+            </LinearLayout>
+
             <!-- Tab Buttons -->
             <com.google.android.material.button.MaterialButtonToggleGroup
                 android:id="@+id/toggleLogTabs"

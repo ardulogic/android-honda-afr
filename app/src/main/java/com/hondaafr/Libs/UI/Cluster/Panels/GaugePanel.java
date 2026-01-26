@@ -34,12 +34,15 @@ public class GaugePanel extends Panel implements AfrComputerListener {
     private final ImageView imageAfrAdaptive;
     private final ImageView imageGauge;
     private final ImageView imageLcd;
-    private AfrComputer afrComputer;
     private ValueAnimator needleAnimator;
     private ValueAnimator gpsAnimator;
     private float targetNeedleRotation = 0;
     private float currentNeedleRotation = 0f;
     private int modeIndex = 0;
+    private String lastLcdText = "";
+    private String lastLcdMode1 = "";
+    private String lastLcdMode2 = "";
+    private int lastRichFuelIconColor = -1;
     int gray = 0xFF222222;
     int red = 0xFFC82B28;
     int orange = 0xFFFFA500;
@@ -56,10 +59,9 @@ public class GaugePanel extends Panel implements AfrComputerListener {
     }
 
 
-    public GaugePanel(MainActivity mainActivity, TripComputer tripComputer, UiView view, AfrComputer afrComputer) {
-        super(mainActivity, tripComputer, view);
+    public GaugePanel(MainActivity mainActivity, TripComputer tripComputer, AfrComputer afrComputer, UiView view) {
+        super(mainActivity, tripComputer, afrComputer, view);
 
-        this.afrComputer = afrComputer;
         this.imageNeedle = rootView.findViewById(R.id.imageClusterNeedle);
         this.imageGauge = rootView.findViewById(R.id.imageClusterGauge);
         this.imageLcd = rootView.findViewById(R.id.imageClusterLcd);
@@ -71,10 +73,6 @@ public class GaugePanel extends Panel implements AfrComputerListener {
         this.imageAfr = rootView.findViewById(R.id.imageClusterAfr);
         this.imageGps = rootView.findViewById(R.id.imageClusterGps);
         this.imageAfrAdaptive = rootView.findViewById(R.id.imageClusterAfrAdaptive);
-        
-        if (afrComputer != null) {
-            afrComputer.addListener(getListenerId(), this);
-        }
     }
 
     @Override
@@ -165,15 +163,36 @@ public class GaugePanel extends Panel implements AfrComputerListener {
             return;
         }
 
+        // Ensure animator is running
+        if (needleAnimator == null || !needleAnimator.isRunning()) {
+            startNeedleAnimator();
+        }
+
         if (modeIndex >= 0 && modeIndex < modeDescriptors.length) {
             ModeDescriptor descriptor = modeDescriptors[modeIndex];
-            textClusterLcdMode1.setText(descriptor.label1);
-            textClusterLcdMode2.setText(descriptor.label2);
-            textClusterLcd.setText(descriptor.formatter.format(tripComputer));
+            String mode1Text = descriptor.label1;
+            String mode2Text = descriptor.label2;
+            String lcdText = descriptor.formatter.format(tripComputer);
+            
+            // Only update text views if values changed
+            if (!mode1Text.equals(lastLcdMode1)) {
+                textClusterLcdMode1.setText(mode1Text);
+                lastLcdMode1 = mode1Text;
+            }
+            if (!mode2Text.equals(lastLcdMode2)) {
+                textClusterLcdMode2.setText(mode2Text);
+                lastLcdMode2 = mode2Text;
+            }
+            if (!lcdText.equals(lastLcdText)) {
+                textClusterLcd.setText(lcdText);
+                lastLcdText = lcdText;
+            }
         }
 
         boolean obdReading = tripComputer.mObdStudio.isReading() && tripComputer.mObdStudio.isAlive();
-        if (obdReading) {
+        boolean afrReading = tripComputer.mSpartanStudio.isReading() && tripComputer.mSpartanStudio.isAlive();
+        
+        if (obdReading && afrReading) {
             this.targetNeedleRotation = calculateNeedleRotation(tripComputer.instStats.getLphAvg());
         } else {
             this.targetNeedleRotation = calculateNeedleRotation(0);
@@ -183,10 +202,12 @@ public class GaugePanel extends Panel implements AfrComputerListener {
 
         int richFuelIconColor = tripComputer.afrIsRich() && tripComputer.mSpartanStudio.lastSensorAfr > 0 ? orange : gray;
 
-        imageRichFuel.setColorFilter(richFuelIconColor);
-        imageRichFuel.setTag(richFuelIconColor);
-
-        Log.d("GaugePanel", "Updated display.");
+        // Only update color filter if it changed
+        if (richFuelIconColor != lastRichFuelIconColor) {
+            imageRichFuel.setColorFilter(richFuelIconColor);
+            imageRichFuel.setTag(richFuelIconColor);
+            lastRichFuelIconColor = richFuelIconColor;
+        }
     }
 
     /**
@@ -208,6 +229,19 @@ public class GaugePanel extends Panel implements AfrComputerListener {
     }
 
     private void startNeedleAnimator() {
+        if (needleAnimator != null && needleAnimator.isRunning()) {
+            return; // Already running
+        }
+        
+        if (imageNeedle == null) {
+            Log.e("GaugePanel", "imageNeedle is null, cannot start animator");
+            return;
+        }
+        
+        if (needleAnimator != null) {
+            needleAnimator.cancel();
+        }
+        
         needleAnimator = ValueAnimator.ofFloat(0f, 1f);
         needleAnimator.setDuration(1000); // not important; we loop
         needleAnimator.setRepeatCount(ValueAnimator.INFINITE);
@@ -328,6 +362,11 @@ public class GaugePanel extends Panel implements AfrComputerListener {
         } else {
             imageAfrAdaptive.setColorFilter(gray);
         }
+    }
+
+    @Override
+    public void onCalculationsUpdated() {
+        updateDisplay();
     }
 
     @Override

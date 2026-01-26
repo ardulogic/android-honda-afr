@@ -6,6 +6,7 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 
 import com.google.android.material.button.MaterialButtonToggleGroup;
+import com.hondaafr.Libs.Helpers.AfrComputer.AfrComputer;
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputer;
 import com.hondaafr.Libs.UI.Scientific.Panels.Panel;
 import com.hondaafr.Libs.UI.UiView;
@@ -59,8 +60,8 @@ public class LogTabsPanel extends Panel {
         return viewsToHide.toArray(new View[0]);
     }
 
-    public LogTabsPanel(MainActivity mainActivity, TripComputer tripComputer, UiView parent) {
-        super(mainActivity, tripComputer, parent);
+    public LogTabsPanel(MainActivity mainActivity, TripComputer tripComputer, AfrComputer afrComputer, UiView parent) {
+        super(mainActivity, tripComputer, afrComputer, parent);
         
         toggleLogTabs = rootView.findViewById(R.id.toggleLogTabs);
         layoutObdLogSection = rootView.findViewById(R.id.layoutObdLogSection);

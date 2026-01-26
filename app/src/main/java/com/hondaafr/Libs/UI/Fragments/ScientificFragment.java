@@ -9,6 +9,7 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.hondaafr.Libs.Helpers.AfrComputer.AfrComputer;
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputer;
 import com.hondaafr.Libs.UI.ScientificView;
 import com.hondaafr.MainActivity;
@@ -17,6 +18,7 @@ import com.hondaafr.R;
 public class ScientificFragment extends BaseFragment {
     private ScientificView scientificView;
     private TripComputer tripComputer;
+    private AfrComputer afrComputer;
 
     @Nullable
     @Override
@@ -28,8 +30,10 @@ public class ScientificFragment extends BaseFragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        tripComputer = ((MainActivity) requireActivity()).getTripComputer();
-        scientificView = new ScientificView((MainActivity) requireActivity(), tripComputer, view);
+        MainActivity activity = (MainActivity) requireActivity();
+        tripComputer = activity.getTripComputer();
+        afrComputer = activity.getAdaptiveAfrComputer();
+        scientificView = new ScientificView(activity, tripComputer, afrComputer, view);
         scientificView.setVisibility(true);
     }
 

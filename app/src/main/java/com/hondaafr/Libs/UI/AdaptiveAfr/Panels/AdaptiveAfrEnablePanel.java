@@ -15,7 +15,6 @@ import com.hondaafr.R;
 
 public class AdaptiveAfrEnablePanel extends Panel implements AfrComputerListener {
 
-    private AfrComputer afrComputer;
     private MaterialButtonToggleGroup toggleAdaptive;
 
     @Override
@@ -28,21 +27,16 @@ public class AdaptiveAfrEnablePanel extends Panel implements AfrComputerListener
         return "adaptive_afr_enable_panel";
     }
 
-    public AdaptiveAfrEnablePanel(MainActivity mainActivity, TripComputer tripComputer, UiView parent, AfrComputer afrComputer) {
-        super(mainActivity, tripComputer, parent);
-        this.afrComputer = afrComputer;
+    public AdaptiveAfrEnablePanel(MainActivity mainActivity, TripComputer tripComputer, AfrComputer afrComputer, UiView parent) {
+        super(mainActivity, tripComputer, afrComputer, parent);
         
         toggleAdaptive = rootView.findViewById(R.id.toggleAdaptiveAfr);
         
         setupListener();
-        
-        if (afrComputer != null) {
-            afrComputer.addListener(getListenerId(), this);
-        }
     }
 
     private void setupListener() {
-        if (toggleAdaptive != null && afrComputer != null) {
+        if (toggleAdaptive != null) {
             toggleAdaptive.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
                 if (isChecked) {
                     afrComputer.setAdaptiveEnabled(checkedId == R.id.buttonAdaptiveOn);
@@ -76,9 +70,6 @@ public class AdaptiveAfrEnablePanel extends Panel implements AfrComputerListener
     @Override
     public void onDestroy(Context context) {
         super.onDestroy(context);
-        if (afrComputer != null) {
-            afrComputer.removeListener(getListenerId());
-        }
     }
 
     @Override
@@ -92,7 +83,7 @@ public class AdaptiveAfrEnablePanel extends Panel implements AfrComputerListener
     }
 
     public void updateAdaptiveToggle() {
-        if (toggleAdaptive != null && afrComputer != null) {
+        if (toggleAdaptive != null) {
             AdaptiveAfrState state = afrComputer.getState();
             if (state != null) {
                 if (state.isAdaptiveEnabled()) {

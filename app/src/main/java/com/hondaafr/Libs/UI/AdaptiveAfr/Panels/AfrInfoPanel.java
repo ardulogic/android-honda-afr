@@ -13,7 +13,6 @@ import com.hondaafr.R;
 
 public class AfrInfoPanel extends Panel implements AfrComputerListener {
 
-    private AfrComputer afrComputer;
     private TextView textRpm;
     private TextView textMap;
     private TextView textAfr;
@@ -29,18 +28,13 @@ public class AfrInfoPanel extends Panel implements AfrComputerListener {
         return "adaptive_afr_info_panel";
     }
 
-    public AfrInfoPanel(MainActivity mainActivity, TripComputer tripComputer, UiView parent, AfrComputer afrComputer) {
-        super(mainActivity, tripComputer, parent);
-        this.afrComputer = afrComputer;
+    public AfrInfoPanel(MainActivity mainActivity, TripComputer tripComputer, AfrComputer afrComputer, UiView parent) {
+        super(mainActivity, tripComputer, afrComputer, parent);
         
         textRpm = rootView.findViewById(R.id.textAdaptiveRpm);
         textMap = rootView.findViewById(R.id.textAdaptiveMap);
         textAfr = rootView.findViewById(R.id.textAdaptiveAfr);
         textTarget = rootView.findViewById(R.id.textAdaptiveTarget);
-        
-        if (afrComputer != null) {
-            afrComputer.addListener(getListenerId(), this);
-        }
     }
 
     @Override
@@ -72,10 +66,20 @@ public class AfrInfoPanel extends Panel implements AfrComputerListener {
     }
 
     @Override
-    public void detachTripComputerListener() {
-        super.detachTripComputerListener();
-        if (afrComputer != null) {
-            afrComputer.removeListener(getListenerId());
+    public void attachTripComputerListener() {
+        super.attachTripComputerListener();
+        // Refresh UI with current state when listener is attached
+        if (afrComputer.getState() != null) {
+            updateInfo(afrComputer.getState());
+        }
+    }
+
+    @Override
+    public void onResume(android.content.Context context) {
+        super.onResume(context);
+        // Refresh UI with current state when fragment resumes
+        if (afrComputer.getState() != null) {
+            updateInfo(afrComputer.getState());
         }
     }
 }

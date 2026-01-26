@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.hondaafr.Libs.Bluetooth.BluetoothStates;
 import com.hondaafr.Libs.Bluetooth.Services.BluetoothService;
 import com.hondaafr.Libs.Devices.Spartan.AfrLogStore;
+import com.hondaafr.Libs.Helpers.AfrComputer.AfrComputer;
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputer;
 import com.hondaafr.Libs.UI.Fragments.AfrLog.AfrLogAdapter;
 import com.hondaafr.Libs.UI.Scientific.Panels.Panel;
@@ -64,8 +65,8 @@ public class AfrLogPanel extends Panel implements AfrLogStore.LogListener {
         return true;
     }
 
-    public AfrLogPanel(MainActivity mainActivity, TripComputer tripComputer, UiView parent) {
-        super(mainActivity, tripComputer, parent);
+    public AfrLogPanel(MainActivity mainActivity, TripComputer tripComputer, AfrComputer afrComputer, UiView parent) {
+        super(mainActivity, tripComputer, afrComputer, parent);
         
         recyclerAfrLog = rootView.findViewById(R.id.recyclerAfrLog);
         afrLogAdapter = new AfrLogAdapter();

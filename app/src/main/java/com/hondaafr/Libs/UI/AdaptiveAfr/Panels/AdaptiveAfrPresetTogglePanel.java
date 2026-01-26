@@ -13,7 +13,6 @@ import com.hondaafr.R;
 
 public class AdaptiveAfrPresetTogglePanel extends Panel {
 
-    private AfrComputer afrComputer;
     private MaterialButtonToggleGroup togglePresets;
 
     @Override
@@ -26,9 +25,8 @@ public class AdaptiveAfrPresetTogglePanel extends Panel {
         return "adaptive_afr_preset_toggle_panel";
     }
 
-    public AdaptiveAfrPresetTogglePanel(MainActivity mainActivity, TripComputer tripComputer, UiView parent, AfrComputer afrComputer) {
-        super(mainActivity, tripComputer, parent);
-        this.afrComputer = afrComputer;
+    public AdaptiveAfrPresetTogglePanel(MainActivity mainActivity, TripComputer tripComputer, AfrComputer afrComputer, UiView parent) {
+        super(mainActivity, tripComputer, afrComputer, parent);
         
         togglePresets = rootView.findViewById(R.id.toggleAdaptivePresets);
         
@@ -36,7 +34,7 @@ public class AdaptiveAfrPresetTogglePanel extends Panel {
     }
 
     private void setupListener() {
-        if (togglePresets != null && afrComputer != null) {
+        if (togglePresets != null) {
             togglePresets.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
                 if (!isChecked) {
                     return;
@@ -75,7 +73,7 @@ public class AdaptiveAfrPresetTogglePanel extends Panel {
     }
 
     public void applyPresetSelection() {
-        if (togglePresets == null || afrComputer == null) {
+        if (togglePresets == null) {
             return;
         }
         AdaptiveAfrState state = afrComputer.getState();
@@ -92,9 +90,7 @@ public class AdaptiveAfrPresetTogglePanel extends Panel {
     }
 
     public void saveCell(int r, int m, double value) {
-        if (afrComputer != null) {
-            afrComputer.saveCell(r, m, value);
-        }
+        afrComputer.saveCell(r, m, value);
     }
 
 }

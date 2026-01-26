@@ -12,10 +12,14 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
+import java.util.ArrayList;
+
 import androidx.annotation.RequiresApi;
 
 import com.hondaafr.Libs.Bluetooth.Services.BluetoothService;
 import com.hondaafr.Libs.Bluetooth.BluetoothUtils;
+import com.hondaafr.Libs.Devices.Obd.ObdSimulator;
+import com.hondaafr.Libs.Devices.Spartan.AfrSimulator;
 import com.hondaafr.Libs.Helpers.Studio;
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputer;
 
@@ -31,6 +35,10 @@ public class BluetoothConnectionManager {
     private final TripComputer tripComputer;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final IntentFilter btUiUpdateIntentFilter = new IntentFilter(BluetoothService.ACTION_UI_UPDATE);
+    private final IntentFilter btCommandIntentFilter = new IntentFilter(BluetoothService.ACTION_BT_COMMAND);
+    
+    private ObdSimulator obdSimulator;
+    private AfrSimulator afrSimulator;
     
     private final BroadcastReceiver btReceiver = new BroadcastReceiver() {
         @Override
@@ -62,44 +70,129 @@ public class BluetoothConnectionManager {
     public BluetoothConnectionManager(Activity activity, TripComputer tripComputer) {
         this.activity = activity;
         this.tripComputer = tripComputer;
+        this.obdSimulator = new ObdSimulator(activity);
+        this.afrSimulator = new AfrSimulator(activity);
     }
     
     public void onStart() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             activity.registerReceiver(btReceiver, btUiUpdateIntentFilter, Context.RECEIVER_EXPORTED);
+            activity.registerReceiver(btCommandReceiver, btCommandIntentFilter, Context.RECEIVER_EXPORTED);
         } else {
             activity.registerReceiver(btReceiver, btUiUpdateIntentFilter);
+            activity.registerReceiver(btCommandReceiver, btCommandIntentFilter);
         }
         startBtService();
+        checkAndStartSimulators();
     }
     
     public void onResume() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             activity.registerReceiver(btReceiver, btUiUpdateIntentFilter, Context.RECEIVER_EXPORTED);
+            activity.registerReceiver(btCommandReceiver, btCommandIntentFilter, Context.RECEIVER_EXPORTED);
         } else {
             activity.registerReceiver(btReceiver, btUiUpdateIntentFilter);
+            activity.registerReceiver(btCommandReceiver, btCommandIntentFilter);
         }
         startBtService();
+        checkAndStartSimulators();
     }
     
     public void onDestroy() {
         try {
             activity.unregisterReceiver(btReceiver);
+            activity.unregisterReceiver(btCommandReceiver);
         } catch (IllegalArgumentException e) {
             Log.w(TAG, "Receiver was already unregistered");
         }
+        stopSimulators();
     }
+    
+    private final BroadcastReceiver btCommandReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (!ObdSimulator.isEnabled(activity) && !AfrSimulator.isEnabled(activity)) {
+                return; // Simulators not enabled, let real Bluetooth handle it
+            }
+            
+            final int cmd = intent.getIntExtra(BluetoothService.KEY_COMMAND, 0);
+            String deviceId = intent.getStringExtra(BluetoothService.PARAM_DEVICE_ID);
+            
+            switch (cmd) {
+                case BluetoothService.COMMAND_BT_CONNECT:
+                    if ("obd".equals(deviceId) && ObdSimulator.isEnabled(activity)) {
+                        Log.d(TAG, "Simulator: Connecting OBD");
+                        handler.postDelayed(() -> obdSimulator.simulateConnection(), 500);
+                    } else if ("spartan".equals(deviceId) && AfrSimulator.isEnabled(activity)) {
+                        Log.d(TAG, "Simulator: Connecting AFR");
+                        handler.postDelayed(() -> afrSimulator.simulateConnection(), 500);
+                    }
+                    break;
+                    
+                case BluetoothService.COMMAND_BT_DISCONNECT:
+                    if ("obd".equals(deviceId) && ObdSimulator.isEnabled(activity)) {
+                        obdSimulator.simulateDisconnection();
+                    } else if ("spartan".equals(deviceId) && AfrSimulator.isEnabled(activity)) {
+                        afrSimulator.simulateDisconnection();
+                    }
+                    break;
+                    
+                case BluetoothService.COMMAND_BT_SEND:
+                    ArrayList<String> lines = intent.getStringArrayListExtra(BluetoothService.PARAM_LINES);
+                    if (lines != null && !lines.isEmpty()) {
+                        String line = lines.get(0);
+                        if ("obd".equals(deviceId) && ObdSimulator.isEnabled(activity)) {
+                            obdSimulator.handleCommand(line);
+                        } else if ("spartan".equals(deviceId) && AfrSimulator.isEnabled(activity)) {
+                            afrSimulator.handleCommand(line);
+                        }
+                    }
+                    break;
+            }
+        }
+    };
     
     private void onBluetoothServiceStateChanged(int state) {
         switch (state) {
             case BluetoothStates.STATE_SERVICE_STARTED:
                 Log.d(TAG, "Bluetooth service started - auto-connecting to devices");
-                connectSpartanSoon();
-                connectObdSoon();
+                if (ObdSimulator.isEnabled(activity) || AfrSimulator.isEnabled(activity)) {
+                    // Simulators enabled, simulate connections
+                    checkAndStartSimulators();
+                } else {
+                    // Real Bluetooth connections
+                    connectSpartanSoon();
+                    connectObdSoon();
+                }
                 break;
             case BluetoothStates.STATE_SERVICE_STOPPED:
                 Log.d(TAG, "Bluetooth service stopped");
+                stopSimulators();
                 break;
+        }
+    }
+    
+    private void checkAndStartSimulators() {
+        if (ObdSimulator.isEnabled(activity)) {
+            handler.postDelayed(() -> {
+                Log.d(TAG, "Starting OBD simulator");
+                obdSimulator.simulateConnection();
+            }, 1000);
+        }
+        if (AfrSimulator.isEnabled(activity)) {
+            handler.postDelayed(() -> {
+                Log.d(TAG, "Starting AFR simulator");
+                afrSimulator.simulateConnection();
+            }, 1200);
+        }
+    }
+    
+    private void stopSimulators() {
+        if (obdSimulator != null) {
+            obdSimulator.simulateDisconnection();
+        }
+        if (afrSimulator != null) {
+            afrSimulator.simulateDisconnection();
         }
     }
     

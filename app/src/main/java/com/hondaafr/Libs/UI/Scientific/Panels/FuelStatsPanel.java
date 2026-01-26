@@ -2,6 +2,7 @@ package com.hondaafr.Libs.UI.Scientific.Panels;
 
 import android.widget.TextView;
 
+import com.hondaafr.Libs.Helpers.AfrComputer.AfrComputer;
 import com.hondaafr.Libs.Helpers.TripComputer.InstantStats;
 import com.hondaafr.Libs.Helpers.TripComputer.TotalStats;
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputer;
@@ -40,8 +41,8 @@ public class FuelStatsPanel extends Panel {
         return "fuel_stats_panel";
     }
 
-    public FuelStatsPanel(MainActivity mainActivity, TripComputer tripComputer, UiView view) {
-        super(mainActivity, tripComputer, view);
+    public FuelStatsPanel(MainActivity mainActivity, TripComputer tripComputer, AfrComputer afrComputer, UiView view) {
+        super(mainActivity, tripComputer, afrComputer, view);
 
         // Keep references to old views for backward compatibility, but they're now hidden
         textStatsInfo = rootView.findViewById(R.id.textStatsTitle);

@@ -22,7 +22,6 @@ import java.util.Locale;
 
 public class AfrTablePanel extends Panel implements AfrComputerListener {
 
-    private AfrComputer afrComputer;
     private TableLayout table;
     private TextView[][] cellViews;
 
@@ -36,15 +35,10 @@ public class AfrTablePanel extends Panel implements AfrComputerListener {
         return "adaptive_afr_table_panel";
     }
 
-    public AfrTablePanel(MainActivity mainActivity, TripComputer tripComputer, UiView parent, AfrComputer afrComputer) {
-        super(mainActivity, tripComputer, parent);
-        this.afrComputer = afrComputer;
+    public AfrTablePanel(MainActivity mainActivity, TripComputer tripComputer, AfrComputer afrComputer, UiView parent) {
+        super(mainActivity, tripComputer, afrComputer, parent);
         
         table = rootView.findViewById(R.id.tableAdaptiveAfr);
-        
-        if (afrComputer != null) {
-            afrComputer.addListener(getListenerId(), this);
-        }
     }
 
     @Override
@@ -64,9 +58,6 @@ public class AfrTablePanel extends Panel implements AfrComputerListener {
     }
 
     public void buildTable() {
-        if (afrComputer == null) {
-            return;
-        }
         AdaptiveAfrState currentState = afrComputer.getState();
         if (table == null || currentState == null || currentState.getTargetTable() == null) {
             return;
@@ -127,9 +118,6 @@ public class AfrTablePanel extends Panel implements AfrComputerListener {
     }
 
     private void showEditDialog(int r, int m) {
-        if (afrComputer == null) {
-            return;
-        }
         AdaptiveAfrState currentState = afrComputer.getState();
         if (currentState == null || currentState.getTargetTable() == null) {
             return;
@@ -159,9 +147,6 @@ public class AfrTablePanel extends Panel implements AfrComputerListener {
     }
 
     public double lookupTargetAfr(double rpm, double map) {
-        if (afrComputer == null) {
-            return Double.NaN;
-        }
         AdaptiveAfrState currentState = afrComputer.getState();
         if (currentState == null || currentState.getTargetTable() == null) {
             return Double.NaN;
@@ -172,9 +157,6 @@ public class AfrTablePanel extends Panel implements AfrComputerListener {
     }
 
     public void updateActiveCellFromLiveData(double rpm, double map) {
-        if (afrComputer == null) {
-            return;
-        }
         AdaptiveAfrState currentState = afrComputer.getState();
         if (currentState == null || Double.isNaN(rpm) || Double.isNaN(map)) {
             return;
@@ -189,17 +171,32 @@ public class AfrTablePanel extends Panel implements AfrComputerListener {
     }
 
     @Override
-    public void detachTripComputerListener() {
-        super.detachTripComputerListener();
-        if (afrComputer != null) {
-            afrComputer.removeListener(getListenerId());
+    public void attachTripComputerListener() {
+        super.attachTripComputerListener();
+        // Refresh table and UI with current state when listener is attached
+        buildTable();
+        if (afrComputer.getState() != null) {
+            AdaptiveAfrState state = afrComputer.getState();
+            if (state.getLastRpm() != null && state.getLastMap() != null) {
+                updateActiveCellFromLiveData(state.getLastRpm(), state.getLastMap());
+            }
+        }
+    }
+
+    @Override
+    public void onResume(android.content.Context context) {
+        super.onResume(context);
+        // Refresh table and UI with current state when fragment resumes
+        buildTable();
+        if (afrComputer.getState() != null) {
+            AdaptiveAfrState state = afrComputer.getState();
+            if (state.getLastRpm() != null && state.getLastMap() != null) {
+                updateActiveCellFromLiveData(state.getLastRpm(), state.getLastMap());
+            }
         }
     }
 
     private void updateActiveCellHighlight() {
-        if (afrComputer == null) {
-            return;
-        }
         AdaptiveAfrState currentState = afrComputer.getState();
         if (cellViews == null || currentState == null) {
             return;

@@ -7,6 +7,7 @@ import android.widget.Button;
 import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.hondaafr.Libs.Devices.Obd.Readings.ObdReading;
 import com.hondaafr.Libs.Devices.Phone.PhoneGps;
+import com.hondaafr.Libs.Helpers.AfrComputer.AfrComputer;
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputer;
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputerListener;
 import com.hondaafr.Libs.UI.UiView;
@@ -18,8 +19,8 @@ public class AfrBoundStatsPanel extends Panel {
     private final Button mToggleClearAfrAll;
     private final Button mToggleClearAfrMax;
 
-    public AfrBoundStatsPanel(MainActivity mainActivity, TripComputer mTripComputer, UiView view) {
-        super(mainActivity, mTripComputer, view);
+    public AfrBoundStatsPanel(MainActivity mainActivity, TripComputer mTripComputer, AfrComputer afrComputer, UiView view) {
+        super(mainActivity, mTripComputer, afrComputer, view);
 
         mToggleClearAfrMin = rootView.findViewById(R.id.buttonClearAfrMin);
         mToggleClearAfrMin.setOnClickListener(v -> mTripComputer.afrHistory.clearMin());

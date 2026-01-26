@@ -21,7 +21,8 @@ public class EdgeToEdgeHelper {
      */
     public static void setup(@NonNull View rootView) {
         ViewCompat.setOnApplyWindowInsetsListener(rootView, (v, insets) -> {
-            return WindowInsetsCompat.CONSUMED;
+            return insets;
+            //WindowInsetsCompat.CONSUMED;
         });
         
         ViewCompat.requestApplyInsets(rootView);

@@ -2,6 +2,7 @@ package com.hondaafr.Libs.UI;
 
 import android.view.View;
 
+import com.hondaafr.Libs.Helpers.AfrComputer.AfrComputer;
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputer;
 import com.hondaafr.Libs.UI.Scientific.Panels.AfrBoundStatsPanel;
 import com.hondaafr.Libs.UI.Scientific.Panels.AfrPreciseControlsPanel;
@@ -19,8 +20,8 @@ import com.hondaafr.R;
 
 public class ScientificView extends UiView {
 
-    public ScientificView(MainActivity mainActivity, TripComputer tripComputer, View rootView) {
-        super(mainActivity, tripComputer, rootView);
+    public ScientificView(MainActivity mainActivity, TripComputer tripComputer, AfrComputer afrComputer, View rootView) {
+        super(mainActivity, tripComputer, afrComputer, rootView);
     }
 
     @Override
@@ -36,16 +37,16 @@ public class ScientificView extends UiView {
     @Override
     public Panel[] initPanels() {
         return new Panel[]{
-                new AfrBoundStatsPanel(mainActivity, tripComputer, this),
-                new AfrPreciseControlsPanel(mainActivity, tripComputer, this),
-                new AfrPresetsPanel(mainActivity, tripComputer, this),
-                new ChartPanel(mainActivity, tripComputer, this),
-                new CornerStatsPanel(mainActivity, tripComputer, this),
-                new FuelStatsPanel(mainActivity, tripComputer, this),
-                new GenericStatusPanel(mainActivity, tripComputer, this),
-                new ObdPanel(mainActivity, tripComputer, this),
-                new SoundPanel(mainActivity, tripComputer, this),
-                new TopButtonsPanel(mainActivity, tripComputer, this),
+                new AfrBoundStatsPanel(mainActivity, tripComputer, afrComputer, this),
+                new AfrPreciseControlsPanel(mainActivity, tripComputer, afrComputer, this),
+                new AfrPresetsPanel(mainActivity, tripComputer, afrComputer, this),
+                new ChartPanel(mainActivity, tripComputer, afrComputer, this),
+                new CornerStatsPanel(mainActivity, tripComputer, afrComputer, this),
+                new FuelStatsPanel(mainActivity, tripComputer, afrComputer, this),
+                new GenericStatusPanel(mainActivity, tripComputer, afrComputer, this),
+                new ObdPanel(mainActivity, tripComputer, afrComputer, this),
+                new SoundPanel(mainActivity, tripComputer, afrComputer, this),
+                new TopButtonsPanel(mainActivity, tripComputer, afrComputer, this),
         };
     }
 

@@ -1,6 +1,7 @@
 package com.hondaafr.Libs.UI.Scientific.Panels;
 
 import com.github.mikephil.charting.charts.LineChart;
+import com.hondaafr.Libs.Helpers.AfrComputer.AfrComputer;
 import com.hondaafr.Libs.Helpers.TimeChart;
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputer;
 import com.hondaafr.Libs.UI.UiView;
@@ -13,8 +14,8 @@ public class ChartPanel extends Panel {
 
     private long startTimestamp;
 
-    public ChartPanel(MainActivity mainActivity, TripComputer tripComputer, UiView view) {
-        super(mainActivity, tripComputer, view);
+    public ChartPanel(MainActivity mainActivity, TripComputer tripComputer, AfrComputer afrComputer, UiView view) {
+        super(mainActivity, tripComputer, afrComputer, view);
 
         startTimestamp = System.currentTimeMillis();
 
@@ -71,6 +72,7 @@ public class ChartPanel extends Panel {
     public void onAfrTargetValue(double targetAfr) {
         onTargetAfrUpdated(targetAfr);
     }
+
 }
 
 

@@ -19,6 +19,7 @@ import androidx.viewpager2.widget.ViewPager2;
 import com.hondaafr.Libs.Bluetooth.Services.BluetoothForegroundService;
 import com.hondaafr.Libs.Helpers.AfrComputer.AfrComputer;
 import com.hondaafr.Libs.Helpers.Permissions;
+import com.hondaafr.Libs.Helpers.Simulator.DataSimulator;
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputer;
 import com.hondaafr.Libs.UI.Fragments.PipAware;
 
@@ -33,6 +34,7 @@ public class MainActivity extends AppCompatActivity {
     private ViewPager2 viewPager;
     private MainPagerAdapter pagerAdapter;
     private com.hondaafr.Libs.Bluetooth.BluetoothConnectionManager bluetoothConnectionManager;
+    private DataSimulator dataSimulator;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,6 +65,7 @@ public class MainActivity extends AppCompatActivity {
         mTripComputer = new TripComputer(this);
         mAfrComputer = new AfrComputer(this, mTripComputer);
         bluetoothConnectionManager = new com.hondaafr.Libs.Bluetooth.BluetoothConnectionManager(this, mTripComputer);
+        dataSimulator = new DataSimulator(this, mTripComputer);
         viewPager = findViewById(R.id.viewPager);
         pagerAdapter = new MainPagerAdapter(this);
         viewPager.setAdapter(pagerAdapter);
@@ -167,6 +170,9 @@ public class MainActivity extends AppCompatActivity {
         if (bluetoothConnectionManager != null) {
             bluetoothConnectionManager.onResume();
         }
+        if (dataSimulator != null) {
+            dataSimulator.start();
+        }
     }
 
     @Override
@@ -178,6 +184,9 @@ public class MainActivity extends AppCompatActivity {
         if (mAfrComputer != null) {
             mAfrComputer.onPause(this);
         }
+        if (dataSimulator != null) {
+            dataSimulator.stop();
+        }
     }
 
     @Override
@@ -186,6 +195,9 @@ public class MainActivity extends AppCompatActivity {
 
         if (bluetoothConnectionManager != null) {
             bluetoothConnectionManager.onDestroy();
+        }
+        if (dataSimulator != null) {
+            dataSimulator.stop();
         }
         if (mAfrComputer != null) {
             mAfrComputer.onDestroy(this);
@@ -220,6 +232,10 @@ public class MainActivity extends AppCompatActivity {
 
     public AfrComputer getAdaptiveAfrComputer() {
         return mAfrComputer;
+    }
+
+    public DataSimulator getDataSimulator() {
+        return dataSimulator;
     }
 
     public void setSwipeEnabled(boolean enabled) {

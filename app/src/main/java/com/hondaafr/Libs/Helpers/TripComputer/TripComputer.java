@@ -39,6 +39,11 @@ public class TripComputer extends Debuggable implements ObdStudioListener, Spart
     public boolean isRecording = false;
     private long timeStatsSaved = 0;
     private long timeDistanceLogged = 0L;
+    private TripFuelTrackStore trackStore;
+    private String currentSessionId = "";
+    private double lastTrackLat = Double.NaN;
+    private double lastTrackLon = Double.NaN;
+    private boolean segmentBreakPending = false;
 
     public TripComputer(Context context) {
         this.context = context;
@@ -56,6 +61,14 @@ public class TripComputer extends Debuggable implements ObdStudioListener, Spart
 
                     timeDistanceLogged = System.currentTimeMillis();
                 }
+                
+                // Log to map track regardless of which fragment is active
+                logToMapTrack();
+            } else {
+                // Mark segment break when devices disconnect
+                lastTrackLat = Double.NaN;
+                lastTrackLon = Double.NaN;
+                segmentBreakPending = true;
             }
 
             for (TripComputerListener l : listeners.values()) {
@@ -230,10 +243,96 @@ public class TripComputer extends Debuggable implements ObdStudioListener, Spart
 
         mSpartanStudio.onResume(context);
         startSupervisor();
+        
+        // Initialize map track store
+        initializeMapTrackStore(context);
+    }
+    
+    private void initializeMapTrackStore(Context context) {
+        String sessionId = tripStats.getSessionId(context);
+        if (!sessionId.equals(currentSessionId)) {
+            currentSessionId = sessionId;
+            trackStore = new TripFuelTrackStore(context, sessionId);
+            lastTrackLat = Double.NaN;
+            lastTrackLon = Double.NaN;
+            segmentBreakPending = false;
+        }
+    }
+    
+    private void logToMapTrack() {
+        if (trackStore == null || gps == null) {
+            return;
+        }
+        
+        android.location.Location lastLocation = gps.getLastLocation();
+        if (lastLocation == null) {
+            return;
+        }
+        
+        double lat = lastLocation.getLatitude();
+        double lon = lastLocation.getLongitude();
+        
+        // Skip if same point (within small tolerance)
+        if (!Double.isNaN(lastTrackLat) && !Double.isNaN(lastTrackLon)) {
+            double latDiff = Math.abs(lat - lastTrackLat);
+            double lonDiff = Math.abs(lon - lastTrackLon);
+            if (latDiff < 0.000001 && lonDiff < 0.000001) {
+                return;
+            }
+        }
+        
+        double lp100km = instStats.getLp100kmAvg();
+        Double sanitized = sanitizeMetric(lp100km);
+        if (sanitized == null) {
+            return;
+        }
+        
+        // Handle segment breaks
+        if (segmentBreakPending && !Double.isNaN(lastTrackLat)) {
+            trackStore.append(TripFuelTrackStore.TrackPoint.breakMarker());
+            segmentBreakPending = false;
+        } else if (segmentBreakPending) {
+            segmentBreakPending = false;
+        }
+        
+        // Create and append track point
+        Double lph = sanitizeMetric(instStats.getLphAvg());
+        TripFuelTrackStore.TrackPoint sample = new TripFuelTrackStore.TrackPoint(
+            lat,
+            lon,
+            sanitized,
+            lph == null ? Double.NaN : lph
+        );
+        
+        trackStore.append(sample);
+        lastTrackLat = lat;
+        lastTrackLon = lon;
+    }
+    
+    private Double sanitizeMetric(double value) {
+        if (Double.isNaN(value) || Double.isInfinite(value)) {
+            return null;
+        }
+        if (value < 0) {
+            return 0.0;
+        }
+        return value;
+    }
+    
+    public TripFuelTrackStore getTrackStore() {
+        return trackStore;
+    }
+    
+    public String getCurrentSessionId() {
+        return currentSessionId;
     }
 
     public void onPause(Context context) {
         saveStats();
+        // Flush map track store
+        if (trackStore != null) {
+            trackStore.flush();
+        }
     }
 
     public void onDestroy(Context context) {

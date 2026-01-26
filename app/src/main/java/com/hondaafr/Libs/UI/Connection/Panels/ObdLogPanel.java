@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.hondaafr.Libs.Bluetooth.BluetoothStates;
 import com.hondaafr.Libs.Bluetooth.Services.BluetoothService;
 import com.hondaafr.Libs.Devices.Obd.ObdLogStore;
+import com.hondaafr.Libs.Helpers.AfrComputer.AfrComputer;
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputer;
 import com.hondaafr.Libs.UI.Fragments.ObdLog.ObdLogAdapter;
 import com.hondaafr.Libs.UI.Scientific.Panels.Panel;
@@ -70,8 +71,8 @@ public class ObdLogPanel extends Panel implements ObdLogStore.LogListener {
         return true;
     }
 
-    public ObdLogPanel(MainActivity mainActivity, TripComputer tripComputer, UiView parent) {
-        super(mainActivity, tripComputer, parent);
+    public ObdLogPanel(MainActivity mainActivity, TripComputer tripComputer, AfrComputer afrComputer, UiView parent) {
+        super(mainActivity, tripComputer, afrComputer, parent);
         
         recyclerObdLog = rootView.findViewById(R.id.recyclerObdLog);
         obdLogAdapter = new ObdLogAdapter();

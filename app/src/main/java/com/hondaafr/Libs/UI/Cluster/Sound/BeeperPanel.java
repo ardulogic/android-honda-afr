@@ -1,5 +1,6 @@
 package com.hondaafr.Libs.UI.Cluster.Sound;
 
+import com.hondaafr.Libs.Helpers.AfrComputer.AfrComputer;
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputer;
 import com.hondaafr.Libs.UI.Scientific.Panels.Panel;
 import com.hondaafr.Libs.UI.UiView;
@@ -44,8 +45,8 @@ public class BeeperPanel extends Panel {
         return "beeper_panel";
     }
 
-    public BeeperPanel(MainActivity activity, TripComputer tripComputer, UiView parent) {
-        super(activity, tripComputer, parent);
+    public BeeperPanel(MainActivity activity, TripComputer tripComputer, AfrComputer afrComputer, UiView parent) {
+        super(activity, tripComputer, afrComputer, parent);
 
         rootView.findViewById(getContainerId()).setOnClickListener(v -> showConfigDialog());
 

@@ -9,6 +9,7 @@ import android.widget.TextView;
 import com.hondaafr.Libs.Devices.Obd.Readings.ObdReading;
 import com.hondaafr.Libs.Devices.Phone.PhoneGps;
 import com.hondaafr.Libs.Devices.Spartan.SpartanStudio;
+import com.hondaafr.Libs.Helpers.AfrComputer.AfrComputer;
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputer;
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputerListener;
 import com.hondaafr.Libs.UI.ScientificView;
@@ -21,8 +22,8 @@ public class AfrPreciseControlsPanel  extends Panel {
     private final Button buttonIncreaseAfr, buttonDecreaseAfr;
     private final TextView textTargetAfr;
 
-    public AfrPreciseControlsPanel(MainActivity mainActivity, TripComputer tripComputer, UiView parent) {
-        super(mainActivity, tripComputer, parent);
+    public AfrPreciseControlsPanel(MainActivity mainActivity, TripComputer tripComputer, AfrComputer afrComputer, UiView parent) {
+        super(mainActivity, tripComputer, afrComputer, parent);
 
         buttonIncreaseAfr = rootView.findViewById(R.id.buttonIncreaseAFR);
         buttonDecreaseAfr = rootView.findViewById(R.id.buttonDecreaseAFR);

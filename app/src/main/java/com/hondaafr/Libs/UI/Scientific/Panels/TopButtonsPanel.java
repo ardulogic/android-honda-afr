@@ -2,6 +2,7 @@ package com.hondaafr.Libs.UI.Scientific.Panels;
 
 import android.widget.Button;
 
+import com.hondaafr.Libs.Helpers.AfrComputer.AfrComputer;
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputer;
 import com.hondaafr.Libs.UI.Scientific.ImageButtonRounded;
 import com.hondaafr.Libs.UI.UiView;
@@ -24,8 +25,8 @@ public class TopButtonsPanel extends Panel {
         return "top_buttons_panel";
     }
 
-    public TopButtonsPanel(MainActivity mainActivity, TripComputer tripComputer, UiView parentView) {
-        super(mainActivity, tripComputer, parentView);
+    public TopButtonsPanel(MainActivity mainActivity, TripComputer tripComputer, AfrComputer afrComputer, UiView parentView) {
+        super(mainActivity, tripComputer, afrComputer, parentView);
 
         this.buttonRecord = rootView.findViewById(R.id.buttonRecord);
         this.buttonToggleFuel = rootView.findViewById(R.id.buttonShowFuelPanel);

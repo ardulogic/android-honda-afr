@@ -4,7 +4,6 @@ import android.content.Context;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.util.AttributeSet;
-import android.util.Log;
 
 import com.hondaafr.R;
 
@@ -28,7 +27,10 @@ public class ImageButtonRounded extends androidx.appcompat.widget.AppCompatImage
     }
 
     public void setIconState(boolean isActive) {
-        Log.d("ImageButtonRounded", "Intermediate state:" + isActive);
+        // Avoid unnecessary updates if state hasn't changed
+        if (isIconActive == isActive) {
+            return;
+        }
 
         if (isActive) {
             setColorFilter(Color.parseColor("#00FF66"), PorterDuff.Mode.SRC_IN);

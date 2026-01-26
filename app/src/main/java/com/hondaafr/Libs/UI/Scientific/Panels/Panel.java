@@ -5,16 +5,20 @@ import android.view.View;
 
 import com.hondaafr.Libs.Devices.Obd.Readings.ObdReading;
 import com.hondaafr.Libs.Devices.Phone.PhoneGps;
+import com.hondaafr.Libs.Helpers.AfrComputer.AfrComputer;
+import com.hondaafr.Libs.Helpers.AfrComputer.AfrComputerListener;
 import com.hondaafr.Libs.Helpers.Debuggable;
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputer;
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputerListener;
+import com.hondaafr.Libs.UI.AdaptiveAfr.AdaptiveAfrState;
 import com.hondaafr.Libs.UI.UiView;
 import com.hondaafr.MainActivity;
 
-abstract public class Panel extends Debuggable implements TripComputerListener {
+abstract public class Panel extends Debuggable implements TripComputerListener, AfrComputerListener {
 
     protected final MainActivity mainActivity;
     protected final TripComputer tripComputer;
+    protected final AfrComputer afrComputer;
     protected final View rootView;
     protected final View container;
     protected final UiView parent;
@@ -31,9 +35,10 @@ abstract public class Panel extends Debuggable implements TripComputerListener {
         return isInPip;
     }
 
-    public Panel (MainActivity mainActivity, TripComputer tripComputer, UiView view) {
+    public Panel (MainActivity mainActivity, TripComputer tripComputer, AfrComputer afrComputer, UiView view) {
         this.mainActivity = mainActivity;
         this.tripComputer = tripComputer;
+        this.afrComputer = afrComputer;
         this.rootView = view.getRootView();
         this.container = rootView.findViewById(getContainerId());
         this.parent = view;
@@ -47,6 +52,16 @@ abstract public class Panel extends Debuggable implements TripComputerListener {
     public void detachTripComputerListener() {
         d("Detaching trip computer listener", VERBOSE);
         tripComputer.removeListener(getListenerId());
+    }
+
+    public void attachAfrComputerListener() {
+        d("Attaching AFR computer listener", VERBOSE);
+        afrComputer.addListener(getListenerId(), this);
+    }
+
+    public void detachAfrComputerListener() {
+        d("Detaching AFR computer listener", VERBOSE);
+        afrComputer.removeListener(getListenerId());
     }
 
     public boolean isParentVisible() {
@@ -177,6 +192,11 @@ abstract public class Panel extends Debuggable implements TripComputerListener {
     @Override
     public void onCalculationsUpdated() {
 
+    }
+
+    @Override
+    public void onAdaptiveAfrDataUpdated(AdaptiveAfrState state) {
+        // Default empty implementation - panels can override if needed
     }
 
     @Override

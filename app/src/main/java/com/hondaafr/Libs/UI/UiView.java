@@ -33,18 +33,6 @@ abstract public class UiView extends Debuggable implements TripComputerListener 
 
     abstract public int getContainerId();
 
-    public UiView(MainActivity mainActivity, TripComputer tripComputer, View rootView) {
-        this.mainActivity = mainActivity;
-        this.tripComputer = tripComputer;
-        this.afrComputer = null;
-        this.rootView = rootView;
-        this.container = rootView.findViewById(getContainerId());
-        panels = initPanels();
-
-        attachListener();
-        notifyPanelsLoaded();
-    }
-
     public UiView(MainActivity mainActivity, TripComputer tripComputer, AfrComputer afrComputer, View rootView) {
         this.mainActivity = mainActivity;
         this.tripComputer = tripComputer;
@@ -73,6 +61,7 @@ abstract public class UiView extends Debuggable implements TripComputerListener 
 
             if (this.isVisible()) {
                 p.attachTripComputerListener();
+                p.attachAfrComputerListener();
             }
         }
     }
@@ -112,12 +101,17 @@ abstract public class UiView extends Debuggable implements TripComputerListener 
     private void attachPanelListeners() {
         for (Panel p : panels) {
             p.attachTripComputerListener();
+            p.attachAfrComputerListener();
         }
     }
 
     private void detachPanelListeners() {
         for (Panel p : panels) {
-            p.detachTripComputerListener();
+            // Don't detach listeners if panel is in PiP mode and visible in PiP
+            if (!p.isInPip() || !p.visibleInPip()) {
+                p.detachTripComputerListener();
+                p.detachAfrComputerListener();
+            }
         }
     }
 
@@ -210,8 +204,9 @@ abstract public class UiView extends Debuggable implements TripComputerListener 
             p.onResume(context);
 
             if (isVisible()) {
-                // Might not be neccessary but just in case
+                // Re-attach listeners in case they were detached
                 p.attachTripComputerListener();
+                p.attachAfrComputerListener();
             }
         }
     }

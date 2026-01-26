@@ -4,6 +4,7 @@ import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.hondaafr.Libs.Helpers.AfrComputer.AfrComputer;
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputer;
 import com.hondaafr.Libs.UI.ScientificView;
 import com.hondaafr.Libs.UI.UiView;
@@ -32,8 +33,8 @@ public class GenericStatusPanel  extends Panel {
         return "generic_status_panel";
     }
 
-    public GenericStatusPanel(MainActivity mainActivity, TripComputer tripComputer, UiView view) {
-        super(mainActivity, tripComputer, view);
+    public GenericStatusPanel(MainActivity mainActivity, TripComputer tripComputer, AfrComputer afrComputer, UiView view) {
+        super(mainActivity, tripComputer, afrComputer, view);
 
         textStatusGeneric = rootView.findViewById(R.id.textStatusGeneric);
         textStatusObd = rootView.findViewById(R.id.textStatusObd);

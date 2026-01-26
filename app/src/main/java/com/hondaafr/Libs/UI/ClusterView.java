@@ -28,9 +28,9 @@ public class ClusterView extends UiView {
     @Override
     public Panel[] initPanels() {
         return new Panel[]{
-                new BeeperPanel(mainActivity, tripComputer, this),
-                new GaugePanel(mainActivity, tripComputer, this, afrComputer),
-                new KnobsPanel(mainActivity, tripComputer, this),
+                new BeeperPanel(mainActivity, tripComputer, afrComputer, this),
+                new GaugePanel(mainActivity, tripComputer, afrComputer, this),
+                new KnobsPanel(mainActivity, tripComputer, afrComputer, this),
         };
     }
 

@@ -5,6 +5,7 @@ import android.graphics.Typeface;
 import android.widget.TextView;
 
 import com.hondaafr.Libs.Devices.Obd.Readings.ObdReading;
+import com.hondaafr.Libs.Helpers.AfrComputer.AfrComputer;
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputer;
 import com.hondaafr.Libs.UI.Scientific.ImageButtonRounded;
 import com.hondaafr.Libs.UI.UiView;
@@ -28,8 +29,8 @@ public class ObdPanel extends Panel {
         return "obd_panel";
     }
 
-    public ObdPanel(MainActivity mainActivity, TripComputer tripComputer, UiView parentView) {
-        super(mainActivity, tripComputer, parentView);
+    public ObdPanel(MainActivity mainActivity, TripComputer tripComputer, AfrComputer afrComputer, UiView parentView) {
+        super(mainActivity, tripComputer, afrComputer, parentView);
 
         mTextSpeedSource = rootView.findViewById(R.id.textSpeedSource);
 

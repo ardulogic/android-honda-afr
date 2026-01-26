@@ -5,6 +5,7 @@ import android.widget.SeekBar;
 
 import com.hondaafr.Libs.Devices.Obd.Readings.ObdReading;
 import com.hondaafr.Libs.EngineSound.EngineSound;
+import com.hondaafr.Libs.Helpers.AfrComputer.AfrComputer;
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputer;
 import com.hondaafr.Libs.UI.UiView;
 import com.hondaafr.MainActivity;
@@ -25,8 +26,8 @@ public class SoundPanel  extends Panel {
         return "sound_panel";
     }
 
-    public SoundPanel(MainActivity mainActivity, TripComputer tripCcomputer, UiView parentView) {
-        super(mainActivity, tripCcomputer, parentView);
+    public SoundPanel(MainActivity mainActivity, TripComputer tripCcomputer, AfrComputer afrComputer, UiView parentView) {
+        super(mainActivity, tripCcomputer, afrComputer, parentView);
 
         mEngineSound = new EngineSound();
         mEngineSound.init(mainActivity);

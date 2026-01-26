@@ -136,7 +136,12 @@ public class MapFragment extends Fragment implements TripComputerListener, PipAw
 
         tripComputer = ((MainActivity) requireActivity()).getTripComputer();
         sessionId = tripComputer.tripStats.getSessionId(requireContext());
-        trackStore = new TripFuelTrackStore(requireContext(), sessionId);
+        // Use TripComputer's track store (logging happens there globally)
+        trackStore = tripComputer.getTrackStore();
+        if (trackStore == null) {
+            // Fallback: create our own if TripComputer hasn't initialized it yet
+            trackStore = new TripFuelTrackStore(requireContext(), sessionId);
+        }
         loadTrackAsync();
         
         updateFollowButton();
@@ -198,6 +203,24 @@ public class MapFragment extends Fragment implements TripComputerListener, PipAw
         }
         if (tripComputer != null) {
             tripComputer.addListener(LISTENER_ID, this);
+            // Sync track store with TripComputer (which does global logging)
+            String currentSession = tripComputer.getCurrentSessionId();
+            if (!currentSession.equals(sessionId)) {
+                sessionId = currentSession;
+                trackStore = tripComputer.getTrackStore();
+                if (trackStore == null) {
+                    trackStore = new TripFuelTrackStore(requireContext(), sessionId);
+                }
+                fuelSamples.clear();
+                lastPoint = null;
+                loadTrackAsync();
+            } else {
+                // Reload track data to get latest points logged by TripComputer
+                trackStore = tripComputer.getTrackStore();
+                if (trackStore != null) {
+                    loadTrackAsync();
+                }
+            }
         }
         updatePipUiState(requireActivity().isInPictureInPictureMode());
     }
@@ -238,9 +261,9 @@ public class MapFragment extends Fragment implements TripComputerListener, PipAw
             return;
         }
 
+        // Map logging is now handled globally in TripComputer, so we only need to update the display
         if (!tripComputer.mObdStudio.isAlive() || !tripComputer.mSpartanStudio.isAlive()) {
             lastPoint = null;
-            segmentBreakPending = true;
             return;
         }
 
@@ -259,18 +282,16 @@ public class MapFragment extends Fragment implements TripComputerListener, PipAw
             return;
         }
 
-        double lp100km = tripComputer.instStats.getLp100kmAvg();
         if (lastPoint == null) {
             lastPoint = currPoint;
             if (followEnabled) {
                 mapView.getController().setCenter(currPoint);
             }
-            addFuelSample(currPoint, lp100km);
+            refreshTrackOverlays();
             return;
         }
 
         lastPoint = currPoint;
-        addFuelSample(currPoint, lp100km);
         refreshTrackOverlays();
 
         if (followEnabled) {
@@ -324,13 +345,17 @@ public class MapFragment extends Fragment implements TripComputerListener, PipAw
         String currentSession = tripComputer.tripStats.getSessionId(requireContext());
         if (!currentSession.equals(sessionId)) {
             sessionId = currentSession;
-            trackStore = new TripFuelTrackStore(requireContext(), sessionId);
+            // Get track store from TripComputer (it handles logging globally)
+            trackStore = tripComputer.getTrackStore();
+            if (trackStore == null) {
+                trackStore = new TripFuelTrackStore(requireContext(), sessionId);
+            }
             fuelSamples.clear();
             renderedSegments.clear();
             fuelLabels.clear();
             lastPoint = null;
-            segmentBreakPending = false;
             refreshTrackOverlays();
+            loadTrackAsync();
         }
     }
 

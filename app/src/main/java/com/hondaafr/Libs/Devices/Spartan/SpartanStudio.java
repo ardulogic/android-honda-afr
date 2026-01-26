@@ -3,6 +3,7 @@ package com.hondaafr.Libs.Devices.Spartan;
 import android.content.Context;
 
 import com.hondaafr.Libs.Bluetooth.Services.BluetoothService;
+import com.hondaafr.Libs.Devices.Spartan.AfrLogStore;
 import com.hondaafr.Libs.Helpers.Studio;
 
 import java.util.LinkedHashMap;
@@ -100,16 +101,22 @@ public class SpartanStudio extends Studio {
     }
 
     public static void requestTargetAfr(Context context) {
-        BluetoothService.send(context, SpartanCommands.getTargetAFR(), "spartan");
+        String cmd = SpartanCommands.getTargetAFR();
+        AfrLogStore.logTx(cmd);
+        BluetoothService.send(context, cmd, "spartan");
     }
 
     public static void requestCurrentAfr(Context context) {
-        BluetoothService.send(context, SpartanCommands.requestCurrentAfr(), "spartan");
+        String cmd = SpartanCommands.requestCurrentAfr();
+        AfrLogStore.logTx(cmd);
+        BluetoothService.send(context, cmd, "spartan");
     }
 
     public void setAFR(double target) {
         targetAfr = target;
-        BluetoothService.send(context, SpartanCommands.setAFR(targetAfr), "spartan");
+        String cmd = SpartanCommands.setAFR(targetAfr);
+        AfrLogStore.logTx(cmd);
+        BluetoothService.send(context, cmd, "spartan");
 
         listener.onTargetAfrUpdated(targetAfr);
     }
@@ -123,6 +130,9 @@ public class SpartanStudio extends Studio {
     // ────────────────────────────────────────────────────────────────────────────────
 
     public void onDataReceived(String data) {
+        if (data != null && !data.trim().isEmpty()) {
+            AfrLogStore.logRx(data);
+        }
         d(data, 1);
         updateDataReceivedTimestamp();
 

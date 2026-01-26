@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 
 import com.google.android.material.button.MaterialButtonToggleGroup;
+import com.hondaafr.Libs.Helpers.AfrComputer.AfrComputer;
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputer;
 import com.hondaafr.Libs.UI.UiView;
 import com.hondaafr.MainActivity;
@@ -16,8 +17,8 @@ public class AfrPresetsPanel  extends Panel {
     private final Map<String, Double> presets = new HashMap<>();
     private final SharedPreferences prefs;
 
-    public AfrPresetsPanel(MainActivity mainActivity, TripComputer tripComputer, UiView view) {
-        super(mainActivity, tripComputer, view);
+    public AfrPresetsPanel(MainActivity mainActivity, TripComputer tripComputer, AfrComputer afrComputer, UiView view) {
+        super(mainActivity, tripComputer, afrComputer, view);
 
         prefs = mainActivity.getSharedPreferences("afr_presets", Context.MODE_PRIVATE);
         presets.put("sportPlusAfr", (double) prefs.getFloat("sportPlusAfr", 12.7f));

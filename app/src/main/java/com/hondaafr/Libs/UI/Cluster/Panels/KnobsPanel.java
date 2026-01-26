@@ -10,6 +10,7 @@ import android.view.animation.OvershootInterpolator;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
+import com.hondaafr.Libs.Helpers.AfrComputer.AfrComputer;
 import com.hondaafr.Libs.Helpers.TripComputer.TotalStats;
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputer;
 import com.hondaafr.Libs.UI.Scientific.Panels.Panel;
@@ -28,8 +29,8 @@ public class KnobsPanel extends Panel {
 
     Vibrator vibrator;
 
-    public KnobsPanel(MainActivity mainActivity, TripComputer tripComputer, UiView view) {
-        super(mainActivity, tripComputer, view);
+    public KnobsPanel(MainActivity mainActivity, TripComputer tripComputer, AfrComputer afrComputer, UiView view) {
+        super(mainActivity, tripComputer, afrComputer, view);
 
         this.buttonTripKnob = rootView.findViewById(R.id.buttonClusterTripKnob);
         this.buttonTotalsKnob = rootView.findViewById(R.id.buttonClusterTotalsKnob);
