@@ -19,7 +19,7 @@ import androidx.annotation.RequiresApi;
 import com.hondaafr.Libs.Bluetooth.Services.BluetoothService;
 import com.hondaafr.Libs.Bluetooth.BluetoothUtils;
 import com.hondaafr.Libs.Devices.Obd.ObdSimulator;
-import com.hondaafr.Libs.Devices.Spartan.AfrSimulator;
+import com.hondaafr.Libs.Devices.Spartan.SpartanSimulator;
 import com.hondaafr.Libs.Helpers.Studio;
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputer;
 
@@ -38,7 +38,7 @@ public class BluetoothConnectionManager {
     private final IntentFilter btCommandIntentFilter = new IntentFilter(BluetoothService.ACTION_BT_COMMAND);
     
     private ObdSimulator obdSimulator;
-    private AfrSimulator afrSimulator;
+    private SpartanSimulator afrSimulator;
     
     private final BroadcastReceiver btReceiver = new BroadcastReceiver() {
         @Override
@@ -71,7 +71,7 @@ public class BluetoothConnectionManager {
         this.activity = activity;
         this.tripComputer = tripComputer;
         this.obdSimulator = new ObdSimulator(activity);
-        this.afrSimulator = new AfrSimulator(activity);
+        this.afrSimulator = new SpartanSimulator(activity);
     }
     
     public void onStart() {
@@ -111,7 +111,7 @@ public class BluetoothConnectionManager {
     private final BroadcastReceiver btCommandReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (!ObdSimulator.isEnabled(activity) && !AfrSimulator.isEnabled(activity)) {
+            if (!ObdSimulator.isEnabled(activity) && !SpartanSimulator.isEnabled(activity)) {
                 return; // Simulators not enabled, let real Bluetooth handle it
             }
             
@@ -123,7 +123,7 @@ public class BluetoothConnectionManager {
                     if ("obd".equals(deviceId) && ObdSimulator.isEnabled(activity)) {
                         Log.d(TAG, "Simulator: Connecting OBD");
                         handler.postDelayed(() -> obdSimulator.simulateConnection(), 500);
-                    } else if ("spartan".equals(deviceId) && AfrSimulator.isEnabled(activity)) {
+                    } else if ("spartan".equals(deviceId) && SpartanSimulator.isEnabled(activity)) {
                         Log.d(TAG, "Simulator: Connecting AFR");
                         handler.postDelayed(() -> afrSimulator.simulateConnection(), 500);
                     }
@@ -132,7 +132,7 @@ public class BluetoothConnectionManager {
                 case BluetoothService.COMMAND_BT_DISCONNECT:
                     if ("obd".equals(deviceId) && ObdSimulator.isEnabled(activity)) {
                         obdSimulator.simulateDisconnection();
-                    } else if ("spartan".equals(deviceId) && AfrSimulator.isEnabled(activity)) {
+                    } else if ("spartan".equals(deviceId) && SpartanSimulator.isEnabled(activity)) {
                         afrSimulator.simulateDisconnection();
                     }
                     break;
@@ -143,7 +143,7 @@ public class BluetoothConnectionManager {
                         String line = lines.get(0);
                         if ("obd".equals(deviceId) && ObdSimulator.isEnabled(activity)) {
                             obdSimulator.handleCommand(line);
-                        } else if ("spartan".equals(deviceId) && AfrSimulator.isEnabled(activity)) {
+                        } else if ("spartan".equals(deviceId) && SpartanSimulator.isEnabled(activity)) {
                             afrSimulator.handleCommand(line);
                         }
                     }
@@ -156,7 +156,7 @@ public class BluetoothConnectionManager {
         switch (state) {
             case BluetoothStates.STATE_SERVICE_STARTED:
                 Log.d(TAG, "Bluetooth service started - auto-connecting to devices");
-                if (ObdSimulator.isEnabled(activity) || AfrSimulator.isEnabled(activity)) {
+                if (ObdSimulator.isEnabled(activity) || SpartanSimulator.isEnabled(activity)) {
                     // Simulators enabled, simulate connections
                     checkAndStartSimulators();
                 } else {
@@ -179,7 +179,7 @@ public class BluetoothConnectionManager {
                 obdSimulator.simulateConnection();
             }, 1000);
         }
-        if (AfrSimulator.isEnabled(activity)) {
+        if (SpartanSimulator.isEnabled(activity)) {
             handler.postDelayed(() -> {
                 Log.d(TAG, "Starting AFR simulator");
                 afrSimulator.simulateConnection();

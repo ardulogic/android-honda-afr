@@ -123,6 +123,11 @@ abstract public class UiView extends Debuggable implements TripComputerListener 
         isInPip = true;
         for (Panel p : panels) {
             p.enterPip();
+            // Re-attach listeners for panels visible in PIP to ensure updates continue
+            if (p.visibleInPip()) {
+                p.attachTripComputerListener();
+                p.attachAfrComputerListener();
+            }
         }
     }
 
@@ -203,8 +208,9 @@ abstract public class UiView extends Debuggable implements TripComputerListener 
         for (Panel p : panels) {
             p.onResume(context);
 
-            if (isVisible()) {
+            if (isVisible() || (isInPip && p.visibleInPip())) {
                 // Re-attach listeners in case they were detached
+                // Also attach if in PIP mode and panel is visible in PIP
                 p.attachTripComputerListener();
                 p.attachAfrComputerListener();
             }

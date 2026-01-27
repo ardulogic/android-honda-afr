@@ -16,8 +16,8 @@ import java.util.Random;
  * Simulator for AFR (Spartan) device that generates random realistic values.
  * Useful for testing without a physical AFR sensor.
  */
-public class AfrSimulator {
-    private static final String PREFS_NAME = "AfrSimulatorPrefs";
+public class SpartanSimulator {
+    private static final String PREFS_NAME = "SpartanSimulatorPrefs";
     private static final String PREF_ENABLED = "enabled";
     private static final long RESPONSE_DELAY_MS = 100;
     private static final long PERIODIC_UPDATE_INTERVAL_MS = 500;
@@ -31,7 +31,7 @@ public class AfrSimulator {
     private double targetLambda = 1.000; // Target lambda (will be converted to AFR)
     private double sensorTemp = 800.0 + random.nextDouble() * 100.0; // 800-900°C
     
-    public AfrSimulator(Context context) {
+    public SpartanSimulator(Context context) {
         this.context = context;
     }
     
@@ -48,8 +48,8 @@ public class AfrSimulator {
     public void simulateConnection() {
         // Simulate connection state
         sendBtStateChange(BluetoothStates.STATE_BT_CONNECTED, "spartan");
-        // Start periodic sensor updates
-        simulatePeriodicUpdates();
+        // Start periodic value updates (but don't send data - only update internal values)
+        simulatePeriodicValueUpdates();
     }
     
     public void simulateDisconnection() {
@@ -67,25 +67,14 @@ public class AfrSimulator {
         context.sendBroadcast(intent);
     }
     
-    private void simulatePeriodicUpdates() {
+    // Update simulated values periodically, but don't send data
+    // Data is only sent when commands are received
+    private void simulatePeriodicValueUpdates() {
         // Update sensor AFR with slight variation
         updateSimulatedValues();
         
-        // Send sensor AFR update
-        String sensorResponse = String.format("0:a:%.1f", sensorAfr);
-        handler.postDelayed(() -> {
-            sendDataReceived(sensorResponse);
-        }, RESPONSE_DELAY_MS);
-        
-        // Send sensor temp update occasionally
-        if (random.nextInt(5) == 0) {
-            String tempResponse = String.format("1:a:%.0f", sensorTemp);
-            handler.postDelayed(() -> {
-                sendDataReceived(tempResponse);
-            }, RESPONSE_DELAY_MS + 50);
-        }
-        
-        handler.postDelayed(this::simulatePeriodicUpdates, PERIODIC_UPDATE_INTERVAL_MS);
+        // Schedule next update (but don't send any data)
+        handler.postDelayed(this::simulatePeriodicValueUpdates, PERIODIC_UPDATE_INTERVAL_MS);
     }
     
     public void handleCommand(String command) {
@@ -97,7 +86,8 @@ public class AfrSimulator {
         
         handler.postDelayed(() -> {
             if (cmd.equals("G\r\n") || cmd.equals("G")) {
-                // Request current AFR - return sensor AFR
+                // Request current AFR - update values first, then send response
+                updateSimulatedValues();
                 String response = String.format("0:a:%.1f", sensorAfr);
                 sendDataReceived(response);
             } else if (cmd.equals("GETNBSWLAMB\r\n") || cmd.equals("GETNBSWLAMB")) {
@@ -129,4 +119,3 @@ public class AfrSimulator {
         sensorTemp = Math.max(700.0, Math.min(950.0, sensorTemp + (random.nextDouble() * 20.0 - 10.0)));
     }
 }
-

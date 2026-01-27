@@ -4,6 +4,7 @@ import android.content.Context;
 
 import com.hondaafr.Libs.Bluetooth.Services.BluetoothService;
 import com.hondaafr.Libs.Devices.Spartan.AfrLogStore;
+import com.hondaafr.Libs.Devices.Spartan.SpartanSimulator;
 import com.hondaafr.Libs.Helpers.Studio;
 
 import java.util.LinkedHashMap;
@@ -91,7 +92,9 @@ public class SpartanStudio extends Studio {
     // ────────────────────────────────────────────────────────────────────────────────
 
     private void requestSensorReadings() {
-        if (BluetoothService.isConnected("spartan")) {
+        // Check if connected via real Bluetooth OR simulator
+        boolean isConnected = BluetoothService.isConnected("spartan") || SpartanSimulator.isEnabled(context);
+        if (isConnected) {
             if (!targetAfrReceived) {
                 requestTargetAfr(context);
             } else {

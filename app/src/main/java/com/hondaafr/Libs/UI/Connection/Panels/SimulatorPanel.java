@@ -6,7 +6,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.hondaafr.Libs.Devices.Obd.ObdSimulator;
-import com.hondaafr.Libs.Devices.Spartan.AfrSimulator;
+import com.hondaafr.Libs.Devices.Spartan.SpartanSimulator;
 import com.hondaafr.Libs.Helpers.AfrComputer.AfrComputer;
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputer;
 import com.hondaafr.Libs.UI.Scientific.Panels.Panel;
@@ -75,13 +75,13 @@ public class SimulatorPanel extends Panel {
     }
 
     private void toggleSimulator() {
-        boolean afrEnabled = AfrSimulator.isEnabled(mainActivity);
+        boolean afrEnabled = SpartanSimulator.isEnabled(mainActivity);
         boolean obdEnabled = ObdSimulator.isEnabled(mainActivity);
         boolean anyEnabled = afrEnabled || obdEnabled;
         
         // Toggle both if none enabled, disable both if any enabled
         boolean newState = !anyEnabled;
-        AfrSimulator.setEnabled(mainActivity, newState);
+        SpartanSimulator.setEnabled(mainActivity, newState);
         ObdSimulator.setEnabled(mainActivity, newState);
         
         // Restart the app's Bluetooth connection manager to apply changes
@@ -90,8 +90,8 @@ public class SimulatorPanel extends Panel {
     }
 
     private void toggleAfrSimulator() {
-        boolean enabled = !AfrSimulator.isEnabled(mainActivity);
-        AfrSimulator.setEnabled(mainActivity, enabled);
+        boolean enabled = !SpartanSimulator.isEnabled(mainActivity);
+        SpartanSimulator.setEnabled(mainActivity, enabled);
         updateUI();
     }
 
@@ -102,7 +102,7 @@ public class SimulatorPanel extends Panel {
     }
 
     private void updateUI() {
-        boolean afrEnabled = AfrSimulator.isEnabled(mainActivity);
+        boolean afrEnabled = SpartanSimulator.isEnabled(mainActivity);
         boolean obdEnabled = ObdSimulator.isEnabled(mainActivity);
         boolean simulatorEnabled = afrEnabled || obdEnabled;
         
