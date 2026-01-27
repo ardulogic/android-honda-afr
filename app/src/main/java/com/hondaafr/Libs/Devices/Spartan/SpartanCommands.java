@@ -43,7 +43,7 @@ public class SpartanCommands {
         return lambdaToAfr(Double.parseDouble(data));
     }
 
-    public static String requestCurrentAfr() {
+    public static String getCurrentAfr() {
         return "G\r\n";
     }
 

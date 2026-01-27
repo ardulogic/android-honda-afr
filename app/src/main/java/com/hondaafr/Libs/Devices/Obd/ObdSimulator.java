@@ -8,7 +8,10 @@ import android.os.Looper;
 import com.hondaafr.Libs.Bluetooth.BluetoothStates;
 import com.hondaafr.Libs.Bluetooth.Services.BluetoothService;
 import android.content.Intent;
+import android.util.Log;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.Random;
 
 /**
@@ -20,6 +23,8 @@ public class ObdSimulator {
     private static final String PREF_ENABLED = "enabled";
     private static final long INIT_RESPONSE_DELAY_MS = 100;
     private static final long READING_RESPONSE_DELAY_MS = 150;
+    private static final long MIN_COMMAND_INTERVAL_MS = 50;
+    private static final String TAG = "ObdSimulator";
     
     private final Context context;
     private final Handler handler = new Handler(Looper.getMainLooper());
@@ -28,8 +33,17 @@ public class ObdSimulator {
     private int initCommandIndex = 0;
     private String lastRequestedPid = null;
     
+    // Track last command time to detect spam
+    private long lastCommandTime = 0;
+    // Queue for commands waiting to be processed
+    private final Deque<String> commandQueue = new ArrayDeque<>();
+    // Track if a command is currently being processed (response pending)
+    private boolean isProcessingCommand = false;
+    // Track when command processing started to ensure minimum delay
+    private long commandProcessingStartTime = 0;
+    
     // Realistic value ranges
-    private int rpm = 800 + random.nextInt(200); // 800-1000 idle
+    private int rpm = 800 + random.nextInt(3000); // 800-1000 idle
     private int map = 30 + random.nextInt(20); // 30-50 kPa idle
     private int speed = random.nextInt(10); // 0-10 km/h
     private int coolantTemp = 85 + random.nextInt(10); // 85-95°C
@@ -66,6 +80,9 @@ public class ObdSimulator {
         sendBtStateChange(BluetoothStates.STATE_BT_DISCONNECTED, "obd");
         isInitializing = false;
         handler.removeCallbacksAndMessages(null);
+        lastCommandTime = 0;
+        commandQueue.clear();
+        isProcessingCommand = false;
     }
     
     private void sendBtStateChange(int state, String deviceId) {
@@ -115,6 +132,7 @@ public class ObdSimulator {
         }
         
         String cmd = command.trim().toUpperCase();
+        Log.d(TAG, "Received command: " + cmd);
         
         // Handle init commands
         if (isInitializing) {
@@ -122,17 +140,83 @@ public class ObdSimulator {
             return;
         }
         
+        // Add command to queue
+        synchronized (commandQueue) {
+            commandQueue.offer(cmd);
+        }
+        
+        // Process command if not already processing
+        processNextCommand();
+    }
+    
+    private void processNextCommand() {
+        // Don't process if already processing a command
+        if (isProcessingCommand) {
+            return;
+        }
+        
+        String cmd;
+        synchronized (commandQueue) {
+            cmd = commandQueue.poll();
+        }
+        
+        if (cmd == null) {
+            return; // No commands in queue
+        }
+        
+        isProcessingCommand = true;
+        commandProcessingStartTime = System.currentTimeMillis();
+        lastCommandTime = commandProcessingStartTime;
+        Log.d(TAG, "Processing command: " + cmd);
+        
         // Handle PID requests (format: "01 XX\r")
         if (cmd.startsWith("01 ")) {
             String pid = cmd.substring(3).trim();
             if (pid.length() >= 2) {
                 final String pidFinal = pid.substring(0, 2);
                 lastRequestedPid = pidFinal;
-                handler.postDelayed(() -> simulatePidResponse(pidFinal), READING_RESPONSE_DELAY_MS);
+                
+                // Schedule response with proper delay, ensuring minimum delay is respected
+                scheduleResponse(() -> {
+                    simulatePidResponse(pidFinal);
+                    isProcessingCommand = false;
+                    commandProcessingStartTime = 0;
+                    // Process next command in queue
+                    processNextCommand();
+                }, READING_RESPONSE_DELAY_MS);
+            } else {
+                isProcessingCommand = false;
+                commandProcessingStartTime = 0;
+                processNextCommand();
             }
         } else if (cmd.contains("AT")) {
             // Other AT commands
-            handler.postDelayed(() -> simulateResponse("OK"), INIT_RESPONSE_DELAY_MS);
+            scheduleResponse(() -> {
+                simulateResponse("OK");
+                isProcessingCommand = false;
+                commandProcessingStartTime = 0;
+                // Process next command in queue
+                processNextCommand();
+            }, INIT_RESPONSE_DELAY_MS);
+        } else {
+            // Unknown command, just mark as processed
+            isProcessingCommand = false;
+            commandProcessingStartTime = 0;
+            processNextCommand();
+        }
+    }
+    
+    private void scheduleResponse(Runnable responseAction, long delayMs) {
+        long elapsed = System.currentTimeMillis() - commandProcessingStartTime;
+        long remainingDelay = Math.max(0, delayMs - elapsed);
+        
+        if (remainingDelay > 0) {
+            handler.postDelayed(responseAction, remainingDelay);
+            Log.d(TAG, "Scheduled response after " + remainingDelay + "ms (elapsed: " + elapsed + "ms, required: " + delayMs + "ms)");
+        } else {
+            // If somehow we've already exceeded the delay, send immediately but log it
+            Log.w(TAG, "Response delay already elapsed (" + elapsed + "ms >= " + delayMs + "ms), sending immediately");
+            handler.post(responseAction);
         }
     }
     

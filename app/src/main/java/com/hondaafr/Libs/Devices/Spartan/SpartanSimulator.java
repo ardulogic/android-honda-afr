@@ -9,27 +9,37 @@ import com.hondaafr.Libs.Bluetooth.BluetoothStates;
 import com.hondaafr.Libs.Bluetooth.Services.BluetoothService;
 import com.hondaafr.Libs.Devices.Spartan.SpartanCommands;
 import android.content.Intent;
-
-import java.util.Random;
+import android.util.Log;
 
 /**
- * Simulator for AFR (Spartan) device that generates random realistic values.
+ * Simulator for AFR (Spartan) device that generates sine wave values.
  * Useful for testing without a physical AFR sensor.
  */
 public class SpartanSimulator {
     private static final String PREFS_NAME = "SpartanSimulatorPrefs";
     private static final String PREF_ENABLED = "enabled";
-    private static final long RESPONSE_DELAY_MS = 100;
-    private static final long PERIODIC_UPDATE_INTERVAL_MS = 500;
+    private static final long RESPONSE_DELAY_MS = 20;
+    private static final long MIN_COMMAND_INTERVAL_MS = 20;
+    private static final String TAG = "SpartanSimulator";
     
     private final Context context;
     private final Handler handler = new Handler(Looper.getMainLooper());
-    private final Random random = new Random();
+    
+    // Track last command time to detect spam
+    private long lastCommandTime = 0;
+    // Track if a command is currently being handled
+    private boolean isHandlingCommand = false;
+    
+    // Sine wave parameters for AFR (12 to 15 range)
+    private double sineAngle = 0.0; // Current angle for sine calculation
+    private static final double SINE_INCREMENT = 0.3; // Increment per update
+    private static final double AFR_CENTER = 13.5; // Center of 12-15 range
+    private static final double AFR_AMPLITUDE = 1.5; // Half the range (15-12)/2
     
     // Simulated values
-    private double sensorAfr = 14.7 + (random.nextDouble() * 2.0 - 1.0); // 13.7-15.7
+    private double sensorAfr = 13.5; // Initial value at center
     private double targetLambda = 1.000; // Target lambda (will be converted to AFR)
-    private double sensorTemp = 800.0 + random.nextDouble() * 100.0; // 800-900°C
+    private double sensorTemp = 850.0; // Fixed temperature
     
     public SpartanSimulator(Context context) {
         this.context = context;
@@ -48,13 +58,13 @@ public class SpartanSimulator {
     public void simulateConnection() {
         // Simulate connection state
         sendBtStateChange(BluetoothStates.STATE_BT_CONNECTED, "spartan");
-        // Start periodic value updates (but don't send data - only update internal values)
-        simulatePeriodicValueUpdates();
     }
     
     public void simulateDisconnection() {
         sendBtStateChange(BluetoothStates.STATE_BT_DISCONNECTED, "spartan");
         handler.removeCallbacksAndMessages(null);
+        lastCommandTime = 0; // Reset command tracking on disconnect
+        isHandlingCommand = false; // Reset handling flag on disconnect
     }
     
     private void sendBtStateChange(int state, String deviceId) {
@@ -67,27 +77,40 @@ public class SpartanSimulator {
         context.sendBroadcast(intent);
     }
     
-    // Update simulated values periodically, but don't send data
-    // Data is only sent when commands are received
-    private void simulatePeriodicValueUpdates() {
-        // Update sensor AFR with slight variation
-        updateSimulatedValues();
-        
-        // Schedule next update (but don't send any data)
-        handler.postDelayed(this::simulatePeriodicValueUpdates, PERIODIC_UPDATE_INTERVAL_MS);
-    }
-    
     public void handleCommand(String command) {
         if (command == null || command.trim().isEmpty()) {
+            Log.w(TAG, "Empty command received!");
+
             return;
         }
         
-        String cmd = command.trim();
+        // Check if command is being called too frequently
+        long currentTime = System.currentTimeMillis();
+        if (lastCommandTime > 0) {
+            long timeSinceLastCommand = currentTime - lastCommandTime;
+            if (timeSinceLastCommand < MIN_COMMAND_INTERVAL_MS) {
+                Log.w(TAG, "handleCommand called too frequently! Only " + timeSinceLastCommand + "ms since last call (minimum: " + MIN_COMMAND_INTERVAL_MS + "ms). Command: " + command.trim());
+                return; // Ignore commands that come too quickly
+            }
+        }
         
+        lastCommandTime = currentTime;
+        String cmd = command.trim();
+
+        Log.d(TAG, "Handling command: " + cmd);
+
         handler.postDelayed(() -> {
-            if (cmd.equals("G\r\n") || cmd.equals("G")) {
-                // Request current AFR - update values first, then send response
+            // Check if already handling a command (detect concurrent execution - shouldn't happen on single thread)
+            if (isHandlingCommand) {
+                Log.e(TAG, "Command handler executed while another command is being processed! Command: " + cmd);
+            }
+            isHandlingCommand = true;
+            
+            try {
                 updateSimulatedValues();
+
+            if (cmd.equals("G\r\n") || cmd.equals("G")) {
+                // Request current AFR - return current value (updated by periodic task)
                 String response = String.format("0:a:%.1f", sensorAfr);
                 sendDataReceived(response);
             } else if (cmd.equals("GETNBSWLAMB\r\n") || cmd.equals("GETNBSWLAMB")) {
@@ -96,26 +119,39 @@ public class SpartanSimulator {
                 sendDataReceived(response);
             } else if (cmd.startsWith("SETNBSWLAM")) {
                 // Set target lambda - parse and store
+                // Command format: SETNBSWLAMx.xxx (exactly 5 characters after SETNBSWLAM)
                 try {
-                    String lambdaStr = cmd.replace("SETNBSWLAM", "").replace("\r\n", "").replace("\r", "").replace("\n", "");
+                    // Extract the lambda value (everything after "SETNBSWLAM")
+                    String lambdaStr = cmd.substring("SETNBSWLAM".length());
+                    // Remove any line endings
+                    lambdaStr = lambdaStr.replace("\r\n", "").replace("\r", "").replace("\n", "");
                     targetLambda = Double.parseDouble(lambdaStr);
-                    // Confirm with the same value
+                    // Respond with exactly 5 characters: x.xxx format
                     String response = String.format("%.3f", targetLambda);
                     sendDataReceived(response);
-                } catch (NumberFormatException e) {
-                    // Invalid command, ignore
+                } catch (NumberFormatException | StringIndexOutOfBoundsException e) {
+                    // Invalid command format, ignore
+                    Log.w(TAG, "Invalid SETNBSWLAM command format: " + cmd);
                 }
+            }
+            } finally {
+                // Mark that we're done handling the command
+                isHandlingCommand = false;
             }
         }, RESPONSE_DELAY_MS);
     }
     
     private void updateSimulatedValues() {
-        // Gradually vary sensor AFR around target (with some lag)
-        double targetAfr = SpartanCommands.lambdaToAfr(targetLambda);
-        double variation = (random.nextDouble() * 0.4) - 0.2; // ±0.2 AFR variation
-        sensorAfr = Math.max(10.0, Math.min(20.0, targetAfr + variation));
+        // Increment sine angle for next calculation
+        sineAngle += SINE_INCREMENT;
         
-        // Gradually vary sensor temp
-        sensorTemp = Math.max(700.0, Math.min(950.0, sensorTemp + (random.nextDouble() * 20.0 - 10.0)));
+        // Calculate AFR using sine wave: ranges from 12 to 15
+        // sin(x) ranges from -1 to 1, so: center + amplitude * sin(x) = 13.5 + 1.5 * sin(x)
+        // This gives: 13.5 - 1.5 = 12 (min) and 13.5 + 1.5 = 15 (max)
+        sensorAfr = AFR_CENTER + AFR_AMPLITUDE * Math.sin(sineAngle);
+
+        Log.d(TAG, "SineAfr: " + sensorAfr);
+        // Keep sensor temp fixed (or you can also use sine if needed)
+        // sensorTemp remains at 850.0
     }
 }

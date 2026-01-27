@@ -1,10 +1,9 @@
 package com.hondaafr.Libs.Devices.Spartan;
 
 import android.content.Context;
+import android.util.Log;
 
 import com.hondaafr.Libs.Bluetooth.Services.BluetoothService;
-import com.hondaafr.Libs.Devices.Spartan.AfrLogStore;
-import com.hondaafr.Libs.Devices.Spartan.SpartanSimulator;
 import com.hondaafr.Libs.Helpers.Studio;
 
 import java.util.LinkedHashMap;
@@ -17,8 +16,11 @@ import java.util.concurrent.TimeUnit;
 public class SpartanStudio extends Studio {
 
     private static final long LINK_TIMEOUT_MS = 500L;     // Sensor considered dead after this
-    private static final long READING_PERIOD_MS = 50L;    // Read every 50ms
+    private static final long COMMUNICATION_CORE_TICK_MS = 10L;    // Read every 50ms
+    private static final long MIN_TIME_AFTER_REQUEST_MS = 30L;    // Read every 50ms
+    private static final long MIN_TIME_AFTER_RESPONSE_MS = 10L;    // Read every 50ms
     private static final long SUPERVISOR_PERIOD_MS = 1000L;
+    private static final String TAG = "SpartanStudio";
 
     private final Context context;
     private final SpartanStudioListener listener;
@@ -27,7 +29,8 @@ public class SpartanStudio extends Studio {
     private ScheduledFuture<?> supervisorTask;
     private ScheduledFuture<?> readingTask;
 
-    private enum Phase { RUNNING, STOPPED }
+    private enum Phase {RUNNING, STOPPED}
+
     private Phase phase = Phase.STOPPED;
 
     public Double targetAfr = 14.7;
@@ -38,7 +41,11 @@ public class SpartanStudio extends Studio {
 
     private long timeLastReadingReceived = 0L;
     private long timeLastDataReceived = 0L;
+    private static long timeLastRequestSent = 0L;
     private boolean linkPreviouslyAlive = false;
+    private static String pendingSetAfrCommand = null;
+    private static String pendingGetAfrCommand = null;
+    private static String pendingGetTargetAfrCommand = null;
 
     public SpartanStudio(Context context, SpartanStudioListener listener) {
         this.context = context;
@@ -68,8 +75,8 @@ public class SpartanStudio extends Studio {
 
     private void startReadingTask() {
         readingTask = scheduler.scheduleAtFixedRate(
-                this::requestSensorReadings,
-                0, READING_PERIOD_MS,
+                this::requestSensorReadingsWithThrottling,
+                0, COMMUNICATION_CORE_TICK_MS,
                 TimeUnit.MILLISECONDS
         );
     }
@@ -91,37 +98,86 @@ public class SpartanStudio extends Studio {
     // Bluetooth interaction
     // ────────────────────────────────────────────────────────────────────────────────
 
-    private void requestSensorReadings() {
-        // Check if connected via real Bluetooth OR simulator
+    private void requestSensorReadingsWithThrottling() {
         boolean isConnected = BluetoothService.isConnected("spartan") || SpartanSimulator.isEnabled(context);
-        if (isConnected) {
+        boolean isDataReceivedAfterRequest = timeLastDataReceived >= timeLastRequestSent;
+        boolean isTimeSinceDataReceivedPassed = timeSinceDataReceived() > MIN_TIME_AFTER_RESPONSE_MS;
+        boolean isTimeSinceLastRequestPassed = timeSinceLastRequestSent() > MIN_TIME_AFTER_REQUEST_MS;
+        boolean isSpamming = !(
+                            isDataReceivedAfterRequest
+                        && isTimeSinceDataReceivedPassed
+                        && isTimeSinceLastRequestPassed
+        );
+        boolean isTimeout = timeSinceLastRequestSent() >= LINK_TIMEOUT_MS;
+
+
+        if ((!isConnected || isSpamming) && !isTimeout) {
+            return;
+        }
+
+        Log.d("SpartanSimulator", "Time since last request:" + timeSinceLastRequestSent() + " Time since last data:" + timeSinceDataReceived());
+
+
+        if (pendingSetAfrCommand != null) {
+            Log.d("SpartanSimulator", "setTargetAfr: " + pendingSetAfrCommand + " Time since last request:" + timeSinceLastRequestSent() + " Time since last data:" + timeSinceDataReceived());
+
+            sendRequest(context, pendingSetAfrCommand);
+            return;
+        }
+
+        if (pendingGetTargetAfrCommand != null) {
+            Log.d("SpartanSimulator", "getTargetAfr: " + pendingGetAfrCommand + " Time since last request:" + timeSinceLastRequestSent() + " Time since last data:" + timeSinceDataReceived());
+
+            sendRequest(context, pendingGetTargetAfrCommand);
+            return;
+        }
+
+        if (pendingGetAfrCommand != null) {
+            Log.d("SpartanSimulator", "getCurrentAfr: Time since last request:" + timeSinceLastRequestSent() + " Time since last data:" + timeSinceDataReceived());
+
+            sendRequest(context, pendingGetAfrCommand);
+            return;
+        }
+
+        if (isRunning()) {
             if (!targetAfrReceived) {
-                requestTargetAfr(context);
+                Log.d("SpartanSimulator", "getTargetAfr: Time since last request:" + timeSinceLastRequestSent() + " Time since last data:" + timeSinceDataReceived());
+                pendingGetTargetAfrCommand = SpartanCommands.getTargetAFR();
+                sendRequest(context, pendingGetTargetAfrCommand);
             } else {
-                requestCurrentAfr(context);
+                Log.d("SpartanSimulator", "getCurrentAfr: Time since last request:" + timeSinceLastRequestSent() + " Time since last data:" + timeSinceDataReceived());
+                pendingGetAfrCommand = SpartanCommands.getCurrentAfr();
+                sendRequest(context, pendingGetAfrCommand);
             }
         }
     }
 
+    private void requestSensorReadings() {
+        if (!targetAfrReceived) {
+            requestTargetAfr(context);
+        } else {
+            requestCurrentAfr(context);
+        }
+    }
+
     public static void requestTargetAfr(Context context) {
-        String cmd = SpartanCommands.getTargetAFR();
-        AfrLogStore.logTx(cmd);
-        BluetoothService.send(context, cmd, "spartan");
+        sendRequest(context, SpartanCommands.getTargetAFR());
     }
 
     public static void requestCurrentAfr(Context context) {
-        String cmd = SpartanCommands.requestCurrentAfr();
-        AfrLogStore.logTx(cmd);
-        BluetoothService.send(context, cmd, "spartan");
+        sendRequest(context, SpartanCommands.getCurrentAfr());
     }
 
     public void setAFR(double target) {
         targetAfr = target;
-        String cmd = SpartanCommands.setAFR(targetAfr);
+        pendingSetAfrCommand = SpartanCommands.setAFR(targetAfr);
+        listener.onTargetAfrUpdated(targetAfr);
+    }
+
+    private static void sendRequest(Context context, String cmd) {
         AfrLogStore.logTx(cmd);
         BluetoothService.send(context, cmd, "spartan");
-
-        listener.onTargetAfrUpdated(targetAfr);
+        timeLastRequestSent = System.currentTimeMillis();
     }
 
     public void adjustAFR(double delta) {
@@ -143,10 +199,13 @@ public class SpartanStudio extends Studio {
             targetAfr = SpartanCommands.parseTargetLambdaAndConvertToAfr(data);
             targetAfrReceived = true;
             listener.onTargetAfrUpdated(targetAfr);
+            pendingGetTargetAfrCommand = null;
+            pendingSetAfrCommand = null;
         } else if (SpartanCommands.dataIsSensorAfr(data)) {
             lastSensorAfr = SpartanCommands.parseSensorAfr(data);
             listener.onSensorAfrReceived(lastSensorAfr);
             updateReadingsReceivedTimestamp();
+            pendingGetAfrCommand = null;
         } else if (SpartanCommands.dataIsSensorTemp(data)) {
             lastSensorTemp = SpartanCommands.parseSensorTemp(data);
             listener.onSensorTempReceived(lastSensorTemp);
@@ -169,6 +228,11 @@ public class SpartanStudio extends Studio {
     public long timeSinceDataReceived() {
         return System.currentTimeMillis() - timeLastDataReceived;
     }
+
+    public static long timeSinceLastRequestSent() {
+        return System.currentTimeMillis() - timeLastRequestSent;
+    }
+
     // ────────────────────────────────────────────────────────────────────────────────
     // State and metrics
     // ────────────────────────────────────────────────────────────────────────────────
