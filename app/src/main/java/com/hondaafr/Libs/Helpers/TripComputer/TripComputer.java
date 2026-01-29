@@ -77,8 +77,6 @@ public class TripComputer extends Debuggable implements ObdStudioListener, Spart
             }
         });
 
-        this.gps.setMinDistanceDeltaInMeters(25);
-
         new PhoneLightSensor(context, intensity -> {
             boolean lowLight = intensity < 15;
             boolean afterSunset = false;
@@ -346,6 +344,21 @@ public class TripComputer extends Debuggable implements ObdStudioListener, Spart
     
     public String getCurrentSessionId() {
         return currentSessionId;
+    }
+
+    /**
+     * Resets trip stats and syncs map track session so the map clears when the user
+     * opens it after resetting the trip (e.g. from the gauge/cluster trip knob).
+     */
+    public void resetTrip(Context context) {
+        tripStats.reset(context);
+        currentSessionId = tripStats.getSessionId(context);
+        trackStore = new TripFuelTrackStore(context, currentSessionId);
+        lastTrackLat = Double.NaN;
+        lastTrackLon = Double.NaN;
+        segmentBreakPending = false;
+
+        this.notifyCalculationsUpdated();
     }
 
     public void onPause(Context context) {

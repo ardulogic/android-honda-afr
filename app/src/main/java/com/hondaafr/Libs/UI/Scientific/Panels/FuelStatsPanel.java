@@ -85,7 +85,7 @@ public class FuelStatsPanel extends Panel {
                     if (mode == FuelDisplayMode.FuelTotal) {
                         tripComputer.totalStats.reset(mainActivity);
                     } else {
-                        tripComputer.tripStats.reset(mainActivity);
+                        tripComputer.resetTrip(mainActivity);
                     }
                     tripComputer.notifyCalculationsUpdated();
                     updateDisplay();

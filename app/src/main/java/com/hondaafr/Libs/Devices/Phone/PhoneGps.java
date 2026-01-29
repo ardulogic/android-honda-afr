@@ -23,7 +23,8 @@ import java.util.*;
 public class PhoneGps {
 
     private static final long UPDATE_INTERVAL_MS = 2000;
-    private static final int DISTANCE_THRESHOLD_METERS = 15;
+    private static final int DISTANCE_THRESHOLD_METERS = 25;
+//    private static final int DISTANCE_THRESHOLD_METERS = 0;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1001;
 
     private final Context context;
@@ -107,7 +108,7 @@ public class PhoneGps {
                                 locationHistory.add(location);
                                 listener.onUpdate(speedKmh, distance / 1000.0, location.getAccuracy()); // Convert to km
                             } else {
-                                Log.d("PhoneGps", "Ignored small movement: " + distance + "m");
+                                Log.d("PhoneGps", "Ignored small movement: " + distance + "m (min:" + minDistanceDelta + "m)");
                             }
                         } else {
                             locationHistory.add(location);

@@ -283,6 +283,7 @@ public class MapFragment extends Fragment implements TripComputerListener, PipAw
         }
 
         if (lastPoint == null) {
+            appendCurrentPointToFuelSamples(lat, lon);
             lastPoint = currPoint;
             if (followEnabled) {
                 mapView.getController().setCenter(currPoint);
@@ -291,12 +292,31 @@ public class MapFragment extends Fragment implements TripComputerListener, PipAw
             return;
         }
 
+        // TripComputer already appended this point to trackStore in logToMapTrack();
+        // add it to fuelSamples so the new segment is drawn (we only update in-memory display).
+        appendCurrentPointToFuelSamples(lat, lon);
+
         lastPoint = currPoint;
         refreshTrackOverlays();
 
         if (followEnabled) {
             mapView.getController().animateTo(currPoint);
         }
+    }
+
+    /**
+     * Appends the current location as a track point to fuelSamples for display.
+     * TripComputer has already appended this point to trackStore, so we do not write to the store here.
+     */
+    private void appendCurrentPointToFuelSamples(double lat, double lon) {
+        double lp100km = tripComputer.instStats.getLp100kmAvg();
+        Double sanitized = sanitizeMetric(lp100km);
+        Double lph = sanitizeMetric(tripComputer.instStats.getLphAvg());
+        double consumption = sanitized != null ? sanitized : 0.0;
+        double lphVal = lph != null ? lph : Double.NaN;
+        TripFuelTrackStore.TrackPoint sample = new TripFuelTrackStore.TrackPoint(
+                lat, lon, consumption, lphVal);
+        fuelSamples.add(sample);
     }
 
     private int consumptionToColor(double litersPer100km) {

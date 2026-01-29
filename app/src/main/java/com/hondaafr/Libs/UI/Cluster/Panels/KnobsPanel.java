@@ -45,7 +45,7 @@ public class KnobsPanel extends Panel {
     public void onParentReady() {
         setupKnobAnimation(buttonTripKnob);
         setKnobOnShortClick(buttonTripKnob, 0, 2);
-        setKnobOnLongClick(buttonTripKnob, tripComputer.tripStats);
+        setKnobOnLongClickTrip(buttonTripKnob);
 
         setupKnobAnimation(buttonTotalsKnob);
         setKnobOnShortClick(buttonTotalsKnob, 3, 5);
@@ -63,6 +63,21 @@ public class KnobsPanel extends Panel {
 
     public GaugePanel getGaugePanel() {
         return ((GaugePanel) parent.getPanel(GaugePanel.class));
+    }
+
+    private void setKnobOnLongClickTrip(ImageButton b) {
+        b.setOnLongClickListener(v -> {
+            tripComputer.resetTrip(mainActivity);
+            tripComputer.notifyCalculationsUpdated();
+            updateGauge();
+
+            if (vibrator != null) {
+                vibrator.vibrate(VibrationEffect.createOneShot(550, VibrationEffect.DEFAULT_AMPLITUDE)); // short click
+            }
+
+            v.setTag(R.id.was_long_clicked, true);
+            return false;
+        });
     }
 
     private void setKnobOnLongClick(ImageButton b, TotalStats stats) {
