@@ -24,6 +24,8 @@
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/app_spacing_lg"
         android:background="@color/overlay_background"
+        android:clickable="true"
+        android:focusable="true"
         android:padding="@dimen/app_spacing_sm"
         android:text="L/100km"
         android:textColor="@color/app_text_primary"
@@ -39,19 +41,6 @@
         android:orientation="vertical"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent">
-
-        <Button
-            android:id="@+id/buttonToggleMetric"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:backgroundTint="@color/app_button_primary_bg"
-            android:text="L/h"
-            android:textColor="@color/app_button_text_light"
-            android:textSize="14sp" />
-
-        <Space
-            android:layout_width="wrap_content"
-            android:layout_height="@dimen/app_spacing_sm" />
 
         <Button
             android:id="@+id/buttonExportTrip"

@@ -34,7 +34,6 @@ public final class MapUiController {
     private final View zoomInButton;
     private final View zoomOutButton;
     private final View exportTripButton;
-    private final View toggleMetricButton;
     private final View followToggleButton;
 
     public MapUiController(
@@ -43,7 +42,6 @@ public final class MapUiController {
             View zoomInButton,
             View zoomOutButton,
             View exportTripButton,
-            View toggleMetricButton,
             View followToggleButton
     ) {
         this.mapView = mapView;
@@ -51,7 +49,6 @@ public final class MapUiController {
         this.zoomInButton = zoomInButton;
         this.zoomOutButton = zoomOutButton;
         this.exportTripButton = exportTripButton;
-        this.toggleMetricButton = toggleMetricButton;
         this.followToggleButton = followToggleButton;
     }
 
@@ -89,7 +86,6 @@ public final class MapUiController {
         int visibility = isInPip ? View.GONE : View.VISIBLE;
         if (legendTitle != null) legendTitle.setVisibility(visibility);
         if (followToggleButton != null) followToggleButton.setVisibility(visibility);
-        if (toggleMetricButton != null) toggleMetricButton.setVisibility(visibility);
         if (exportTripButton != null) exportTripButton.setVisibility(visibility);
         if (zoomInButton != null) zoomInButton.setVisibility(visibility);
         if (zoomOutButton != null) zoomOutButton.setVisibility(visibility);
@@ -98,9 +94,6 @@ public final class MapUiController {
     public void updateLegendTitle(MapMetric metric) {
         if (legendTitle != null) {
             legendTitle.setText(metric.label());
-        }
-        if (toggleMetricButton instanceof android.widget.Button) {
-            ((android.widget.Button) toggleMetricButton).setText("Next");
         }
     }
 

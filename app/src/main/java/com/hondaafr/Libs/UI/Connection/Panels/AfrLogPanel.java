@@ -122,6 +122,18 @@ public class AfrLogPanel extends Panel implements AfrLogStore.LogListener {
         // Listener will be re-added in onResume when exiting PiP
     }
 
+    public void setMaxItems(int maxItems) {
+        if (afrLogAdapter != null) {
+            afrLogAdapter.setMaxItems(maxItems);
+        }
+    }
+
+    public void setShowTimestamp(boolean show) {
+        if (afrLogAdapter != null) {
+            afrLogAdapter.setShowTimestamp(show);
+        }
+    }
+
     @Override
     public void onLogUpdated(List<AfrLogStore.LogEntry> entries) {
         if (afrLogAdapter == null) {

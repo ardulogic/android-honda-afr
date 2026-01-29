@@ -91,9 +91,8 @@ public class MapFragment extends Fragment implements TripComputerListener, PipAw
         View zoomInButton = view.findViewById(R.id.buttonZoomIn);
         View zoomOutButton = view.findViewById(R.id.buttonZoomOut);
         View exportTripButton = view.findViewById(R.id.buttonExportTrip);
-        View toggleMetricButton = view.findViewById(R.id.buttonToggleMetric);
         uiController = new MapUiController(mapView, legendTitle, zoomInButton, zoomOutButton,
-                exportTripButton, toggleMetricButton, followToggleButton);
+                exportTripButton, followToggleButton);
 
         tripComputer = ((MainActivity) requireActivity()).getTripComputer();
         sessionId = tripComputer.tripStats.getSessionId(requireContext());
@@ -109,7 +108,7 @@ public class MapFragment extends Fragment implements TripComputerListener, PipAw
         zoomInButton.setOnClickListener(v -> mapView.getController().zoomIn());
         zoomOutButton.setOnClickListener(v -> mapView.getController().zoomOut());
         exportTripButton.setOnClickListener(v -> exportTripCsv());
-        toggleMetricButton.setOnClickListener(v -> toggleMetric());
+        legendTitle.setOnClickListener(v -> toggleMetric());
 
         mapView.addMapListener(new MapListener() {
             @Override

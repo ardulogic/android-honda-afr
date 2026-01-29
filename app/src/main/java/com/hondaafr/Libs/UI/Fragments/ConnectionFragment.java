@@ -12,6 +12,7 @@ import androidx.annotation.Nullable;
 import com.hondaafr.Libs.Helpers.AfrComputer.AfrComputer;
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputer;
 import com.hondaafr.Libs.UI.ConnectionView;
+import com.hondaafr.Libs.UI.Connection.Panels.AfrLogPanel;
 import com.hondaafr.Libs.UI.Connection.Panels.ObdLogPanel;
 import com.hondaafr.MainActivity;
 import com.hondaafr.R;
@@ -83,12 +84,18 @@ public class ConnectionFragment extends BaseFragment {
     @Override
     public void onEnterPip() {
         if (connectionView != null) {
-            connectionView.showPipView();
+            // Apply PiP log state before showing PiP view so AFR/OBD logs don't show timestamps
             ObdLogPanel obdLogPanel = connectionView.getPanel(ObdLogPanel.class);
             if (obdLogPanel != null) {
                 obdLogPanel.setShowTimestamp(false);
-                obdLogPanel.setMaxItems(5);
+                obdLogPanel.setMaxItems(4);
             }
+            AfrLogPanel afrLogPanel = connectionView.getPanel(AfrLogPanel.class);
+            if (afrLogPanel != null) {
+                afrLogPanel.setShowTimestamp(false);
+                afrLogPanel.setMaxItems(4);
+            }
+            connectionView.showPipView();
         }
     }
 
@@ -96,10 +103,16 @@ public class ConnectionFragment extends BaseFragment {
     public void onExitPip() {
         if (connectionView != null) {
             connectionView.restoreFullView();
+            // Restore full log state after restoring view
             ObdLogPanel obdLogPanel = connectionView.getPanel(ObdLogPanel.class);
             if (obdLogPanel != null) {
                 obdLogPanel.setShowTimestamp(true);
                 obdLogPanel.setMaxItems(Integer.MAX_VALUE);
+            }
+            AfrLogPanel afrLogPanel = connectionView.getPanel(AfrLogPanel.class);
+            if (afrLogPanel != null) {
+                afrLogPanel.setShowTimestamp(true);
+                afrLogPanel.setMaxItems(Integer.MAX_VALUE);
             }
         }
     }
