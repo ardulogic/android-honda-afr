@@ -1,7 +1,6 @@
 package com.hondaafr.Libs.Helpers.Simulator;
 
 import android.content.Context;
-import android.util.Log;
 
 import com.hondaafr.Libs.Devices.Obd.ObdReadings;
 import com.hondaafr.Libs.Devices.Obd.ObdStudio;
@@ -68,8 +67,6 @@ public class DataSimulator {
         if (config.isObdSimulatorEnabled()) {
             startObdSimulator();
         }
-        
-        Log.d(TAG, "Data simulator started");
     }
     
     /**
@@ -85,8 +82,6 @@ public class DataSimulator {
             obdSimulatorTask.cancel(true);
             obdSimulatorTask = null;
         }
-        
-        Log.d(TAG, "Data simulator stopped");
     }
     
     /**

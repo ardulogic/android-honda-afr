@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
 
 import com.hondaafr.Libs.Bluetooth.BluetoothStates;
 import com.hondaafr.Libs.Bluetooth.Services.BluetoothService;
@@ -274,7 +273,6 @@ public final class ObdSimulator {
     /* ===================== OUTPUT ===================== */
 
     private void simulateResponse(String response) {
-        Log.d(TAG, "TX: " + response);
         Intent i = BluetoothStates.intentForDataReceived(
                 BluetoothService.ACTION_UI_UPDATE, response, DEVICE_ID);
         context.sendBroadcast(i);

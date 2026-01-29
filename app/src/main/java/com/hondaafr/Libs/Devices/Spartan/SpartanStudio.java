@@ -1,7 +1,6 @@
 package com.hondaafr.Libs.Devices.Spartan;
 
 import android.content.Context;
-import android.util.Log;
 
 import com.hondaafr.Libs.Bluetooth.Services.BluetoothService;
 import com.hondaafr.Libs.Helpers.Studio;
@@ -115,37 +114,26 @@ public class SpartanStudio extends Studio {
             return;
         }
 
-        Log.d("SpartanSimulator", "Time since last request:" + timeSinceLastRequestSent() + " Time since last data:" + timeSinceDataReceived());
-
-
         if (pendingSetAfrCommand != null) {
-            Log.d("SpartanSimulator", "setTargetAfr: " + pendingSetAfrCommand + " Time since last request:" + timeSinceLastRequestSent() + " Time since last data:" + timeSinceDataReceived());
-
             sendRequest(context, pendingSetAfrCommand);
             return;
         }
 
         if (pendingGetTargetAfrCommand != null) {
-            Log.d("SpartanSimulator", "getTargetAfr: " + pendingGetAfrCommand + " Time since last request:" + timeSinceLastRequestSent() + " Time since last data:" + timeSinceDataReceived());
-
             sendRequest(context, pendingGetTargetAfrCommand);
             return;
         }
 
         if (pendingGetAfrCommand != null) {
-            Log.d("SpartanSimulator", "getCurrentAfr: Time since last request:" + timeSinceLastRequestSent() + " Time since last data:" + timeSinceDataReceived());
-
             sendRequest(context, pendingGetAfrCommand);
             return;
         }
 
         if (isRunning()) {
             if (!targetAfrReceived) {
-                Log.d("SpartanSimulator", "getTargetAfr: Time since last request:" + timeSinceLastRequestSent() + " Time since last data:" + timeSinceDataReceived());
                 pendingGetTargetAfrCommand = SpartanCommands.getTargetAFR();
                 sendRequest(context, pendingGetTargetAfrCommand);
             } else {
-                Log.d("SpartanSimulator", "getCurrentAfr: Time since last request:" + timeSinceLastRequestSent() + " Time since last data:" + timeSinceDataReceived());
                 pendingGetAfrCommand = SpartanCommands.getCurrentAfr();
                 sendRequest(context, pendingGetAfrCommand);
             }
@@ -192,7 +180,6 @@ public class SpartanStudio extends Studio {
         if (data != null && !data.trim().isEmpty()) {
             AfrLogStore.logRx(data);
         }
-        d(data, 1);
         updateDataReceivedTimestamp();
 
         if (SpartanCommands.dataIsTargetLambda(data)) {

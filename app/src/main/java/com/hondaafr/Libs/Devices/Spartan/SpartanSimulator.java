@@ -97,8 +97,6 @@ public class SpartanSimulator {
         lastCommandTime = currentTime;
         String cmd = command.trim();
 
-        Log.d(TAG, "Handling command: " + cmd);
-
         handler.postDelayed(() -> {
             // Check if already handling a command (detect concurrent execution - shouldn't happen on single thread)
             if (isHandlingCommand) {
@@ -149,8 +147,6 @@ public class SpartanSimulator {
         // sin(x) ranges from -1 to 1, so: center + amplitude * sin(x) = 13.5 + 1.5 * sin(x)
         // This gives: 13.5 - 1.5 = 12 (min) and 13.5 + 1.5 = 15 (max)
         sensorAfr = AFR_CENTER + AFR_AMPLITUDE * Math.sin(sineAngle);
-
-        Log.d(TAG, "SineAfr: " + sensorAfr);
         // Keep sensor temp fixed (or you can also use sine if needed)
         // sensorTemp remains at 850.0
     }

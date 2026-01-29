@@ -3,8 +3,6 @@ package com.hondaafr.Libs.Helpers;
 import android.app.Activity;
 import android.graphics.Color;
 import android.graphics.Typeface;
-import android.util.Log;
-
 import androidx.core.content.res.ResourcesCompat;
 
 import com.github.mikephil.charting.charts.LineChart;
@@ -226,7 +224,6 @@ public class TimeChart {
         for (float i = 0; i < count; i++, x += 100) {
             float y = getRandom(10, 50);
             values.add(new Entry(x, y)); // add one entry per hour
-            Log.d("Demo value", String.valueOf(x) + " - " + String.valueOf(y));
         }
 
         setData(values);
