@@ -18,98 +18,18 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <LinearLayout
-        android:id="@+id/layoutFuelLegend"
+    <TextView
+        android:id="@+id/textLegendTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/app_spacing_lg"
         android:background="@color/overlay_background"
-        android:orientation="vertical"
         android:padding="@dimen/app_spacing_sm"
+        android:text="L/100km"
+        android:textColor="@color/app_text_primary"
+        android:textSize="14sp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <TextView
-            android:id="@+id/textLegendTitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="L/100km"
-            android:textColor="@color/app_text_primary"
-            android:textSize="12sp" />
-
-        <com.hondaafr.Libs.UI.Map.LegendGradientView
-            android:id="@+id/viewLegendGradient"
-            android:layout_width="140dp"
-            android:layout_height="6dp"
-            android:layout_marginTop="@dimen/app_spacing_sm" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/app_spacing_xs"
-            android:orientation="horizontal">
-
-            <TextView
-                android:id="@+id/textLegendMin"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="0"
-                android:textColor="@color/app_text_primary"
-                android:textSize="10sp" />
-
-            <Space
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="3" />
-
-            <TextView
-                android:id="@+id/textLegendMid1"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="3"
-                android:textColor="@color/app_text_primary"
-                android:textSize="10sp" />
-
-            <Space
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="3" />
-
-            <TextView
-                android:id="@+id/textLegendMid2"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="6"
-                android:textColor="@color/app_text_primary"
-                android:textSize="10sp" />
-
-            <Space
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="2" />
-
-            <TextView
-                android:id="@+id/textLegendMid3"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="8"
-                android:textColor="@color/app_text_primary"
-                android:textSize="10sp" />
-
-            <Space
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="7" />
-
-            <TextView
-                android:id="@+id/textLegendMax"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="15"
-                android:textColor="@color/app_text_primary"
-                android:textSize="10sp" />
-        </LinearLayout>
-    </LinearLayout>
+        app:layout_constraintTop_toTopOf="parent" />
 
     <LinearLayout
         android:id="@+id/layoutMapButtons"

@@ -48,6 +48,14 @@ public class TripFuelTrackStore {
                 .append(point.litersPer100km)
                 .append(',')
                 .append(point.litersPerHour)
+                .append(',')
+                .append(Double.isNaN(point.afr) ? "" : point.afr)
+                .append(',')
+                .append(Double.isNaN(point.rpm) ? "" : point.rpm)
+                .append(',')
+                .append(Double.isNaN(point.mapKpa) ? "" : point.mapKpa)
+                .append(',')
+                .append(Double.isNaN(point.speedKmh) ? "" : point.speedKmh)
                 .append('\n');
         flushIfNeeded();
     }
@@ -73,11 +81,12 @@ public class TripFuelTrackStore {
                     double lat = Double.parseDouble(parts[0]);
                     double lon = Double.parseDouble(parts[1]);
                     double fuel = Double.parseDouble(parts[2]);
-                    double lph = Double.NaN;
-                    if (parts.length >= 4) {
-                        lph = Double.parseDouble(parts[3]);
-                    }
-                    points.add(new TrackPoint(lat, lon, fuel, lph));
+                    double lph = parts.length >= 4 && !parts[3].isEmpty() ? Double.parseDouble(parts[3]) : Double.NaN;
+                    double afr = parts.length >= 5 && !parts[4].isEmpty() ? Double.parseDouble(parts[4]) : Double.NaN;
+                    double rpm = parts.length >= 6 && !parts[5].isEmpty() ? Double.parseDouble(parts[5]) : Double.NaN;
+                    double mapKpa = parts.length >= 7 && !parts[6].isEmpty() ? Double.parseDouble(parts[6]) : Double.NaN;
+                    double speedKmh = parts.length >= 8 && !parts[7].isEmpty() ? Double.parseDouble(parts[7]) : Double.NaN;
+                    points.add(new TrackPoint(lat, lon, fuel, lph, afr, rpm, mapKpa, speedKmh));
                 } catch (NumberFormatException ignored) {
                 }
             }
@@ -190,13 +199,27 @@ public class TripFuelTrackStore {
         public final double longitude;
         public final double litersPer100km;
         public final double litersPerHour;
+        public final double afr;
+        public final double rpm;
+        public final double mapKpa;
+        public final double speedKmh;
         public final boolean isBreak;
 
+        /** Constructor for backward compat (OBD/AFR/speed = NaN). */
         public TrackPoint(double latitude, double longitude, double litersPer100km, double litersPerHour) {
+            this(latitude, longitude, litersPer100km, litersPerHour, Double.NaN, Double.NaN, Double.NaN, Double.NaN);
+        }
+
+        public TrackPoint(double latitude, double longitude, double litersPer100km, double litersPerHour,
+                          double afr, double rpm, double mapKpa, double speedKmh) {
             this.latitude = latitude;
             this.longitude = longitude;
             this.litersPer100km = litersPer100km;
             this.litersPerHour = litersPerHour;
+            this.afr = afr;
+            this.rpm = rpm;
+            this.mapKpa = mapKpa;
+            this.speedKmh = speedKmh;
             this.isBreak = false;
         }
 
@@ -205,11 +228,20 @@ public class TripFuelTrackStore {
             this.longitude = 0.0;
             this.litersPer100km = 0.0;
             this.litersPerHour = Double.NaN;
+            this.afr = Double.NaN;
+            this.rpm = Double.NaN;
+            this.mapKpa = Double.NaN;
+            this.speedKmh = Double.NaN;
             this.isBreak = isBreak;
         }
 
         public static TrackPoint breakMarker() {
             return new TrackPoint(true);
+        }
+
+        /** True if this point is not a segment break (can be drawn for some metric). */
+        public boolean isRenderable() {
+            return !isBreak;
         }
     }
 }

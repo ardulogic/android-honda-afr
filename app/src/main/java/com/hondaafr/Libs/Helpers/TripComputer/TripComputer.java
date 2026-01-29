@@ -234,18 +234,49 @@ public class TripComputer extends Debuggable implements ObdStudioListener, Spart
 
     public double getSpeed() {
         if (isGpsSpeedUsed()) {
-            return gps.getSpeed();
+            Double v = gps.getSpeed();
+            return v != null ? v : Double.NaN;
         } else {
             ObdReading speedObd = mObdStudio.getAvailableReading("speed");
             if (speedObd == null || speedObd.getValue() == null) {
-                return gps.getSpeed();
+                Double v = gps.getSpeed();
+                return v != null ? v : Double.NaN;
             }
-
             try {
                 return ((Number) speedObd.getValue()).doubleValue();
             } catch (ClassCastException e) {
-                return gps.getSpeed();
+                Double v = gps.getSpeed();
+                return v != null ? v : Double.NaN;
             }
+        }
+    }
+
+    /** Last AFR from wideband (for map track). NaN if not available. */
+    public double getLastAfr() {
+        return mSpartanStudio != null && mSpartanStudio.lastSensorAfr > 0 ? mSpartanStudio.lastSensorAfr : Double.NaN;
+    }
+
+    /** Last RPM from OBD (for map track). NaN if not available. */
+    public double getLastRpm() {
+        if (mObdStudio == null) return Double.NaN;
+        ObdReading r = mObdStudio.getAvailableReading("rpm");
+        if (r == null || r.getValue() == null) return Double.NaN;
+        try {
+            return ((Number) r.getValue()).doubleValue();
+        } catch (ClassCastException e) {
+            return Double.NaN;
+        }
+    }
+
+    /** Last MAP from OBD in kPa (for map track). NaN if not available. */
+    public double getLastMapKpa() {
+        if (mObdStudio == null) return Double.NaN;
+        ObdReading r = mObdStudio.getAvailableReading("map");
+        if (r == null || r.getValue() == null) return Double.NaN;
+        try {
+            return ((Number) r.getValue()).doubleValue();
+        } catch (ClassCastException e) {
+            return Double.NaN;
         }
     }
 
@@ -314,13 +345,21 @@ public class TripComputer extends Debuggable implements ObdStudioListener, Spart
             segmentBreakPending = false;
         }
         
-        // Create and append track point
+        // Create and append track point with all dimensions
         Double lph = sanitizeMetric(instStats.getLphAvg());
+        double afr = getLastAfr();
+        double rpm = getLastRpm();
+        double mapKpa = getLastMapKpa();
+        double speedKmh = getSpeed();
         TripFuelTrackStore.TrackPoint sample = new TripFuelTrackStore.TrackPoint(
             lat,
             lon,
             sanitized,
-            lph == null ? Double.NaN : lph
+            lph == null ? Double.NaN : lph,
+            afr,
+            rpm,
+            mapKpa,
+            speedKmh
         );
         
         trackStore.append(sample);
