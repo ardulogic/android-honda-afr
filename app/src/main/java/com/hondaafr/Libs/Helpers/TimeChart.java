@@ -128,8 +128,12 @@ public class TimeChart {
 
             data.notifyDataChanged();
             mChart.notifyDataSetChanged();
-            mChart.setData(data);
-            updateLegend();
+            // Only (re)configure legend & axes once; afterwards just keep viewport updated
+            if (!legendIsInitialized) {
+                updateLegend();
+            } else {
+                setMaxZoom();
+            }
         } else {
             ArrayList<Entry> values = new ArrayList<>();
             values.add(new Entry(timestamp, value));

@@ -33,7 +33,6 @@ public class ChartPanel extends Panel {
         mainActivity.runOnUiThread(() -> {
             float time = System.currentTimeMillis() - startTimestamp; // Cant use full timestamp, too big
             mChart.addToData(time, afr.floatValue(), true);
-            mChart.invalidate();
         });
     }
 
