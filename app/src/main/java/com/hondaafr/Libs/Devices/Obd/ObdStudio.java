@@ -42,7 +42,7 @@ public class ObdStudio extends Studio {
     private static final long LINK_TIMEOUT_MS          = 5_000L;  // liveness threshold
     private static final long SUPERVISOR_PERIOD_MS     = 1_000L;  // watchdog tick
     private static final long INIT_RESPONSE_TIMEOUT_MS = 2_000L;  // wait for OK
-    private static final long READING_DELAY = 75;
+    private static final long READING_DELAY = 10;
 
     // ────────────────────────────────────────────────────────────────────────────────
     // Types & state

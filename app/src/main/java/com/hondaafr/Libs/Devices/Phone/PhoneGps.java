@@ -23,8 +23,8 @@ import java.util.*;
 public class PhoneGps {
 
     private static final long UPDATE_INTERVAL_MS = 2000;
-//    private static final int DISTANCE_THRESHOLD_METERS = 25;
-    private static final int DISTANCE_THRESHOLD_METERS = 0;
+    private static final int DISTANCE_THRESHOLD_METERS = 25;
+//    private static final int DISTANCE_THRESHOLD_METERS = 0;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1001;
 
     private final Context context;
