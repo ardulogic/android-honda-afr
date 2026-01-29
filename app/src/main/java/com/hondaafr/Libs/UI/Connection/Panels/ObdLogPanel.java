@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.hondaafr.Libs.Bluetooth.BluetoothStates;
 import com.hondaafr.Libs.Bluetooth.Services.BluetoothService;
 import com.hondaafr.Libs.Devices.Obd.ObdLogStore;
+import com.hondaafr.Libs.Devices.Obd.ObdSimulator;
 import com.hondaafr.Libs.Helpers.AfrComputer.AfrComputer;
 import com.hondaafr.Libs.Helpers.TripComputer.TripComputer;
 import com.hondaafr.Libs.UI.Fragments.ObdLog.ObdLogAdapter;
@@ -178,6 +179,11 @@ public class ObdLogPanel extends Panel implements ObdLogStore.LogListener {
     private void onBluetoothStateChanged(int state, String deviceId) {
         // Only log OBD-related status changes
         if ("obd".equals(deviceId)) {
+            // When ObdSimulator is on, skip logging "Disconnected" so the log doesn't show
+            // a misleading state before the simulator sends CONNECTED and ATZ flows.
+            if (state == BluetoothStates.STATE_BT_DISCONNECTED && ObdSimulator.isEnabled(mainActivity)) {
+                return;
+            }
             String statusMessage = BluetoothStates.labelOfState(state);
             ObdLogStore.logBt(statusMessage);
         }

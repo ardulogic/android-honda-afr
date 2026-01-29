@@ -81,59 +81,74 @@
                 android:stretchColumns="*" />
         </HorizontalScrollView>
 
-        <com.google.android.material.button.MaterialButtonToggleGroup
-            android:id="@+id/toggleAdaptiveAfr"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_margin="@dimen/app_spacing_sm"
-            app:selectionRequired="true"
-            app:singleSelection="true">
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/buttonAdaptiveOff"
-                style="?attr/materialButtonOutlinedStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="OFF" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/buttonAdaptiveOn"
-                style="?attr/materialButtonOutlinedStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="ON" />
-        </com.google.android.material.button.MaterialButtonToggleGroup>
-
-        <com.google.android.material.button.MaterialButtonToggleGroup
-            android:id="@+id/toggleAdaptivePresets"
+        <LinearLayout
+            android:id="@+id/layoutAdaptiveAfrEnable"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="@dimen/app_spacing_sm"
             android:gravity="center"
-            app:singleSelection="true">
+            android:orientation="horizontal">
 
-            <Button
-                android:id="@+id/buttonAdaptiveSport"
-                style="?attr/materialButtonOutlinedStyle"
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                android:id="@+id/toggleAdaptiveAfr"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Sport" />
+                app:selectionRequired="true"
+                app:singleSelection="true">
 
-            <Button
-                android:id="@+id/buttonAdaptiveEco"
-                style="?attr/materialButtonOutlinedStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Eco" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/buttonAdaptiveOff"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="OFF" />
 
-            <Button
-                android:id="@+id/buttonAdaptiveEcoPlus"
-                style="?attr/materialButtonOutlinedStyle"
-                android:layout_width="wrap_content"
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/buttonAdaptiveOn"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="ON" />
+            </com.google.android.material.button.MaterialButtonToggleGroup>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/layoutAdaptiveAfrPresets"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/app_spacing_sm"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                android:id="@+id/toggleAdaptivePresets"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Eco+" />
-        </com.google.android.material.button.MaterialButtonToggleGroup>
+                android:gravity="center"
+                app:singleSelection="true">
+
+                <Button
+                    android:id="@+id/buttonAdaptiveSport"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Sport" />
+
+                <Button
+                    android:id="@+id/buttonAdaptiveEco"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Eco" />
+
+                <Button
+                    android:id="@+id/buttonAdaptiveEcoPlus"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Eco+" />
+            </com.google.android.material.button.MaterialButtonToggleGroup>
+        </LinearLayout>
 
     </LinearLayout>
 

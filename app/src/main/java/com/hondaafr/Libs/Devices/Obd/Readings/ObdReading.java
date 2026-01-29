@@ -161,7 +161,7 @@ public abstract class ObdReading {
     }
 
     public String getDisplayValue() {
-        return getDisplayName() + ": " + getFormattedValue() + " " + getMeasurement();
+        return getDisplayName() + "\n" + getFormattedValue() + " " + getMeasurement();
     }
 
     public Long getTimeSinceLastUpdate() {

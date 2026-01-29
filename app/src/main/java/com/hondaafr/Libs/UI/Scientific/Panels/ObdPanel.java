@@ -18,7 +18,6 @@ import java.util.Map;
 public class ObdPanel extends Panel {
 
     private final Map<String, TextView> obdButtons = new HashMap<>();
-    private final TextView mTextSpeedSource;
     @Override
     public int getContainerId() {
         return R.id.layoutObd;
@@ -31,9 +30,6 @@ public class ObdPanel extends Panel {
 
     public ObdPanel(MainActivity mainActivity, TripComputer tripComputer, AfrComputer afrComputer, UiView parentView) {
         super(mainActivity, tripComputer, afrComputer, parentView);
-
-        mTextSpeedSource = rootView.findViewById(R.id.textSpeedSource);
-
         setObdOnClickListeners();
     }
 
@@ -98,7 +94,6 @@ public class ObdPanel extends Panel {
                 break;
             case "speed":
                 if (!tripComputer.isGpsSpeedUsed()) {
-                    mTextSpeedSource.setText("OBD");
                     setObdReadingText(R.id.textSpeed, reading);
                 }
                 break;
@@ -117,10 +112,8 @@ public class ObdPanel extends Panel {
     @Override
     public void onGpsUpdate(Double speed, double distanceIncrement) {
         if (tripComputer.isGpsSpeedUsed()) {
-            mTextSpeedSource.setText("GPS");
-
-            TextView textView = rootView.findViewById(R.id.textSpeed);
-            textView.setText(String.format("%.1f km/h", speed));
+            TextView textSpeed = rootView.findViewById(R.id.textSpeed);
+            textSpeed.setText(String.format("GPS\n%.1f km/h", speed));
         }
     }
 

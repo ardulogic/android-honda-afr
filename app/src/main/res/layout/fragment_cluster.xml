@@ -12,6 +12,7 @@
         android:id="@+id/imageClusterConfigure"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:alpha="0.15"
         android:background="#00FFFFFF"
         android:padding="@dimen/cluster_configure_padding"
         app:layout_constraintEnd_toEndOf="parent"

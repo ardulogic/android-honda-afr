@@ -10,6 +10,8 @@ import android.os.Handler;
 import android.util.Log;
 import android.util.Rational;
 import android.view.View;
+import android.view.WindowInsets;
+import android.view.WindowInsetsController;
 import android.view.WindowManager;
 
 import androidx.activity.EdgeToEdge;
@@ -48,6 +50,9 @@ public class MainActivity extends AppCompatActivity {
         
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
+        
+        // Hide system bars by default
+        hideSystemBars();
         
         // Setup EdgeToEdge window insets handling at activity level
         View rootView = findViewById(R.id.main);
@@ -253,6 +258,26 @@ public class MainActivity extends AppCompatActivity {
                     ((PipAware) fragment).onExitPip();
                 }
             }
+        }
+    }
+
+    private void hideSystemBars() {
+        View decorView = getWindow().getDecorView();
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            WindowInsetsController insetsController = getWindow().getInsetsController();
+            if (insetsController != null) {
+                // Hide both status and navigation bars
+                insetsController.hide(WindowInsets.Type.systemBars());
+                insetsController.setSystemBarsBehavior(
+                        WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+            }
+        } else {
+            // For Android 10 and below
+            decorView.setSystemUiVisibility(
+                    View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                            | View.SYSTEM_UI_FLAG_FULLSCREEN
+                            | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
         }
     }
 

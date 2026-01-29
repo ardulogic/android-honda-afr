@@ -17,7 +17,7 @@ public class AdaptiveAfrPresetTogglePanel extends Panel {
 
     @Override
     public int getContainerId() {
-        return R.id.layoutAdaptiveAfr;
+        return R.id.layoutAdaptiveAfrPresets;
     }
 
     @Override

@@ -208,25 +208,46 @@ public class TripComputer extends Debuggable implements ObdStudioListener, Spart
         Double speedGps = gps.getSpeed();
         ObdReading speedObd = mObdStudio.getAvailableReading("speed");
 
-        if (speedObd.getTimeSinceLastUpdate() > 3000) {
+        if (speedObd == null || speedObd.getValue() == null) {
+            // No OBD speed available; fall back to GPS when possible
             return true;
-        } else {
-            if (gps.isAlive()) {
-
-                // Has recent readings
-                boolean isGpsValid = Math.abs(speedGps - (Double) speedObd.getValue()) <= 20;
-                return isGpsValid && gps.getSpeed() > 30 && (Integer) speedObd.getValue() > 30;
-            }
         }
 
-        return true;
+        double speedObdValue;
+        try {
+            speedObdValue = ((Number) speedObd.getValue()).doubleValue();
+        } catch (ClassCastException e) {
+            // Unexpected type, prefer GPS to avoid crashes
+            return true;
+        }
+
+        if (speedObd.getTimeSinceLastUpdate() > 3000) {
+            // OBD speed is stale, use GPS
+            return true;
+        } else if (gps.isAlive() && speedGps != null) {
+            // Has recent readings from both sources; ensure they are reasonably close
+            boolean isGpsValid = Math.abs(speedGps - speedObdValue) <= 20;
+            return isGpsValid && speedGps > 30 && speedObdValue > 30;
+        }
+
+        // Default to using OBD speed when GPS is not a better option
+        return false;
     }
 
     public double getSpeed() {
         if (isGpsSpeedUsed()) {
             return gps.getSpeed();
         } else {
-            return (Integer) mObdStudio.getAvailableReading("speed").getValue();
+            ObdReading speedObd = mObdStudio.getAvailableReading("speed");
+            if (speedObd == null || speedObd.getValue() == null) {
+                return gps.getSpeed();
+            }
+
+            try {
+                return ((Number) speedObd.getValue()).doubleValue();
+            } catch (ClassCastException e) {
+                return gps.getSpeed();
+            }
         }
     }
 

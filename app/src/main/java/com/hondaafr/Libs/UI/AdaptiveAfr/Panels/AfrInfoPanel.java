@@ -1,5 +1,6 @@
 package com.hondaafr.Libs.UI.AdaptiveAfr.Panels;
 
+import android.view.View;
 import android.widget.TextView;
 
 import com.hondaafr.Libs.Helpers.AfrComputer.AfrComputer;
@@ -11,7 +12,7 @@ import com.hondaafr.Libs.UI.UiView;
 import com.hondaafr.MainActivity;
 import com.hondaafr.R;
 
-public class AfrInfoPanel extends Panel implements AfrComputerListener {
+public class AfrInfoPanel extends Panel {
 
     private TextView textRpm;
     private TextView textMap;
@@ -81,6 +82,17 @@ public class AfrInfoPanel extends Panel implements AfrComputerListener {
         if (afrComputer.getState() != null) {
             updateInfo(afrComputer.getState());
         }
+    }
+
+    @Override
+    public boolean visibleInPip() {
+        return true;
+    }
+
+    @Override
+    public View[] getViewsHiddenInPip() {
+        // Hide RPM and MAP in PiP, but keep AFR and AFRT visible
+        return new View[]{textRpm, textMap};
     }
 }
 

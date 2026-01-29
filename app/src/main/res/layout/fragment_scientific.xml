@@ -275,166 +275,114 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
 
-        <LinearLayout
+        <GridLayout
             android:id="@+id/layoutObd"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="@dimen/obd_layout_margin_horizontal"
             android:layout_marginEnd="@dimen/obd_layout_margin_horizontal"
             android:layout_marginBottom="@dimen/section_spacing"
-            android:gravity="center"
-            android:orientation="vertical">
+            android:alignmentMode="alignMargins"
+            android:columnCount="3"
+            android:useDefaultMargins="true">
 
-            <LinearLayout
-                android:id="@+id/linearLayoutObd3"
-                android:layout_width="match_parent"
+            <!-- Row 1: TPS | IAT | VOLT -->
+            <TextView
+                android:id="@+id/textTps"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal">
+                android:layout_columnWeight="1"
+                android:gravity="center_horizontal"
+                android:padding="@dimen/obd_text_padding"
+                android:text="TPS\n-"
+                android:textColor="@color/app_text_primary" />
 
-                <TextView
-                    android:id="@+id/textTps"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:layout_marginBottom="0dp"
-                    android:padding="@dimen/obd_text_padding"
-                    android:text="TPS"
-                    android:textColor="@color/app_text_primary" />
-
-                <Space
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1" />
-
-                <TextView
-                    android:id="@+id/textIat"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="0dp"
-                    android:padding="@dimen/obd_text_padding"
-                    android:text="IAT"
-                    android:textColor="@color/app_text_primary" />
-
-                <Space
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1" />
-
-                <TextView
-                    android:id="@+id/textLambdaVoltage"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="0dp"
-                    android:padding="@dimen/obd_text_padding"
-                    android:text="VOLT"
-                    android:textColor="@color/app_text_primary" />
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/linearLayoutObd2"
-                android:layout_width="match_parent"
+            <TextView
+                android:id="@+id/textIat"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal">
+                android:layout_columnWeight="1"
+                android:gravity="center_horizontal"
+                android:padding="@dimen/obd_text_padding"
+                android:text="IAT\n-"
+                android:textColor="@color/app_text_primary" />
 
-                <TextView
-                    android:id="@+id/textRpm"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:padding="@dimen/obd_text_padding"
-                    android:text="RPM"
-                    android:textColor="@color/app_text_primary" />
-
-                <Space
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1" />
-
-                <TextView
-                    android:id="@+id/textMap"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:padding="@dimen/obd_text_padding"
-                    android:text="MAP"
-                    android:textColor="@color/app_text_primary" />
-
-                <Space
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1" />
-
-                <TextView
-                    android:id="@+id/textLtft"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:padding="@dimen/obd_text_padding"
-                    android:text="LTFT"
-                    android:textColor="@color/app_text_primary" />
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/linearLayoutObd1"
-                android:layout_width="match_parent"
+            <TextView
+                android:id="@+id/textLambdaVoltage"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal">
+                android:layout_columnWeight="1"
+                android:gravity="center_horizontal"
+                android:padding="@dimen/obd_text_padding"
+                android:text="VOLT\n-"
+                android:textColor="@color/app_text_primary" />
 
-                <TextView
-                    android:id="@+id/textEct"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:padding="@dimen/obd_text_padding"
-                    android:text="ECT"
-                    android:textColor="@color/app_text_primary" />
+            <!-- Row 2: RPM | MAP | LTFT -->
+            <TextView
+                android:id="@+id/textRpm"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_columnWeight="1"
+                android:gravity="center_horizontal"
+                android:padding="@dimen/obd_text_padding"
+                android:text="RPM\n-"
+                android:textColor="@color/app_text_primary" />
 
-                <Space
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1" />
+            <TextView
+                android:id="@+id/textMap"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_columnWeight="1"
+                android:gravity="center_horizontal"
+                android:padding="@dimen/obd_text_padding"
+                android:text="MAP\n-"
+                android:textColor="@color/app_text_primary" />
 
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical">
+            <TextView
+                android:id="@+id/textLtft"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_columnWeight="1"
+                android:gravity="center_horizontal"
+                android:padding="@dimen/obd_text_padding"
+                android:text="LTFT\n-"
+                android:textColor="@color/app_text_primary" />
 
-                    <TextView
-                        android:id="@+id/textSpeed"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="0.8"
-                        android:paddingStart="15dp"
-                        android:paddingLeft="15dp"
-                        android:paddingTop="15dp"
-                        android:paddingRight="15dp"
-                        android:paddingBottom="5dp"
-                        android:text="SPD"
-                        android:textColor="@color/app_text_primary" />
+            <!-- Row 3: ECT | Speed block | STFT -->
+            <TextView
+                android:id="@+id/textEct"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_columnWeight="1"
+                android:gravity="center_horizontal"
+                android:padding="@dimen/obd_text_padding"
+                android:text="ECT\n-"
+                android:textColor="@color/app_text_primary" />
 
-                    <TextView
-                        android:id="@+id/textSpeedSource"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="0.2"
-                        android:gravity="center"
-                        android:text="OBD"
-                        android:textColor="@color/app_text_secondary" />
-                </LinearLayout>
 
-                <Space
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1" />
 
-                <TextView
-                    android:id="@+id/textStft"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:padding="@dimen/obd_text_padding"
-                    android:text="STFT"
-                    android:textColor="@color/app_text_primary" />
+            <TextView
+                android:id="@+id/textSpeed"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_columnWeight="1"
+                android:gravity="center_horizontal"
+                android:padding="@dimen/obd_text_padding"
+                android:text="SPD\n-"
+                android:textColor="@color/app_text_primary" />
 
-            </LinearLayout>
 
-        </LinearLayout>
+            <TextView
+                android:id="@+id/textStft"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_columnWeight="1"
+                android:gravity="center_horizontal"
+                android:padding="@dimen/obd_text_padding"
+                android:text="STFT\n-"
+                android:textColor="@color/app_text_primary" />
+
+        </GridLayout>
 
         <com.google.android.material.button.MaterialButtonToggleGroup
             android:id="@+id/toggleAfrBoundStatsGroup"

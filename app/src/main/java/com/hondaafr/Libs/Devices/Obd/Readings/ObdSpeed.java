@@ -14,7 +14,7 @@ public class ObdSpeed extends ObdReading {
 
     @Override
     public String getDisplayName() {
-        return "OSPD";
+        return "SPD";
     }
 
     @Override

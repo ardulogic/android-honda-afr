@@ -12,6 +12,8 @@
     <dimen name="connect_button_width">150dp</dimen>
     <dimen name="status_text_width">120dp</dimen>
     <dimen name="obd_text_padding">15dp</dimen>
+    <!-- More compact padding for OBD grid cells on the scientific screen -->
+    <dimen name="obd_grid_text_padding">8dp</dimen>
     <dimen name="top_button_spacing">16dp</dimen>
     <dimen name="section_spacing">32dp</dimen>
     <dimen name="afr_button_spacing">32dp</dimen>

@@ -19,7 +19,7 @@ public class AdaptiveAfrEnablePanel extends Panel implements AfrComputerListener
 
     @Override
     public int getContainerId() {
-        return R.id.layoutAdaptiveAfr;
+        return R.id.layoutAdaptiveAfrEnable;
     }
 
     @Override

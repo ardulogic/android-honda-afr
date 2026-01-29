@@ -122,10 +122,10 @@ public class BluetoothConnectionManager {
                 case BluetoothService.COMMAND_BT_CONNECT:
                     if ("obd".equals(deviceId) && ObdSimulator.isEnabled(activity)) {
                         Log.d(TAG, "Simulator: Connecting OBD");
-                        handler.postDelayed(() -> obdSimulator.simulateConnection(), 500);
+                        handler.post(() -> obdSimulator.simulateConnection());
                     } else if ("spartan".equals(deviceId) && SpartanSimulator.isEnabled(activity)) {
                         Log.d(TAG, "Simulator: Connecting AFR");
-                        handler.postDelayed(() -> afrSimulator.simulateConnection(), 500);
+                        handler.post(() -> afrSimulator.simulateConnection());
                     }
                     break;
                     
@@ -177,13 +177,13 @@ public class BluetoothConnectionManager {
             handler.postDelayed(() -> {
                 Log.d(TAG, "Starting OBD simulator");
                 obdSimulator.simulateConnection();
-            }, 1000);
+            }, 50);
         }
         if (SpartanSimulator.isEnabled(activity)) {
             handler.postDelayed(() -> {
                 Log.d(TAG, "Starting AFR simulator");
                 afrSimulator.simulateConnection();
-            }, 1200);
+            }, 150);
         }
     }
     

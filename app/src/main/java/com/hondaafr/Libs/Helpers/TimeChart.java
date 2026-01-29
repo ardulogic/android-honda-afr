@@ -26,6 +26,10 @@ import java.util.Locale;
 import java.util.Random;
 
 public class TimeChart {
+    private static final float VISIBLE_X_RANGE_MS = 3000f;
+    // Keep roughly two visible windows worth of data to avoid unbounded growth
+    private static final float MAX_ENTRY_AGE_MS = VISIBLE_X_RANGE_MS * 2f;
+
     private final LineChart mChart;
     private final Typeface legendFont;
     private final Activity activity;
@@ -48,8 +52,10 @@ public class TimeChart {
     }
 
     public void setMaxZoom() {
-        mChart.setVisibleXRangeMaximum(8000);
-        mChart.moveViewToX(data.getXMax());
+        mChart.setVisibleXRangeMaximum(VISIBLE_X_RANGE_MS);
+        if (data != null) {
+            mChart.moveViewToX(data.getXMax());
+        }
     }
 
     public void init() {
@@ -105,7 +111,23 @@ public class TimeChart {
 
     public void addToData(float timestamp, float value, boolean update) {
         if (data != null) {
-            data.addEntry(new Entry(timestamp, value), 0);
+            LineDataSet set = (LineDataSet) data.getDataSetByIndex(0);
+            if (set == null) {
+                set = new LineDataSet(new ArrayList<>(), "DataSet 1");
+                data.addDataSet(set);
+            }
+
+            // Append new entry
+            set.addEntry(new Entry(timestamp, value));
+
+            // Prune old entries outside the max age window to limit memory and draw cost
+            float cutoff = timestamp - MAX_ENTRY_AGE_MS;
+            while (set.getEntryCount() > 0 && set.getEntryForIndex(0).getX() < cutoff) {
+                set.removeFirst();
+            }
+
+            data.notifyDataChanged();
+            mChart.notifyDataSetChanged();
             mChart.setData(data);
             updateLegend();
         } else {

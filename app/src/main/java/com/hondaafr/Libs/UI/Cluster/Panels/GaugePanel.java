@@ -384,6 +384,20 @@ public class GaugePanel extends Panel implements AfrComputerListener {
     }
     
     @Override
+    public void attachAfrComputerListener() {
+        super.attachAfrComputerListener();
+        // Update icon when listener is attached to ensure it reflects current state
+        updateAdaptiveAfrIcon();
+    }
+
+    @Override
+    public void onResume(android.content.Context context) {
+        super.onResume(context);
+        // Update icon when panel resumes to ensure it reflects current state
+        updateAdaptiveAfrIcon();
+    }
+
+    @Override
     public void onIsActivatedChanged(AdaptiveAfrState state) {
         updateAdaptiveAfrIcon();
     }
