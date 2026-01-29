@@ -3,6 +3,8 @@ package com.hondaafr.Libs.UI.Map;
 import android.graphics.Color;
 import android.view.View;
 
+import com.hondaafr.R;
+
 import org.osmdroid.tileprovider.tilesource.ITileSource;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.tileprovider.tilesource.XYTileSource;
@@ -64,16 +66,21 @@ public final class MapUiController {
             legendTitle.setBackgroundColor(nightMode ? 0x66000000 : 0xCCFFFFFF);
             legendTitle.setTextColor(nightMode ? Color.WHITE : Color.BLACK);
         }
+        int tint = nightMode ? Color.WHITE : Color.BLACK;
+        int bgColor = nightMode ? 0xAAFFFFFF : 0xE6FFFFFF;
         if (zoomInButton instanceof android.widget.ImageButton
                 && zoomOutButton instanceof android.widget.ImageButton) {
-            int tint = nightMode ? Color.WHITE : Color.BLACK;
-            int bgColor = nightMode ? 0xAAFFFFFF : 0xE6FFFFFF;
             android.graphics.drawable.Drawable inBg = zoomInButton.getBackground();
             android.graphics.drawable.Drawable outBg = zoomOutButton.getBackground();
             if (inBg != null) inBg.setTint(bgColor);
             if (outBg != null) outBg.setTint(bgColor);
             ((android.widget.ImageButton) zoomInButton).setColorFilter(tint);
             ((android.widget.ImageButton) zoomOutButton).setColorFilter(tint);
+        }
+        if (followToggleButton instanceof android.widget.ImageButton) {
+            android.graphics.drawable.Drawable followBg = followToggleButton.getBackground();
+            if (followBg != null) followBg.setTint(bgColor);
+            ((android.widget.ImageButton) followToggleButton).setColorFilter(tint);
         }
         mapView.invalidate();
     }
@@ -98,8 +105,9 @@ public final class MapUiController {
     }
 
     public void updateFollowButton(boolean followEnabled) {
-        if (followToggleButton instanceof android.widget.Button) {
-            ((android.widget.Button) followToggleButton).setText(followEnabled ? "Free Pan" : "Follow Me");
+        if (followToggleButton instanceof android.widget.ImageButton) {
+            ((android.widget.ImageButton) followToggleButton).setImageResource(
+                    followEnabled ? R.drawable.ic_map_pan : R.drawable.ic_map_follow);
         }
     }
 }

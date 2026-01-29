@@ -41,7 +41,7 @@ import java.util.concurrent.Executors;
 public class MapFragment extends Fragment implements TripComputerListener, PipAware {
     private static final String TAG = "MapFragment";
     private static final String LISTENER_ID = "map_fragment";
-    private static final double MAX_CONSUMPTION = 15.0;
+    private static final double MAX_CONSUMPTION = 30.0;
     private static final long RENDER_THROTTLE_MS = 250;
 
     private MapView mapView;
@@ -51,7 +51,6 @@ public class MapFragment extends Fragment implements TripComputerListener, PipAw
     private TripFuelTrackStore trackStore;
     private long lastRenderMs = 0;
     private boolean didInitialZoom = false;
-    private boolean segmentBreakPending = false;
     private boolean isNightMode = false;
     private boolean mapReady = false;
 
@@ -286,7 +285,8 @@ public class MapFragment extends Fragment implements TripComputerListener, PipAw
      * TripComputer has already appended this point to trackStore; we only update in-memory display.
      */
     private void appendCurrentPointToFuelSamples(double lat, double lon) {
-        double lp100km = tripComputer.instStats.getLp100kmAvg();
+        double lp100kmAvg = tripComputer.instStats.getLp100kmAvg();
+        double lp100km = (lp100kmAvg > 0) ? lp100kmAvg : tripComputer.instStats.getLp100km();
         Double sanitized = sanitizeMetric(lp100km);
         Double lph = sanitizeMetric(tripComputer.instStats.getLphAvg());
         double consumption = sanitized != null ? sanitized : 0.0;

@@ -40,8 +40,8 @@ public class InstantStats {
         lphHistory.add(rateLph);
 
         if (speed > 0) {
-            lp100kmHistory.add(rateLp100km);
             rateLp100km = FuelConsumption.calculateLiters100km(rateLph, speed);
+            lp100kmHistory.add(rateLp100km);
         }
     }
 

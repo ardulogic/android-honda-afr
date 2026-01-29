@@ -41,18 +41,6 @@
         app:layout_constraintTop_toTopOf="parent">
 
         <Button
-            android:id="@+id/buttonMapFollow"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:backgroundTint="@color/app_button_primary_bg"
-            android:text="Free Pan"
-            android:textColor="@color/app_button_text_light" />
-
-        <Space
-            android:layout_width="wrap_content"
-            android:layout_height="@dimen/app_spacing_sm" />
-
-        <Button
             android:id="@+id/buttonToggleMetric"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -83,6 +71,20 @@
         android:orientation="vertical"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
+
+        <ImageButton
+            android:id="@+id/buttonMapFollow"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:background="@color/overlay_background"
+            android:contentDescription="Follow / Free Pan"
+            android:padding="@dimen/app_spacing_sm"
+            android:src="@drawable/ic_map_follow"
+            android:tint="@color/app_text_primary" />
+
+        <Space
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/app_spacing_sm" />
 
         <ImageButton
             android:id="@+id/buttonZoomIn"
