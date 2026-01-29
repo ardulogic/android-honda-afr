@@ -31,8 +31,8 @@ import org.osmdroid.events.ScrollEvent;
 import org.osmdroid.events.ZoomEvent;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
+import com.hondaafr.Libs.UI.Map.NoFollowMyLocationOverlay;
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
-import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -45,7 +45,7 @@ public class MapFragment extends Fragment implements TripComputerListener, PipAw
     private static final long RENDER_THROTTLE_MS = 250;
 
     private MapView mapView;
-    private MyLocationNewOverlay myLocationOverlay;
+    private NoFollowMyLocationOverlay myLocationOverlay;
     private TripComputer tripComputer;
     private String sessionId = "";
     private TripFuelTrackStore trackStore;
@@ -81,7 +81,7 @@ public class MapFragment extends Fragment implements TripComputerListener, PipAw
         mapView.getController().setZoom(16.0);
 
         isNightMode = isSystemNightMode();
-        myLocationOverlay = new MyLocationNewOverlay(new GpsMyLocationProvider(requireContext()), mapView);
+        myLocationOverlay = new NoFollowMyLocationOverlay(new GpsMyLocationProvider(requireContext()), mapView);
         mapView.getOverlays().add(myLocationOverlay);
 
         trackDataSource = new MapTrackDataSource();
@@ -221,7 +221,7 @@ public class MapFragment extends Fragment implements TripComputerListener, PipAw
             if (myLocationOverlay != null) {
                 mapView.getOverlays().remove(myLocationOverlay);
             }
-            myLocationOverlay = new MyLocationNewOverlay(new GpsMyLocationProvider(requireContext()), mapView);
+            myLocationOverlay = new NoFollowMyLocationOverlay(new GpsMyLocationProvider(requireContext()), mapView);
             mapView.getOverlays().add(myLocationOverlay);
         }
     }
@@ -265,9 +265,9 @@ public class MapFragment extends Fragment implements TripComputerListener, PipAw
         }
 
         appendCurrentPointToFuelSamples(lat, lon);
-        if (followController != null) {
+        if (followController != null && mapView != null) {
             followController.setLastPoint(currPoint);
-            followController.onLocationUpdate(currPoint, false);
+            mapView.post(() -> followController.onLocationUpdate(currPoint, false));
         }
         runIfAlive(() -> refreshTrackOverlays(false));
     }
