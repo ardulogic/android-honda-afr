@@ -199,14 +199,17 @@ public class MapFragment extends Fragment implements TripComputerListener, PipAw
     @Override
     public void onPause() {
         super.onPause();
-        if (tripComputer != null) {
-            tripComputer.removeListener(LISTENER_ID);
-        }
-        if (myLocationOverlay != null) {
-            myLocationOverlay.disableMyLocation();
-        }
-        if (mapView != null) {
-            mapView.onPause();
+        boolean inPip = requireActivity().isInPictureInPictureMode();
+        if (!inPip) {
+            if (tripComputer != null) {
+                tripComputer.removeListener(LISTENER_ID);
+            }
+            if (myLocationOverlay != null) {
+                myLocationOverlay.disableMyLocation();
+            }
+            if (mapView != null) {
+                mapView.onPause();
+            }
         }
         if (trackStore != null) {
             trackStore.flush();
@@ -469,6 +472,19 @@ public class MapFragment extends Fragment implements TripComputerListener, PipAw
 
     @Override
     public void onEnterPip() {
+        if (tripComputer != null) {
+            tripComputer.addListener(LISTENER_ID, this);
+        }
+        if (myLocationOverlay != null && mapView != null) {
+            ensureMyLocationProvider();
+            myLocationOverlay.enableMyLocation();
+            if (followController != null) {
+                followController.applyToOverlay();
+            }
+        }
+        if (mapView != null) {
+            mapView.onResume();
+        }
         if (uiController != null) {
             uiController.updatePipUiState(true);
         }

@@ -1,11 +1,10 @@
 package com.hondaafr.Libs.UI.Map;
 
 import android.graphics.Point;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.SystemClock;
 import android.util.Log;
-import android.view.Choreographer;
-
-import com.hondaafr.BuildConfig;
 
 import org.osmdroid.api.IGeoPoint;
 import org.osmdroid.util.GeoPoint;
@@ -13,7 +12,9 @@ import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
 /**
- * Handles follow-mode state and map centering. Fragment wires button and swipe behavior. * Pans by scrollBy(px - centerX, py - centerY) each frame. Uses elapsed real time so the * animation always runs 600ms regardless of "Animator duration scale" in Developer options.
+ * Handles follow-mode state and map centering. Pans by scrollBy each frame using
+ * Handler.postDelayed so animation runs in PiP (Choreographer is throttled for PiP).
+ * Elapsed real time so duration is correct when "Animator duration scale" is off.
  */
 public final class MapFollowController {
     private static final String TAG = "MapFollow";
@@ -25,8 +26,12 @@ public final class MapFollowController {
      * Min ms between starting a new pan so we don't restart animation on every GPS tick.
      */
     private static final long MIN_PAN_INTERVAL_MS = 400L;
+    /** Interval between animation frames (Handler), works in PiP. */
+    private static final long FRAME_INTERVAL_MS = 16L;
     private final MapView mapView;
     private final MyLocationNewOverlay myLocationOverlay;
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private Runnable panRunnable;
     private boolean followEnabled = true;
     private GeoPoint lastPoint;
     private boolean panAnimationActive = false;
@@ -111,6 +116,10 @@ public final class MapFollowController {
     }
 
     private void cancelPanAnimation() {
+        if (panRunnable != null) {
+            mainHandler.removeCallbacks(panRunnable);
+            panRunnable = null;
+        }
         if (panAnimationActive) {
             Log.d(TAG, "cancelPanAnimation (was running, frames=" + panFrameCount + ")");
             panAnimationActive = false;
@@ -118,7 +127,9 @@ public final class MapFollowController {
     }
 
     /**
-     * Pans from current center to target over FOLLOW_ANIMATION_DURATION_MS using elapsed * real time (SystemClock.uptimeMillis) so duration is correct even when "Animator * duration scale" is off. Uses Choreographer for per-frame updates.
+     * Pans from current center to target over FOLLOW_ANIMATION_DURATION_MS using elapsed
+     * real time. Uses Handler.postDelayed so animation runs in PiP (Choreographer is
+     * throttled for PiP windows).
      */
     private void smoothPanTo(GeoPoint target) {
         if (mapView == null || mapView.getProjection() == null) {
@@ -145,22 +156,22 @@ public final class MapFollowController {
         Log.d(TAG, "smoothPanTo start start=(" + startLat + "," + startLon + ") end=(" + endLat + "," + endLon + ") centerPx=(" + centerX + "," + centerY + ") zoom=" + zoom + " durationMs=" + FOLLOW_ANIMATION_DURATION_MS);
         panAnimationActive = true;
         panFrameCount = 0;
-        Choreographer.FrameCallback frameCallback = new Choreographer.FrameCallback() {
+        panRunnable = new Runnable() {
             @Override
-            public void doFrame(long frameTimeNanos) {
+            public void run() {
                 if (!panAnimationActive || mapView == null || mapView.getProjection() == null) {
                     return;
                 }
                 long elapsed = SystemClock.uptimeMillis() - startTimeUptime;
                 float t = elapsed / (float) FOLLOW_ANIMATION_DURATION_MS;
                 if (t >= 1f) {
-                    t = 1f;
                     panAnimationActive = false;
+                    panRunnable = null;
                     Log.d(TAG, "smoothPanTo done frames=" + panFrameCount + " setCenter(finalTarget)");
                     if (mapView != null) {
                         mapView.getController().setCenter(finalTarget);
                     }
-                    mapView.postInvalidate();
+                    if (mapView != null) mapView.postInvalidate();
                     return;
                 }
                 panFrameCount++;
@@ -175,9 +186,9 @@ public final class MapFollowController {
                 }
                 mapView.getController().scrollBy(dx, dy);
                 mapView.postInvalidate();
-                Choreographer.getInstance().postFrameCallback(this);
+                mainHandler.postDelayed(this, FRAME_INTERVAL_MS);
             }
         };
-        Choreographer.getInstance().postFrameCallback(frameCallback);
+        mainHandler.post(panRunnable);
     }
 }
