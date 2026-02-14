@@ -15,9 +15,9 @@ import java.util.concurrent.TimeUnit;
 public class SpartanStudio extends Studio {
 
     private static final long LINK_TIMEOUT_MS = 500L;     // Sensor considered dead after this
-    private static final long COMMUNICATION_CORE_TICK_MS = 10L;    // Read every 50ms
-    private static final long MIN_TIME_AFTER_REQUEST_MS = 30L;    // Read every 50ms
-    private static final long MIN_TIME_AFTER_RESPONSE_MS = 10L;    // Read every 50ms
+    private static final long COMMUNICATION_CORE_TICK_MS = 10L;    // Poll interval
+    private static final long MIN_TIME_AFTER_REQUEST_MS = 30L;     // Min gap between sends
+    private static final long MIN_TIME_AFTER_RESPONSE_MS = 0L;    // No delay after response; send next command immediately
     private static final long SUPERVISOR_PERIOD_MS = 1000L;
     private static final String TAG = "SpartanStudio";
 
@@ -182,7 +182,10 @@ public class SpartanStudio extends Studio {
         }
         updateDataReceivedTimestamp();
 
-        if (SpartanCommands.dataIsTargetLambda(data)) {
+        if (SpartanCommands.dataIsSetAfrAck(data)) {
+            // Real device responds with "OK Please Power Cycle Spartan 3" to SETNBSWLAM
+            pendingSetAfrCommand = null;
+        } else if (SpartanCommands.dataIsTargetLambda(data)) {
             targetAfr = SpartanCommands.parseTargetLambdaAndConvertToAfr(data);
             targetAfrReceived = true;
             listener.onTargetAfrUpdated(targetAfr);

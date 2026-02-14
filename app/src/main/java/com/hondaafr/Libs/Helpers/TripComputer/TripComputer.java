@@ -331,7 +331,7 @@ public class TripComputer extends Debuggable implements ObdStudioListener, Spart
             }
         }
         
-        double lp100km = instStats.getLp100kmAvg();
+        double lp100km = instStats.getLp100km();
         Double sanitized = sanitizeMetric(lp100km);
         if (sanitized == null) {
             return;

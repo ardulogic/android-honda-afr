@@ -117,18 +117,14 @@ public class SpartanSimulator {
                 sendDataReceived(response);
             } else if (cmd.startsWith("SETNBSWLAM")) {
                 // Set target lambda - parse and store
-                // Command format: SETNBSWLAMx.xxx (exactly 5 characters after SETNBSWLAM)
+                // Command format: SETNBSWLAMx.xxx (e.g. SETNBSWLAM1.000)
                 try {
-                    // Extract the lambda value (everything after "SETNBSWLAM")
                     String lambdaStr = cmd.substring("SETNBSWLAM".length());
-                    // Remove any line endings
-                    lambdaStr = lambdaStr.replace("\r\n", "").replace("\r", "").replace("\n", "");
+                    lambdaStr = lambdaStr.replace("\r\n", "").replace("\r", "").replace("\n", "").trim();
                     targetLambda = Double.parseDouble(lambdaStr);
-                    // Respond with exactly 5 characters: x.xxx format
-                    String response = String.format("%.3f", targetLambda);
-                    sendDataReceived(response);
+                    // Match real device: respond with "OK Please Power Cycle Spartan 3"
+                    sendDataReceived(SpartanCommands.SETNBSWLAM_ACK);
                 } catch (NumberFormatException | StringIndexOutOfBoundsException e) {
-                    // Invalid command format, ignore
                     Log.w(TAG, "Invalid SETNBSWLAM command format: " + cmd);
                 }
             }

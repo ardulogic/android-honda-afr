@@ -29,6 +29,13 @@ public class SpartanCommands {
         return lambda * STOICHIOMETRIC_AFR;
     }
 
+    /** Real device response after SETNBSWLAM: "OK Please Power Cycle Spartan 3" */
+    public static final String SETNBSWLAM_ACK = "OK Please Power Cycle Spartan 3";
+
+    public static boolean dataIsSetAfrAck(String data) {
+        return data != null && data.trim().contains(SETNBSWLAM_ACK);
+    }
+
     public static boolean dataIsTargetLambda(String data) {
         // Define the regex pattern for any number formatted as x.xxx
         String patternString = "^\\d\\.\\d{3}$";
